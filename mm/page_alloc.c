@@ -84,33 +84,34 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 		BUG();
 	if (PageActive(page))
 		BUG();
-	page->flags &= ~((1<<PG_referenced) | (1<<PG_dirty));
+	page->flags &= ~((1<<PG_referenced) | (1<<PG_dirty)); // 清除referenced和dirty标志
 
 	if (current->flags & PF_FREE_PAGES)
 		goto local_freelist;
  back_local_freelist:
 
-	zone = page->zone;
+	zone = page->zone;  // page所属内存区域
 
 	mask = (~0UL) << order;
 	base = zone->zone_mem_map;
-	page_idx = page - base;
+	page_idx = page - base;          // page所在区域的索引
 	if (page_idx & ~mask)
 		BUG();
-	index = page_idx >> (1 + order);
+	index = page_idx >> (1 + order); // page的伙伴索引
 
-	area = zone->free_area + order;
+	area = zone->free_area + order;  // page所在的空闲链表
 
 	spin_lock_irqsave(&zone->lock, flags);
 
-	zone->free_pages -= mask;
+	zone->free_pages -= mask; // 这个是一个技巧, 可以加上对应(1<<order)个页面数
 
+	// (1<<9)的二进制为: 000000000000000000000001000000000
 	while (mask + (1 << (MAX_ORDER-1))) {
 		struct page *buddy1, *buddy2;
 
 		if (area >= zone->free_area + MAX_ORDER)
 			BUG();
-		if (!__test_and_change_bit(index, area->map))
+		if (!__test_and_change_bit(index, area->map)) // 如果之前此索引为0
 			/*
 			 * the buddy page is still allocated.
 			 */
@@ -140,7 +141,7 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 	if (current->nr_local_pages)
 		goto back_local_freelist;
 	if (in_interrupt())
-		goto back_local_freelist;		
+		goto back_local_freelist;
 
 	list_add(&page->list, &current->local_pages);
 	page->index = order;
@@ -207,7 +208,7 @@ static struct page * rmqueue(zone_t *zone, unsigned int order)
 				BUG();
 			if (PageActive(page))
 				BUG();
-			return page;	
+			return page;
 		}
 		curr_order++;
 		area++;
@@ -526,14 +527,14 @@ void show_free_areas_core(pg_data_t *pgdat)
 		zone_t *zone;
 		for (zone = tmpdat->node_zones;
 			       	zone < tmpdat->node_zones + MAX_NR_ZONES; zone++)
-			printk("Zone:%s freepages:%6lukB min:%6lukB low:%6lukB " 
-				       "high:%6lukB\n", 
+			printk("Zone:%s freepages:%6lukB min:%6lukB low:%6lukB "
+				       "high:%6lukB\n",
 					zone->name,
 					K(zone->free_pages),
 					K(zone->pages_min),
 					K(zone->pages_low),
 					K(zone->pages_high));
-			
+
 		tmpdat = tmpdat->node_next;
 	}
 
@@ -570,7 +571,7 @@ void show_free_areas_core(pg_data_t *pgdat)
 
 #ifdef SWAP_CACHE_INFO
 	show_swap_cache_info();
-#endif	
+#endif
 }
 
 void show_free_areas(void)
@@ -585,7 +586,7 @@ static inline void build_zonelists(pg_data_t *pgdat)
 {
 	int i, j, k;
 
-	for (i = 0; i <= GFP_ZONEMASK; i++) {
+	for (i = 0; i <= GFP_ZONEMASK; i++) { // 遍历所有分配策略
 		zonelist_t *zonelist;
 		zone_t *zone;
 
@@ -623,7 +624,7 @@ static inline void build_zonelists(pg_data_t *pgdat)
 					zonelist->zones[j++] = zone;
 		}
 		zonelist->zones[j++] = NULL;
-	} 
+	}
 }
 
 #define LONG_ALIGN(x) (((x)+(sizeof(long))-1)&~((sizeof(long))-1))
@@ -634,8 +635,18 @@ static inline void build_zonelists(pg_data_t *pgdat)
  *   - mark all memory queues empty
  *   - clear the memory bitmaps
  */
+//
+// free_area_init(unsigned long *zones_size) 调用如下:
+// -------------------------------------------------------
+//     free_area_init_core(0, &contig_page_data, &mem_map,
+//         zones_size, 0,
+//         0, 0);
+// -------------------------------------------------------
+// contig_page_data是RAM节点, 这个函数用于初始化内存节点,
+// 根据传入的zones_size来设置每个区域的内存页.
+//
 void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
-	unsigned long *zones_size, unsigned long zone_start_paddr, 
+	unsigned long *zones_size, unsigned long zone_start_paddr,
 	unsigned long *zholes_size, struct page *lmem_map)
 {
 	struct page *p;
@@ -652,33 +663,37 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 		unsigned long size = zones_size[i];
 		totalpages += size;
 	}
-	realtotalpages = totalpages;
+	realtotalpages = totalpages;  // 真正的内存页数量
 	if (zholes_size)
 		for (i = 0; i < MAX_NR_ZONES; i++)
 			realtotalpages -= zholes_size[i];
-			
+
 	printk("On node %d totalpages: %lu\n", nid, realtotalpages);
 
-	INIT_LIST_HEAD(&active_list);
+	INIT_LIST_HEAD(&active_list);    // 初始化链表
 	INIT_LIST_HEAD(&inactive_list);
 
 	/*
 	 * Some architectures (with lots of mem and discontinous memory
 	 * maps) have to search for a good mem_map area:
-	 * For discontigmem, the conceptual mem map array starts from 
-	 * PAGE_OFFSET, we need to align the actual array onto a mem map 
+	 * For discontigmem, the conceptual mem map array starts from
+	 * PAGE_OFFSET, we need to align the actual array onto a mem map
 	 * boundary, so that MAP_NR works.
 	 */
+	// 需要多少个内存页管理结构, +1是为了内存对齐
 	map_size = (totalpages + 1)*sizeof(struct page);
 	if (lmem_map == (struct page *)0) {
+		// 从内存节点那里申请内存
 		lmem_map = (struct page *) alloc_bootmem_node(pgdat, map_size);
-		lmem_map = (struct page *)(PAGE_OFFSET + 
+		lmem_map = (struct page *)(PAGE_OFFSET +
 			MAP_ALIGN((unsigned long)lmem_map - PAGE_OFFSET));
 	}
+	// 设置内存页管理结构数组
+	// 由于gmap一般指向mem_map, 所以mem_map会被修改成
 	*gmap = pgdat->node_mem_map = lmem_map;
 	pgdat->node_size = totalpages;
-	pgdat->node_start_paddr = zone_start_paddr;
-	pgdat->node_start_mapnr = (lmem_map - mem_map);
+	pgdat->node_start_paddr = zone_start_paddr;     // 内存区开始地址
+	pgdat->node_start_mapnr = (lmem_map - mem_map); // 一般这里等于0
 	pgdat->nr_zones = 0;
 
 	/*
@@ -686,15 +701,15 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 	 * up by free_all_bootmem() once the early boot process is
 	 * done.
 	 */
-	for (p = lmem_map; p < lmem_map + totalpages; p++) {
+	for (p = lmem_map; p < lmem_map + totalpages; p++) { // 初始化内存页结构的字段
 		set_page_count(p, 0);
 		SetPageReserved(p);
 		init_waitqueue_head(&p->wait);
 		memlist_init(&p->list);
 	}
 
-	offset = lmem_map - mem_map;	
-	for (j = 0; j < MAX_NR_ZONES; j++) {
+	offset = lmem_map - mem_map;          // 一般等于0
+	for (j = 0; j < MAX_NR_ZONES; j++) {  // 初始化内存区域
 		zone_t *zone = pgdat->node_zones + j;
 		unsigned long mask;
 		unsigned long size, realsize;
@@ -704,7 +719,8 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 			realsize -= zholes_size[j];
 
 		printk("zone(%lu): %lu pages.\n", j, size);
-		zone->size = size;
+		// 初始化内存区域成员
+		zone->size = size;  // 这个内存区域管理的内存页数
 		zone->name = zone_names[j];
 		zone->lock = SPIN_LOCK_UNLOCKED;
 		zone->zone_pgdat = pgdat;
@@ -724,23 +740,23 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 		zone->pages_low = mask*2;
 		zone->pages_high = mask*3;
 
-		zone->zone_mem_map = mem_map + offset;
-		zone->zone_start_mapnr = offset;
-		zone->zone_start_paddr = zone_start_paddr;
+		zone->zone_mem_map = mem_map + offset;     // 此区域管理的内存页结构数组
+		zone->zone_start_mapnr = offset;           // 在全局映射地图的偏移量
+		zone->zone_start_paddr = zone_start_paddr; // 内存区域的起始物理地址
 
 		if ((zone_start_paddr >> PAGE_SHIFT) & (zone_required_alignment-1))
 			printk("BUG: wrong zone alignment, it will crash\n");
 
-		for (i = 0; i < size; i++) {
+		for (i = 0; i < size; i++) { // 初始化内存页结构
 			struct page *page = mem_map + offset + i;
-			page->zone = zone;
-			if (j != ZONE_HIGHMEM)
+			page->zone = zone;       // 内存页所属的内存区域
+			if (j != ZONE_HIGHMEM)   // 是不是可以直接映射?
 				page->virtual = __va(zone_start_paddr);
 			zone_start_paddr += PAGE_SIZE;
 		}
 
 		offset += size;
-		for (i = 0; ; i++) {
+		for (i = 0; ; i++) { // 初始化bitmap
 			unsigned long bitmap_size;
 
 			memlist_init(&zone->free_area[i].free_list);
@@ -774,7 +790,7 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 			 */
 			bitmap_size = (size-1) >> (i+4);
 			bitmap_size = LONG_ALIGN(bitmap_size+1);
-			zone->free_area[i].map = 
+			zone->free_area[i].map =
 			  (unsigned long *) alloc_bootmem_node(pgdat, bitmap_size);
 		}
 	}

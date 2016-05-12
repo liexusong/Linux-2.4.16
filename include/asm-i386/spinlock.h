@@ -52,16 +52,16 @@ typedef struct {
 #define spin_is_locked(x)	(*(volatile char *)(&(x)->lock) <= 0)
 #define spin_unlock_wait(x)	do { barrier(); } while(spin_is_locked(x))
 
-#define spin_lock_string \
-	"\n1:\t" \
-	"lock ; decb %0\n\t" \
-	"js 2f\n" \
-	".section .text.lock,\"ax\"\n" \
-	"2:\t" \
-	"cmpb $0,%0\n\t" \
-	"rep;nop\n\t" \
-	"jle 2b\n\t" \
-	"jmp 1b\n" \
+#define spin_lock_string			\
+	"\n1:\t"						\
+	"lock ; decb %0\n\t" 			\
+	"js 2f\n"						\
+	".section .text.lock,\"ax\"\n"	\
+	"2:\t"							\
+	"cmpb $0,%0\n\t"				\
+	"rep;nop\n\t"					\
+	"jle 2b\n\t"					\
+	"jmp 1b\n"						\
 	".previous"
 
 /*
@@ -69,7 +69,7 @@ typedef struct {
  * (except on PPro SMP or if we are using OOSTORE)
  * (PPro errata 66, 92)
  */
- 
+
 #if !defined(CONFIG_X86_OOSTORE) && !defined(CONFIG_X86_PPRO_FENCE)
 
 #define spin_unlock_string \

@@ -216,18 +216,22 @@ static void __init pagetable_init (void)
 	 * This can be zero as well - no problem, in that case we exit
 	 * the loops anyway due to the PTRS_PER_* conditions.
 	 */
-	end = (unsigned long)__va(max_low_pfn*PAGE_SIZE);
+	end = (unsigned long)__va(max_low_pfn*PAGE_SIZE); // 获取内核直接映射的最大page号
 
 	pgd_base = swapper_pg_dir;
-#if CONFIG_X86_PAE
+#if CONFIG_X86_PAE  // 我们假设这个功能没有启动
 	for (i = 0; i < PTRS_PER_PGD; i++)
 		set_pgd(pgd_base + i, __pgd(1 + __pa(empty_zero_page)));
 #endif
-	i = __pgd_offset(PAGE_OFFSET);
-	pgd = pgd_base + i;
+	i = __pgd_offset(PAGE_OFFSET);  // 获取地址为PAGE_OFFSET的页目录索引(PAGE_OFFSET等于3GB)
+	pgd = pgd_base + i; // 页目录entry
 
-	for (; i < PTRS_PER_PGD; pgd++, i++) {
-		vaddr = i*PGDIR_SIZE;
+	/*
+	 * 下面开始映射内核空间(3GB ~ 4GB - vmalloc大小)
+	 */
+
+	for (; i < PTRS_PER_PGD; pgd++, i++) { // PTRS_PER_PGD等于1024
+		vaddr = i*PGDIR_SIZE;              // 虚拟内存地址
 		if (end && (vaddr >= end))
 			break;
 #if CONFIG_X86_PAE
@@ -257,13 +261,14 @@ static void __init pagetable_init (void)
 				continue;
 			}
 
+			// 申请一个新的内存页, 用于存放页表
 			pte_base = pte = (pte_t *) alloc_bootmem_low_pages(PAGE_SIZE);
 
 			for (k = 0; k < PTRS_PER_PTE; pte++, k++) {
 				vaddr = i*PGDIR_SIZE + j*PMD_SIZE + k*PAGE_SIZE;
 				if (end && (vaddr >= end))
 					break;
-				*pte = mk_pte_phys(__pa(vaddr), PAGE_KERNEL);
+				*pte = mk_pte_phys(__pa(vaddr), PAGE_KERNEL); // 只能内核访问
 			}
 			set_pmd(pmd, __pmd(_KERNPG_TABLE + __pa(pte_base)));
 			if (pte_base != pte_offset(pmd, 0))
@@ -333,6 +338,7 @@ void __init paging_init(void)
 {
 	pagetable_init();
 
+	// 把页目录放到cr3寄存器中
 	__asm__( "movl %%ecx,%%cr3\n" ::"c"(__pa(swapper_pg_dir)));
 
 #if CONFIG_X86_PAE
@@ -344,7 +350,7 @@ void __init paging_init(void)
 		set_in_cr4(X86_CR4_PAE);
 #endif
 
-	__flush_tlb_all();
+	__flush_tlb_all(); // 清空缓存
 
 #ifdef CONFIG_HIGHMEM
 	kmap_init();
@@ -445,7 +451,7 @@ static inline int page_kills_ppro(unsigned long pagenr)
 		return 1;
 	return 0;
 }
-	
+
 void __init mem_init(void)
 {
 	extern int ppro_with_ram_bug(void);
@@ -455,7 +461,7 @@ void __init mem_init(void)
 
 	if (!mem_map)
 		BUG();
-	
+
 	bad_ppro = ppro_with_ram_bug();
 
 #ifdef CONFIG_HIGHMEM
@@ -464,26 +470,26 @@ void __init mem_init(void)
 #else
 	max_mapnr = num_physpages = max_low_pfn;
 #endif
-	high_memory = (void *) __va(max_low_pfn * PAGE_SIZE);
+	high_memory = (void *) __va(max_low_pfn * PAGE_SIZE); // 内核能够直接映射的最高虚拟地址
 
 	/* clear the zero-page */
 	memset(empty_zero_page, 0, PAGE_SIZE);
 
 	/* this will put all low memory onto the freelists */
-	totalram_pages += free_all_bootmem();
+	totalram_pages += free_all_bootmem(); // 可用的内存页数
 
 	reservedpages = 0;
 	for (tmp = 0; tmp < max_low_pfn; tmp++)
 		/*
 		 * Only count reserved RAM pages
 		 */
-		if (page_is_ram(tmp) && PageReserved(mem_map+tmp))
+		if (page_is_ram(tmp) && PageReserved(mem_map+tmp)) // 如果是内存并且被保留
 			reservedpages++;
 #ifdef CONFIG_HIGHMEM
 	for (tmp = highstart_pfn; tmp < highend_pfn; tmp++) {
 		struct page *page = mem_map + tmp;
 
-		if (!page_is_ram(tmp)) {
+		if (!page_is_ram(tmp)) { // 如果不属于随机访问内存, 设置为保留
 			SetPageReserved(page);
 			continue;
 		}
@@ -492,9 +498,9 @@ void __init mem_init(void)
 			SetPageReserved(page);
 			continue;
 		}
-		ClearPageReserved(page);
-		set_bit(PG_highmem, &page->flags);
-		atomic_set(&page->count, 1);
+		ClearPageReserved(page);            // 清除保留标志
+		set_bit(PG_highmem, &page->flags);  // 设置HighMem标志
+		atomic_set(&page->count, 1);        // 设置count为1
 		__free_page(page);
 		totalhigh_pages++;
 	}
@@ -553,7 +559,7 @@ static int do_test_wp_bit(unsigned long vaddr)
 		 "=r" (flag)
 		:"2" (1)
 		:"memory");
-	
+
 	return flag;
 }
 

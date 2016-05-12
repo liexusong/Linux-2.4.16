@@ -18,7 +18,7 @@ struct ipc_ids {
 	int max_id;
 	unsigned short seq;
 	unsigned short seq_max;
-	struct semaphore sem;	
+	struct semaphore sem;
 	spinlock_t ary;
 	struct ipc_id* entries;
 };
@@ -72,7 +72,7 @@ extern inline struct kern_ipc_perm* ipc_lock(struct ipc_ids* ids, int id)
 	if(lid >= ids->size)
 		return NULL;
 
-	spin_lock(&ids->ary);
+	spin_lock(&ids->ary);  /* 自旋锁 */
 	out = ids->entries[lid].p;
 	if(out==NULL)
 		spin_unlock(&ids->ary);
@@ -100,7 +100,7 @@ void kernel_to_ipc64_perm(struct kern_ipc_perm *in, struct ipc64_perm *out);
 void ipc64_perm_to_ipc_perm(struct ipc64_perm *in, struct ipc_perm *out);
 
 #ifdef __ia64__
-  /* On IA-64, we always use the "64-bit version" of the IPC structures.  */ 
+  /* On IA-64, we always use the "64-bit version" of the IPC structures.  */
 # define ipc_parse_version(cmd)	IPC_64
 #else
 int ipc_parse_version (int *cmd);

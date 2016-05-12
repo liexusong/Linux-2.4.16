@@ -117,7 +117,7 @@ static __inline__ void change_bit(int nr, volatile void * addr)
  * @nr: Bit to set
  * @addr: Address to count from
  *
- * This operation is atomic and cannot be reordered.  
+ * This operation is atomic and cannot be reordered.
  * It also implies a memory barrier.
  */
 static __inline__ int test_and_set_bit(int nr, volatile void * addr)
@@ -136,7 +136,7 @@ static __inline__ int test_and_set_bit(int nr, volatile void * addr)
  * @nr: Bit to set
  * @addr: Address to count from
  *
- * This operation is non-atomic and can be reordered.  
+ * This operation is non-atomic and can be reordered.
  * If two examples of this operation race, one can appear to succeed
  * but actually fail.  You must protect multiple accesses with a lock.
  */
@@ -156,7 +156,7 @@ static __inline__ int __test_and_set_bit(int nr, volatile void * addr)
  * @nr: Bit to set
  * @addr: Address to count from
  *
- * This operation is atomic and cannot be reordered.  
+ * This operation is atomic and cannot be reordered.
  * It also implies a memory barrier.
  */
 static __inline__ int test_and_clear_bit(int nr, volatile void * addr)
@@ -175,7 +175,7 @@ static __inline__ int test_and_clear_bit(int nr, volatile void * addr)
  * @nr: Bit to set
  * @addr: Address to count from
  *
- * This operation is non-atomic and can be reordered.  
+ * This operation is non-atomic and can be reordered.
  * If two examples of this operation race, one can appear to succeed
  * but actually fail.  You must protect multiple accesses with a lock.
  */
@@ -195,6 +195,8 @@ static __inline__ int __test_and_change_bit(int nr, volatile void * addr)
 {
 	int oldbit;
 
+	// btcl %1, %2
+	// 先把%2对应的内存地址的第%1位的值填入cflags寄存器的进位位C，然后把该位反转
 	__asm__ __volatile__(
 		"btcl %2,%1\n\tsbbl %0,%0"
 		:"=r" (oldbit),"=m" (ADDR)
@@ -207,7 +209,7 @@ static __inline__ int __test_and_change_bit(int nr, volatile void * addr)
  * @nr: Bit to set
  * @addr: Address to count from
  *
- * This operation is atomic and cannot be reordered.  
+ * This operation is atomic and cannot be reordered.
  * It also implies a memory barrier.
  */
 static __inline__ int test_and_change_bit(int nr, volatile void * addr)
@@ -293,7 +295,7 @@ static __inline__ int find_next_zero_bit (void * addr, int size, int offset)
 {
 	unsigned long * p = ((unsigned long *) addr) + (offset >> 5);
 	int set = 0, bit = offset & 31, res;
-	
+
 	if (bit) {
 		/*
 		 * Look for zero in first byte

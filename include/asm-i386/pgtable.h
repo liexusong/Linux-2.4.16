@@ -126,7 +126,7 @@ extern void pgtable_cache_init(void);
 
 #define PMD_SIZE	(1UL << PMD_SHIFT)
 #define PMD_MASK	(~(PMD_SIZE-1))
-#define PGDIR_SIZE	(1UL << PGDIR_SHIFT)
+#define PGDIR_SIZE	(1UL << PGDIR_SHIFT)  // 1 << 22
 #define PGDIR_MASK	(~(PGDIR_SIZE-1))
 
 #define USER_PTRS_PER_PGD	(TASK_SIZE/PGDIR_SIZE)
@@ -163,7 +163,7 @@ extern void pgtable_cache_init(void);
  * of the Pentium details, but assuming intel did the straightforward
  * thing, this bit set in the page directory entry just means that
  * the page directory entry points directly to a 4MB-aligned block of
- * memory. 
+ * memory.
  */
 #define _PAGE_BIT_PRESENT	0
 #define _PAGE_BIT_RW		1
@@ -318,7 +318,7 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 #define pmd_page(pmd) \
 ((unsigned long) __va(pmd_val(pmd) & PAGE_MASK))
 
-/* to find an entry in a page-table-directory. */
+/* to find an entry in a page-table-directory. PGDIR_SHIFT equls 22 */
 #define pgd_index(address) ((address >> PGDIR_SHIFT) & (PTRS_PER_PGD-1))
 
 #define __pgd_offset(address) pgd_index(address)

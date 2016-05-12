@@ -317,7 +317,7 @@ repeat:
 			timer_exit();
 			goto repeat;
 		}
-		++timer_jiffies; 
+		++timer_jiffies;
 		tv1.index = (tv1.index + 1) & TVR_MASK;
 	}
 	spin_unlock_irq(&timerlist_lock);
@@ -462,7 +462,7 @@ static void second_overflow(void)
 static void update_wall_time_one_tick(void)
 {
 	if ( (time_adjust_step = time_adjust) != 0 ) {
-	    /* We are doing an adjtime thing. 
+	    /* We are doing an adjtime thing.
 	     *
 	     * Prepare time_adjust_step to be within bounds.
 	     * Note that a positive time_adjust means we want the clock
@@ -475,7 +475,7 @@ static void update_wall_time_one_tick(void)
 		time_adjust_step = tickadj;
 	     else if (time_adjust < -tickadj)
 		time_adjust_step = -tickadj;
-	     
+
 	    /* Reduce by this step the amount of time left  */
 	    time_adjust -= time_adjust_step;
 	}
@@ -570,10 +570,10 @@ void update_one_process(struct task_struct *p, unsigned long user,
 	do_process_times(p, user, system);
 	do_it_virt(p, user);
 	do_it_prof(p);
-}	
+}
 
 /*
- * Called from the timer interrupt handler to charge one tick to the current 
+ * Called from the timer interrupt handler to charge one tick to the current
  * process.  user_tick is 1 if the tick is user time, 0 for system.
  */
 void update_process_times(int user_tick)
@@ -715,7 +715,7 @@ asmlinkage unsigned long sys_alarm(unsigned int seconds)
  * The Alpha uses getxpid, getxuid, and getxgid instead.  Maybe this
  * should be moved into arch/i386 instead?
  */
- 
+
 asmlinkage long sys_getpid(void)
 {
 	/* This is SMP safe - current->pid doesn't change */

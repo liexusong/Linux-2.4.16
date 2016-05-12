@@ -33,33 +33,36 @@ struct pglist_data;
  * ZONE_NORMAL	16-896 MB	direct mapped by the kernel
  * ZONE_HIGHMEM	 > 896 MB	only page cache and user processes
  */
+// 这个结构用来描述内存区域
+// 在Linux中内存区域被分为3个区: dma, normal, highmem
+// 用于描述一个内存节点(pg_data_t), 也就是说每个内存节点可以分为多个内存区域
 typedef struct zone_struct {
 	/*
 	 * Commonly accessed fields:
 	 */
 	spinlock_t		lock;
-	unsigned long		free_pages;
+	unsigned long		free_pages;  // 这个区域空闲的页数
 	unsigned long		pages_min, pages_low, pages_high;
-	int			need_balance;
+	int			need_balance;  // 与kswapd相关
 
 	/*
 	 * free areas of different sizes
 	 */
-	free_area_t		free_area[MAX_ORDER];
+	free_area_t		free_area[MAX_ORDER];  // 用于伙伴分配器
 
 	/*
 	 * Discontig memory support fields.
 	 */
-	struct pglist_data	*zone_pgdat;
+	struct pglist_data	*zone_pgdat;  // 属于哪个内存节点
 	struct page		*zone_mem_map;
-	unsigned long		zone_start_paddr;
+	unsigned long		zone_start_paddr;  // 内存区域的物理起始地址
 	unsigned long		zone_start_mapnr;
 
 	/*
 	 * rarely used fields:
 	 */
-	char			*name;
-	unsigned long		size;
+	char			*name;     // 内存区域的名字
+	unsigned long		size;  // 内存区域的总大小
 } zone_t;
 
 #define ZONE_DMA		0
@@ -82,7 +85,7 @@ typedef struct zonelist_struct {
 	zone_t * zones [MAX_NR_ZONES+1]; // NULL delimited
 } zonelist_t;
 
-#define GFP_ZONEMASK	0x0f
+#define GFP_ZONEMASK	0x0f   /* 00001111 */
 
 /*
  * The pg_data_t structure is used in machines with CONFIG_DISCONTIGMEM

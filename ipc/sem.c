@@ -90,7 +90,7 @@ static int sysvipc_sem_read_proc(char *buffer, char **start, off_t offset, int l
  *	sem_array.sem_pending{,last},
  *	sem_array.sem_undo: sem_lock() for read/write
  *	sem_undo.proc_next: only "current" is allowed to read/write that field.
- *	
+ *
  */
 
 int sem_ctls[4] = {SEMMSL, SEMMNS, SEMOPM, SEMMNI};
@@ -157,7 +157,7 @@ asmlinkage long sys_semget (key_t key, int nsems, int semflg)
 	if (nsems < 0 || nsems > sc_semmsl)
 		return -EINVAL;
 	down(&sem_ids.sem);
-	
+
 	if (key == IPC_PRIVATE) {
 		err = newary(key, nsems, semflg);
 	} else if ((id = ipc_findkey(&sem_ids, key)) == -1) {  /* key not used */
@@ -320,7 +320,7 @@ static void update_queue (struct sem_array * sma)
 	struct sem_queue * q;
 
 	for (q = sma->sem_pending; q; q = q->next) {
-			
+
 		if (q->status == 1)
 			continue;	/* this one was woken up before */
 
@@ -470,7 +470,7 @@ int semctl_nolock(int semid, int semnum, int cmd, int version, union semun arg)
 		}
 		max_id = sem_ids.max_id;
 		up(&sem_ids.sem);
-		if (copy_to_user (arg.__buf, &seminfo, sizeof(struct seminfo))) 
+		if (copy_to_user (arg.__buf, &seminfo, sizeof(struct seminfo)))
 			return -EFAULT;
 		return (max_id < 0) ? 0: max_id;
 	}
@@ -542,7 +542,7 @@ int semctl_main(int semid, int semnum, int cmd, int version, union semun arg)
 		int i;
 
 		if(nsems > SEMMSL_FAST) {
-			sem_unlock(semid);			
+			sem_unlock(semid);
 			sem_io = ipc_alloc(sizeof(ushort)*nsems);
 			if(sem_io == NULL)
 				return -ENOMEM;
@@ -716,10 +716,10 @@ int semctl_down(int semid, int semnum, int cmd, int version, union semun arg)
 	if (sem_checkid(sma,semid)) {
 		err=-EIDRM;
 		goto out_unlock;
-	}	
+	}
 	ipcp = &sma->sem_perm;
-	
-	if (current->euid != ipcp->cuid && 
+
+	if (current->euid != ipcp->cuid &&
 	    current->euid != ipcp->uid && !capable(CAP_SYS_ADMIN)) {
 	    	err=-EPERM;
 		goto out_unlock;
@@ -859,7 +859,7 @@ asmlinkage long sys_semop (int semid, struct sembuf *tsops, unsigned nsops)
 		error=-EFAULT;
 		goto out_free;
 	}
-	sma = sem_lock(semid);
+	sma = sem_lock(semid); /* call ipc_lock(), get smeid lock */
 	error=-EINVAL;
 	if(sma==NULL)
 		goto out_free;
@@ -910,7 +910,7 @@ asmlinkage long sys_semop (int semid, struct sembuf *tsops, unsigned nsops)
 	/* We need to sleep on this operation, so we put the current
 	 * task into the pending queue and go to sleep.
 	 */
-		
+
 	queue.sma = sma;
 	queue.sops = sops;
 	queue.nsops = nsops;
@@ -952,7 +952,7 @@ asmlinkage long sys_semop (int semid, struct sembuf *tsops, unsigned nsops)
 		{
 			error = try_atomic_semop (sma, sops, nsops, un,
 						  current->pid,0);
-			if (error <= 0) 
+			if (error <= 0)
 				break;
 		} else {
 			error = queue.status;
