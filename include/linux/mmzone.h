@@ -18,9 +18,12 @@
 #define MAX_ORDER CONFIG_FORCE_MAX_ZONEORDER
 #endif
 
+/*
+ * 伙伴分配器使用的结构
+ */
 typedef struct free_area_struct {
 	struct list_head	free_list;
-	unsigned long		*map;
+	unsigned long		*map;  // 指向一个位图, 在free_area_init_core()初始化
 } free_area_t;
 
 struct pglist_data;

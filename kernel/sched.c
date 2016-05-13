@@ -75,7 +75,7 @@ extern void mem_use(void);
  *	Init task must be ok at boot for the ix86 as we will check its signals
  *	via the SMP irq return path.
  */
- 
+
 struct task_struct * init_tasks[NR_CPUS] = {&init_task, };
 
 /*
@@ -168,7 +168,7 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 		weight = p->counter;
 		if (!weight)
 			goto out;
-			
+
 #ifdef CONFIG_SMP
 		/* Give a largish advantage to the same processor...   */
 		/* (this is equivalent to penalizing other processors) */
@@ -288,14 +288,14 @@ send_now_idle:
 			smp_send_reschedule(tsk->processor);
 	}
 	return;
-		
+
 
 #else /* UP */
-	int this_cpu = smp_processor_id();
+	int this_cpu = smp_processor_id(); // 当前运行的CPU
 	struct task_struct *tsk;
 
-	tsk = cpu_curr(this_cpu);
-	if (preemption_goodness(tsk, p, this_cpu) > 0)
+	tsk = cpu_curr(this_cpu); // 当前CPU的运行进程
+	if (preemption_goodness(tsk, p, this_cpu) > 0) // 如果tsk的优先级比p大
 		tsk->need_resched = 1;
 #endif
 }
@@ -342,10 +342,11 @@ static inline int try_to_wake_up(struct task_struct * p, int synchronous)
 	 * We want the common case fall through straight, thus the goto.
 	 */
 	spin_lock_irqsave(&runqueue_lock, flags);
-	p->state = TASK_RUNNING;
+	p->state = TASK_RUNNING;  // 把进程状态设置为running
 	if (task_on_runqueue(p))
 		goto out;
-	add_to_runqueue(p);
+	add_to_runqueue(p);       // 把进程添加到运行队列中
+	// 如果不需要同步或者p进程不能在当前CPU运行
 	if (!synchronous || !(p->cpus_allowed & (1 << smp_processor_id())))
 		reschedule_idle(p);
 	success = 1;
@@ -383,7 +384,7 @@ static void process_timeout(unsigned long __data)
  * delivered to the current task. In this case the remaining time
  * in jiffies will be returned, or 0 if the timer expired in time
  *
- * The current task state is guaranteed to be TASK_RUNNING when this 
+ * The current task state is guaranteed to be TASK_RUNNING when this
  * routine returns.
  *
  * Specifying a @timeout value of %MAX_SCHEDULE_TIMEOUT will schedule
@@ -706,15 +707,15 @@ static inline void __wake_up_common (wait_queue_head_t *q, unsigned int mode,
 
 	CHECK_MAGIC_WQHEAD(q);
 	WQ_CHECK_LIST_HEAD(&q->task_list);
-	
+
 	list_for_each(tmp,&q->task_list) {
 		unsigned int state;
-                wait_queue_t *curr = list_entry(tmp, wait_queue_t, task_list);
+        wait_queue_t *curr = list_entry(tmp, wait_queue_t, task_list);
 
 		CHECK_MAGIC(curr->__magic);
 		p = curr->task;
 		state = p->state;
-		if (state & mode) {
+		if (state & mode) { // mode是要唤醒的进程状态
 			WQ_NOTE_WAKER(curr);
 			if (try_to_wake_up(p, sync) && (curr->flags&WQ_FLAG_EXCLUSIVE) && !--nr_exclusive)
 				break;
@@ -814,7 +815,7 @@ long interruptible_sleep_on_timeout(wait_queue_head_t *q, long timeout)
 void sleep_on(wait_queue_head_t *q)
 {
 	SLEEP_ON_VAR
-	
+
 	current->state = TASK_UNINTERRUPTIBLE;
 
 	SLEEP_ON_HEAD
@@ -825,7 +826,7 @@ void sleep_on(wait_queue_head_t *q)
 long sleep_on_timeout(wait_queue_head_t *q, long timeout)
 {
 	SLEEP_ON_VAR
-	
+
 	current->state = TASK_UNINTERRUPTIBLE;
 
 	SLEEP_ON_HEAD
@@ -883,7 +884,7 @@ static inline struct task_struct *find_process_by_pid(pid_t pid)
 	return tsk;
 }
 
-static int setscheduler(pid_t pid, int policy, 
+static int setscheduler(pid_t pid, int policy,
 			struct sched_param *param)
 {
 	struct sched_param lp;
@@ -909,7 +910,7 @@ static int setscheduler(pid_t pid, int policy,
 	retval = -ESRCH;
 	if (!p)
 		goto out_unlock;
-			
+
 	if (policy < 0)
 		policy = p->policy;
 	else {
@@ -918,7 +919,7 @@ static int setscheduler(pid_t pid, int policy,
 				policy != SCHED_OTHER)
 			goto out_unlock;
 	}
-	
+
 	/*
 	 * Valid priorities for SCHED_FIFO and SCHED_RR are 1..99, valid
 	 * priority for SCHED_OTHER is 0.
@@ -930,7 +931,7 @@ static int setscheduler(pid_t pid, int policy,
 		goto out_unlock;
 
 	retval = -EPERM;
-	if ((policy == SCHED_FIFO || policy == SCHED_RR) && 
+	if ((policy == SCHED_FIFO || policy == SCHED_RR) &&
 	    !capable(CAP_SYS_NICE))
 		goto out_unlock;
 	if ((current->euid != p->euid) && (current->euid != p->uid) &&
@@ -953,7 +954,7 @@ out_nounlock:
 	return retval;
 }
 
-asmlinkage long sys_sched_setscheduler(pid_t pid, int policy, 
+asmlinkage long sys_sched_setscheduler(pid_t pid, int policy,
 				      struct sched_param *param)
 {
 	return setscheduler(pid, policy, param);
@@ -1018,7 +1019,7 @@ out_unlock:
 asmlinkage long sys_sched_yield(void)
 {
 	/*
-	 * Trick. sched_yield() first counts the number of truly 
+	 * Trick. sched_yield() first counts the number of truly
 	 * 'pending' runnable processes, then returns if it's
 	 * only the current processes. (This test does not have
 	 * to be atomic.) In threaded applications this optimization

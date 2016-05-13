@@ -156,7 +156,7 @@ static inline struct page * expand (zone_t *zone, struct page *page,
 {
 	unsigned long size = 1 << high;
 
-	while (high > low) {
+	while (high > low) { // 伙伴分配算法, 把剩余的部分放置到一个order的链表中
 		if (BAD_RANGE(zone,page))
 			BUG();
 		area--;
@@ -175,7 +175,7 @@ static inline struct page * expand (zone_t *zone, struct page *page,
 static FASTCALL(struct page * rmqueue(zone_t *zone, unsigned int order));
 static struct page * rmqueue(zone_t *zone, unsigned int order)
 {
-	free_area_t * area = zone->free_area + order;
+	free_area_t * area = zone->free_area + order; // 优先从哪个链表分配
 	unsigned int curr_order = order;
 	struct list_head *head, *curr;
 	unsigned long flags;
@@ -189,15 +189,18 @@ static struct page * rmqueue(zone_t *zone, unsigned int order)
 		if (curr != head) {
 			unsigned int index;
 
-			page = memlist_entry(curr, struct page, list);
+			page = memlist_entry(curr, struct page, list); // 获取page
 			if (BAD_RANGE(zone,page))
 				BUG();
-			memlist_del(curr);
+			memlist_del(curr); // 把page从free链表中删除
 			index = page - zone->zone_mem_map;
 			if (curr_order != MAX_ORDER-1)
-				MARK_USED(index, curr_order, area);
+				MARK_USED(index, curr_order, area); // 设置位图为已经使用
 			zone->free_pages -= 1UL << order;
 
+			// 根据order分裂page(伙伴算法)
+			// 因为伙伴算法会把更大的page分裂成更小的page
+			//     expand(zone, page, index, low,   high,       area);
 			page = expand(zone, page, index, order, curr_order, area);
 			spin_unlock_irqrestore(&zone->lock, flags);
 
@@ -303,6 +306,9 @@ static struct page * balance_classzone(zone_t * classzone, unsigned int gfp_mask
 /*
  * This is the 'heart' of the zoned buddy allocator:
  */
+// gfp_mask: 标志
+// order: 分配的内存大小
+// zonelist: 分配策略
 struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_t *zonelist)
 {
 	unsigned long min;
@@ -310,7 +316,7 @@ struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_
 	struct page * page;
 	int freed;
 
-	zone = zonelist->zones;
+	zone = zonelist->zones; // 分配策略的zone列表
 	classzone = *zone;
 	min = 1UL << order;
 	for (;;) {
@@ -318,8 +324,8 @@ struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_
 		if (!z)
 			break;
 
-		min += z->pages_low;
-		if (z->free_pages > min) {
+		min += z->pages_low;       // 加上最低水位线
+		if (z->free_pages > min) { // 如果当前zone有足够的空闲page
 			page = rmqueue(z, order);
 			if (page)
 				return page;
@@ -328,8 +334,8 @@ struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_
 
 	classzone->need_balance = 1;
 	mb();
-	if (waitqueue_active(&kswapd_wait))
-		wake_up_interruptible(&kswapd_wait);
+	if (waitqueue_active(&kswapd_wait))       // 如果kswapd在睡眠
+		wake_up_interruptible(&kswapd_wait);  // 那么就唤醒kswapd
 
 	zone = zonelist->zones;
 	min = 1UL << order;
@@ -340,7 +346,7 @@ struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_
 			break;
 
 		local_min = z->pages_min;
-		if (!(gfp_mask & __GFP_WAIT))
+		if (!(gfp_mask & __GFP_WAIT)) // 如果不能等待, 那么先降低最低水位值
 			local_min >>= 2;
 		min += local_min;
 		if (z->free_pages > min) {
@@ -353,6 +359,8 @@ struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_
 	/* here we're in the low on memory slow path */
 
 rebalance:
+	// 1) 对于PF_MEMALLOC的进程(一般是kswapd进程), 必须立刻分配内存给它
+	// 2) 对于PF_MEMDIE的进程(内存溢出导致被杀死的进程), 也必须立刻分配内存
 	if (current->flags & (PF_MEMALLOC | PF_MEMDIE)) {
 		zone = zonelist->zones;
 		for (;;) {
@@ -368,7 +376,7 @@ rebalance:
 	}
 
 	/* Atomic allocations - we can't balance anything */
-	if (!(gfp_mask & __GFP_WAIT))
+	if (!(gfp_mask & __GFP_WAIT)) // 如果进程不能等待, 那么分配不成功时直接返回NULL
 		return NULL;
 
 	page = balance_classzone(classzone, gfp_mask, order, &freed);
@@ -438,7 +446,7 @@ void page_cache_release(struct page *page)
 
 void __free_pages(struct page *page, unsigned int order)
 {
-	if (!PageReserved(page) && put_page_testzero(page))
+	if (!PageReserved(page) && put_page_testzero(page)) // --page->count == 0 ?
 		__free_pages_ok(page, order);
 }
 
@@ -756,11 +764,12 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 		}
 
 		offset += size;
-		for (i = 0; ; i++) { // 初始化bitmap
+		for (i = 0; ; i++) { // 初始化free_area的bitmap
 			unsigned long bitmap_size;
 
 			memlist_init(&zone->free_area[i].free_list);
-			if (i == MAX_ORDER-1) {
+
+			if (i == MAX_ORDER-1) { // 最后一个链表
 				zone->free_area[i].map = NULL;
 				break;
 			}
@@ -788,6 +797,7 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 			 * Finally, we LONG_ALIGN because all bitmap
 			 * operations are on longs.
 			 */
+			// bitmap的大小计算
 			bitmap_size = (size-1) >> (i+4);
 			bitmap_size = LONG_ALIGN(bitmap_size+1);
 			zone->free_area[i].map =
