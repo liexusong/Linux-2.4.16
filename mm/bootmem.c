@@ -258,7 +258,7 @@ static unsigned long __init free_all_bootmem_core(pg_data_t *pgdat)
 	 * Now free the allocator bitmap itself, it's not
 	 * needed anymore:
 	 */
-	page = virt_to_page(bdata->node_bootmem_map);
+	page = virt_to_page(bdata->node_bootmem_map);  // 虚拟内存转换成page结构指针
 	count = 0;
 	for (i = 0; i < ((bdata->node_low_pfn-(bdata->node_boot_start >> PAGE_SHIFT))/8 + PAGE_SIZE-1)/PAGE_SIZE; i++,page++) {
 		count++;

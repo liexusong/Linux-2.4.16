@@ -24,7 +24,7 @@ extern unsigned long min_low_pfn;
 typedef struct bootmem_data {
 	unsigned long node_boot_start;
 	unsigned long node_low_pfn;
-	void *node_bootmem_map;
+	void *node_bootmem_map;  // 指向bootmem_map的虚拟地址
 	unsigned long last_offset;
 	unsigned long last_pos;
 } bootmem_data_t;
