@@ -147,7 +147,7 @@ inline int vmalloc_area_pages (unsigned long address, unsigned long size,
 	spin_lock(&init_mm.page_table_lock);
 	do {
 		pmd_t *pmd;
-		
+
 		pmd = pmd_alloc(&init_mm, dir, address);
 		ret = -ENOMEM;
 		if (!pmd)
@@ -229,12 +229,12 @@ void * __vmalloc (unsigned long size, int gfp_mask, pgprot_t prot)
 	void * addr;
 	struct vm_struct *area;
 
-	size = PAGE_ALIGN(size);
+	size = PAGE_ALIGN(size); // 设置为页对齐
 	if (!size || (size >> PAGE_SHIFT) > num_physpages) {
 		BUG();
 		return NULL;
 	}
-	area = get_vm_area(size, VM_ALLOC);
+	area = get_vm_area(size, VM_ALLOC); // 申请一个合法的虚拟地址
 	if (!area)
 		return NULL;
 	addr = area->addr;

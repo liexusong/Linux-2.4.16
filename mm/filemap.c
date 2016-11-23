@@ -55,7 +55,7 @@ EXPORT_SYMBOL(vm_min_readahead);
 
 spinlock_t pagecache_lock ____cacheline_aligned_in_smp = SPIN_LOCK_UNLOCKED;
 /*
- * NOTE: to avoid deadlocking you must never acquire the pagemap_lru_lock 
+ * NOTE: to avoid deadlocking you must never acquire the pagemap_lru_lock
  *	with the pagecache_lock held.
  *
  * Ordering:
@@ -242,7 +242,7 @@ static void truncate_complete_page(struct page *page)
 	 * destroyed all buffer-cache references to it. Otherwise some
 	 * other process might think this inode page is not in the
 	 * page cache and creates a buffer-cache alias to it causing
-	 * all sorts of fun problems ...  
+	 * all sorts of fun problems ...
 	 */
 	ClearPageDirty(page);
 	ClearPageUptodate(page);
@@ -287,7 +287,7 @@ static int truncate_list_pages(struct list_head *head, unsigned long start, unsi
 				if (*partial && (offset + 1) == start) {
 					truncate_partial_page(page, *partial);
 					*partial = 0;
-				} else 
+				} else
 					truncate_complete_page(page);
 
 				UnlockPage(page);
@@ -319,7 +319,7 @@ static int truncate_list_pages(struct list_head *head, unsigned long start, unsi
  * that are beyond that offset (and zeroing out partial pages).
  * If any page is locked we wait for it to become unlocked.
  */
-void truncate_inode_pages(struct address_space * mapping, loff_t lstart) 
+void truncate_inode_pages(struct address_space * mapping, loff_t lstart)
 {
 	unsigned long start = (lstart + PAGE_CACHE_SIZE - 1) >> PAGE_CACHE_SHIFT;
 	unsigned partial = lstart & (PAGE_CACHE_SIZE - 1);
@@ -470,7 +470,7 @@ static int writeout_one_page(struct page *page)
 			continue;
 
 		bh->b_flushtime = jiffies;
-		ll_rw_block(WRITE, 1, &bh);	
+		ll_rw_block(WRITE, 1, &bh);
 	} while ((bh = bh->b_this_page) != head);
 	return 0;
 }
@@ -578,7 +578,7 @@ EXPORT_SYMBOL(fail_writepage);
 /**
  *      filemap_fdatasync - walk the list of dirty pages of the given address space
  *     	and writepage() all of them.
- * 
+ *
  *      @mapping: address space structure to write
  *
  */
@@ -617,7 +617,7 @@ void filemap_fdatasync(struct address_space * mapping)
 /**
  *      filemap_fdatawait - walk the list of locked pages of the given address space
  *     	and wait for all of them.
- * 
+ *
  *      @mapping: address space structure to wait for
  *
  */
@@ -648,7 +648,7 @@ void filemap_fdatawait(struct address_space * mapping)
 /*
  * Add a page to the inode page cache.
  *
- * The caller must have locked the page and 
+ * The caller must have locked the page and
  * set all the page flags correctly..
  */
 void add_to_page_cache_locked(struct page * page, struct address_space *mapping, unsigned long index)
@@ -723,7 +723,7 @@ static int page_cache_read(struct file * file, unsigned long offset)
 {
 	struct address_space *mapping = file->f_dentry->d_inode->i_mapping;
 	struct page **hash = page_hash(mapping, offset);
-	struct page *page; 
+	struct page *page;
 
 	spin_lock(&pagecache_lock);
 	page = __find_page_nolock(mapping, offset, *hash);
@@ -741,7 +741,7 @@ static int page_cache_read(struct file * file, unsigned long offset)
 		return error;
 	}
 	/*
-	 * We arrive here in the unlikely event that someone 
+	 * We arrive here in the unlikely event that someone
 	 * raced with us and added our page to the cache first.
 	 */
 	page_cache_release(page);
@@ -770,7 +770,7 @@ static int read_cluster_nonblocking(struct file * file, unsigned long offset,
 	return 0;
 }
 
-/* 
+/*
  * Wait for a page to get unlocked.
  *
  * This must be called with the caller "holding" the page,
@@ -800,7 +800,7 @@ void unlock_page(struct page *page)
 	smp_mb__before_clear_bit();
 	if (!test_and_clear_bit(PG_locked, &(page)->flags))
 		BUG();
-	smp_mb__after_clear_bit(); 
+	smp_mb__after_clear_bit();
 	if (waitqueue_active(&(page)->wait))
 	wake_up(&(page)->wait);
 }
@@ -827,7 +827,7 @@ static void __lock_page(struct page *page)
 	tsk->state = TASK_RUNNING;
 	remove_wait_queue(&page->wait, &wait);
 }
-	
+
 
 /*
  * Get an exclusive lock on the page, optimistically
@@ -953,11 +953,11 @@ struct page * find_or_create_page(struct address_space *mapping, unsigned long i
 			spin_unlock(&pagecache_lock);
 			if (newpage == NULL)
 				lru_cache_add(page);
-			else 
+			else
 				page_cache_release(newpage);
 		}
 	}
-	return page;	
+	return page;
 }
 
 /*
@@ -1022,11 +1022,11 @@ struct page *grab_cache_page_nowait(struct address_space *mapping, unsigned long
 /*
  * Read-ahead profiling information
  * --------------------------------
- * Every PROFILE_MAXREADCOUNT, the following information is written 
+ * Every PROFILE_MAXREADCOUNT, the following information is written
  * to the syslog:
  *   Percentage of asynchronous read-ahead.
  *   Average of read-ahead fields context value.
- * If DEBUG_READAHEAD is defined, a snapshot of these fields is written 
+ * If DEBUG_READAHEAD is defined, a snapshot of these fields is written
  * to the syslog.
  */
 
@@ -1102,7 +1102,7 @@ static void profile_readahead(int async, struct file *filp)
  *
  * Synchronous read-ahead benefits:
  * --------------------------------
- * Using reasonable IO xfer length from peripheral devices increase system 
+ * Using reasonable IO xfer length from peripheral devices increase system
  * performances.
  * Reasonable means, in this context, not too large but not too small.
  * The actual maximum value is:
@@ -1111,22 +1111,22 @@ static void profile_readahead(int async, struct file *filp)
  *
  * Asynchronous read-ahead benefits:
  * ---------------------------------
- * Overlapping next read request and user process execution increase system 
+ * Overlapping next read request and user process execution increase system
  * performance.
  *
  * Read-ahead risks:
  * -----------------
  * We have to guess which further data are needed by the user process.
- * If these data are often not really needed, it's bad for system 
+ * If these data are often not really needed, it's bad for system
  * performances.
- * However, we know that files are often accessed sequentially by 
- * application programs and it seems that it is possible to have some good 
+ * However, we know that files are often accessed sequentially by
+ * application programs and it seems that it is possible to have some good
  * strategy in that guessing.
  * We only try to read-ahead files that seems to be read sequentially.
  *
  * Asynchronous read-ahead risks:
  * ------------------------------
- * In order to maximize overlapping, we must start some asynchronous read 
+ * In order to maximize overlapping, we must start some asynchronous read
  * request from the device, as soon as possible.
  * We must be very careful about:
  * - The number of effective pending IO read requests.
@@ -1164,7 +1164,7 @@ static void generic_file_readahead(int reada_ok,
  * If the current position is inside the previous read IO request, do not
  * try to reread previously read ahead pages.
  * Otherwise decide or not to read ahead some pages synchronously.
- * If we are not going to read ahead, set the read ahead context for this 
+ * If we are not going to read ahead, set the read ahead context for this
  * page only.
  */
 	if (PageLocked(page)) {
@@ -1193,7 +1193,7 @@ static void generic_file_readahead(int reada_ok,
 /*
  * Add ONE page to max_ahead in order to try to have about the same IO max size
  * as synchronous read-ahead (MAX_READAHEAD + 1)*PAGE_CACHE_SIZE.
- * Compute the position of the last page we have tried to read in order to 
+ * Compute the position of the last page we have tried to read in order to
  * begin to read ahead just at the next page.
  */
 		raend -= 1;
@@ -1254,7 +1254,7 @@ static void generic_file_readahead(int reada_ok,
  * If it was already so marked, move it
  * to the active queue and drop the referenced
  * bit. Otherwise, just mark it for future
- * action..
+ * action.. (page_referenced)
  */
 void mark_page_accessed(struct page *page)
 {
@@ -1291,7 +1291,7 @@ void do_generic_file_read(struct file * filp, loff_t *ppos, read_descriptor_t * 
 	offset = *ppos & ~PAGE_CACHE_MASK;
 
 /*
- * If the current position is outside the previous read-ahead window, 
+ * If the current position is outside the previous read-ahead window,
  * we reset the current read-ahead context and set read ahead max to zero
  * (will be set to just needed value later),
  * otherwise, we assume that the file accesses are sequential enough to
@@ -1334,7 +1334,7 @@ void do_generic_file_read(struct file * filp, loff_t *ppos, read_descriptor_t * 
 		unsigned long end_index, nr, ret;
 
 		end_index = inode->i_size >> PAGE_CACHE_SHIFT;
-			
+
 		if (index > end_index)
 			break;
 		nr = PAGE_CACHE_SIZE;
@@ -1474,7 +1474,7 @@ no_cached_page:
 		page = cached_page;
 		__add_to_page_cache(page, mapping, index, hash);
 		spin_unlock(&pagecache_lock);
-		lru_cache_add(page);		
+		lru_cache_add(page);
 		cached_page = NULL;
 
 		goto readpage;
@@ -1543,7 +1543,7 @@ static ssize_t generic_file_direct_IO(int rw, struct file * filp, char * buf, si
 
 		if (rw == READ && retval > 0)
 			mark_dirty_kiobuf(iobuf, retval);
-		
+
 		if (retval >= 0) {
 			count -= retval;
 			buf += retval;
@@ -1564,7 +1564,7 @@ static ssize_t generic_file_direct_IO(int rw, struct file * filp, char * buf, si
 		clear_bit(0, &filp->f_iobuf_lock);
 	else
 		free_kiovec(1, &iobuf);
- out:	
+ out:
 	return retval;
 }
 
@@ -1579,7 +1579,7 @@ int file_read_actor(read_descriptor_t * desc, struct page *page, unsigned long o
 	kaddr = kmap(page);
 	left = __copy_to_user(desc->buf, kaddr + offset, size);
 	kunmap(page);
-	
+
 	if (left) {
 		size -= left;
 		desc->error = -EFAULT;
@@ -1925,7 +1925,7 @@ success:
 
 no_cached_page:
 	/*
-	 * If the requested offset is within our file, try to read a whole 
+	 * If the requested offset is within our file, try to read a whole
 	 * cluster of pages at once.
 	 *
 	 * Otherwise, we're off the end of a privately mapped file,
@@ -2029,7 +2029,7 @@ static inline int filemap_sync_pte(pte_t * ptep, struct vm_area_struct *vma,
 }
 
 static inline int filemap_sync_pte_range(pmd_t * pmd,
-	unsigned long address, unsigned long size, 
+	unsigned long address, unsigned long size,
 	struct vm_area_struct *vma, unsigned long offset, unsigned int flags)
 {
 	pte_t * pte;
@@ -2059,7 +2059,7 @@ static inline int filemap_sync_pte_range(pmd_t * pmd,
 }
 
 static inline int filemap_sync_pmd_range(pgd_t * pgd,
-	unsigned long address, unsigned long size, 
+	unsigned long address, unsigned long size,
 	struct vm_area_struct *vma, unsigned int flags)
 {
 	pmd_t * pmd;
@@ -2471,7 +2471,7 @@ static long madvise_vma(struct vm_area_struct * vma, unsigned long start,
 		error = -EINVAL;
 		break;
 	}
-		
+
 	return error;
 }
 
@@ -2832,7 +2832,7 @@ inline void remove_suid(struct inode *inode)
 }
 
 /*
- * Write to a file through the page cache. 
+ * Write to a file through the page cache.
  *
  * We currently put everything into the page cache prior to writing it.
  * This is not a problem when writing full pages. With partial pages,
@@ -2890,7 +2890,7 @@ generic_file_write(struct file *file,const char *buf,size_t count, loff_t *ppos)
 	 * Check whether we've reached the file size limit.
 	 */
 	err = -EFBIG;
-	
+
 	if (limit != RLIM_INFINITY) {
 		if (pos >= limit) {
 			send_sig(SIGXFSZ, current, 0);
@@ -2903,7 +2903,7 @@ generic_file_write(struct file *file,const char *buf,size_t count, loff_t *ppos)
 	}
 
 	/*
-	 *	LFS rule 
+	 *	LFS rule
 	 */
 	if ( pos + count > MAX_NON_LFS && !(file->f_flags&O_LARGEFILE)) {
 		if (pos >= MAX_NON_LFS) {
@@ -2925,7 +2925,7 @@ generic_file_write(struct file *file,const char *buf,size_t count, loff_t *ppos)
 	 *
 	 *	Linus frestrict idea will clean these up nicely..
 	 */
-	 
+
 	if (!S_ISBLK(inode->i_mode)) {
 		if (pos >= inode->i_sb->s_maxbytes)
 		{
@@ -3041,8 +3041,8 @@ unlock:
 		if ((file->f_flags & O_SYNC) || IS_SYNC(inode))
 			status = generic_osync_inode(inode, OSYNC_METADATA|OSYNC_DATA);
 	}
-	
-out_status:	
+
+out_status:
 	err = written ? written : status;
 out:
 

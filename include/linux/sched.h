@@ -203,9 +203,9 @@ struct files_struct {
 
 struct mm_struct {
 	struct vm_area_struct * mmap;		/* list of VMAs */
-	rb_root_t mm_rb;
+	rb_root_t mm_rb;					/* 用来管理VMAs */
 	struct vm_area_struct * mmap_cache;	/* last find_vma result */
-	pgd_t * pgd;
+	pgd_t * pgd;						/* 页目录指针 */
 	atomic_t mm_users;			/* How many users with user space? */
 	atomic_t mm_count;			/* How many references to "struct mm_struct" (users count as 1) */
 	int map_count;				/* number of VMAs */
@@ -233,15 +233,15 @@ struct mm_struct {
 
 extern int mmlist_nr;
 
-#define INIT_MM(name) \
-{			 				\
-	mm_rb:		RB_ROOT,			\
-	pgd:		swapper_pg_dir, 		\
-	mm_users:	ATOMIC_INIT(2), 		\
-	mm_count:	ATOMIC_INIT(1), 		\
-	mmap_sem:	__RWSEM_INITIALIZER(name.mmap_sem), \
-	page_table_lock: SPIN_LOCK_UNLOCKED, 		\
-	mmlist:		LIST_HEAD_INIT(name.mmlist),	\
+#define INIT_MM(name) 								\
+{			 										\
+	mm_rb:		RB_ROOT,							\
+	pgd:		swapper_pg_dir, 					\
+	mm_users:	ATOMIC_INIT(2), 					\
+	mm_count:	ATOMIC_INIT(1), 					\
+	mmap_sem:	__RWSEM_INITIALIZER(name.mmap_sem),	\
+	page_table_lock: SPIN_LOCK_UNLOCKED, 			\
+	mmlist:		LIST_HEAD_INIT(name.mmlist),		\
 }
 
 struct signal_struct {
@@ -340,9 +340,9 @@ struct task_struct {
 	pid_t tgid;
 	/* boolean value for session group leader */
 	int leader;
-	/* 
+	/*
 	 * pointers to (original) parent process, youngest child, younger sibling,
-	 * older sibling, respectively.  (p->father can be replaced with 
+	 * older sibling, respectively.  (p->father can be replaced with
 	 * p->p_pptr->pid)
 	 */
 	struct task_struct *p_opptr, *p_pptr, *p_cptr, *p_ysptr, *p_osptr;
@@ -401,7 +401,7 @@ struct task_struct {
 	int (*notifier)(void *priv);
 	void *notifier_data;
 	sigset_t *notifier_mask;
-	
+
 /* Thread group tracking */
    	u32 parent_exec_id;
    	u32 self_exec_id;
@@ -507,6 +507,7 @@ extern struct exec_domain	default_exec_domain;
 # define INIT_TASK_SIZE	2048*sizeof(long)
 #endif
 
+/* 把进程描述符与内核栈放置在一起 */
 union task_union {
 	struct task_struct task;
 	unsigned long stack[INIT_TASK_SIZE/sizeof(long)];
@@ -701,12 +702,12 @@ extern void free_irq(unsigned int, void *);
  * fsuser(). This is done, along with moving fsuser() checks to be
  * last.
  *
- * These will be removed, but in the mean time, when the SECURE_NOROOT 
+ * These will be removed, but in the mean time, when the SECURE_NOROOT
  * flag is set, uids don't grant privilege.
  */
 static inline int suser(void)
 {
-	if (!issecure(SECURE_NOROOT) && current->euid == 0) { 
+	if (!issecure(SECURE_NOROOT) && current->euid == 0) {
 		current->flags |= PF_SUPERPRIV;
 		return 1;
 	}
@@ -723,7 +724,7 @@ static inline int fsuser(void)
 }
 
 /*
- * capable() checks for a particular capability.  
+ * capable() checks for a particular capability.
  * New privilege checks should use this interface, rather than suser() or
  * fsuser(). See include/linux/capability.h for defined capabilities.
  */
@@ -835,7 +836,7 @@ do {									\
 	current->state = TASK_RUNNING;					\
 	remove_wait_queue(&wq, &__wait);				\
 } while (0)
-	
+
 #define wait_event_interruptible(wq, condition)				\
 ({									\
 	int __ret = 0;							\

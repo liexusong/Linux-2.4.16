@@ -879,7 +879,8 @@ static inline void break_cow(struct vm_area_struct * vma, struct page * new_page
 {
 	flush_page_to_ram(new_page);
 	flush_cache_page(vma, address);
-	establish_pte(vma, address, page_table, pte_mkwrite(pte_mkdirty(mk_pte(new_page, vma->vm_page_prot))));
+	establish_pte(vma, address, page_table,
+		pte_mkwrite(pte_mkdirty(mk_pte(new_page, vma->vm_page_prot))));
 }
 
 /*
@@ -907,7 +908,7 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct * vma,
 {
 	struct page *old_page, *new_page;
 
-	old_page = pte_page(pte);
+	old_page = pte_page(pte); // 旧的内存页
 	if (!VALID_PAGE(old_page))
 		goto bad_wp_page;
 
@@ -925,26 +926,26 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct * vma,
 	/*
 	 * Ok, we need to copy. Oh, well..
 	 */
-	page_cache_get(old_page);
+	page_cache_get(old_page); // 引用计数器加一
 	spin_unlock(&mm->page_table_lock);
 
 	new_page = alloc_page(GFP_HIGHUSER);
 	if (!new_page)
 		goto no_mem;
-	copy_cow_page(old_page,new_page,address);
+	copy_cow_page(old_page,new_page,address); // 复制内存页的内容
 
 	/*
 	 * Re-check the pte - we dropped the lock
 	 */
 	spin_lock(&mm->page_table_lock);
-	if (pte_same(*page_table, pte)) {
+	if (pte_same(*page_table, pte)) { // 没有被其他进程修改
 		if (PageReserved(old_page))
 			++mm->rss;
-		break_cow(vma, new_page, address, page_table);
+		break_cow(vma, new_page, address, page_table); // 映射内存地址
 		lru_cache_add(new_page);
 
 		/* Free the old page.. */
-		new_page = old_page;
+		new_page = old_page; // free old page twice
 	}
 	spin_unlock(&mm->page_table_lock);
 	page_cache_release(new_page);
@@ -1150,16 +1151,18 @@ static int do_anonymous_page(struct mm_struct * mm, struct vm_area_struct * vma,
 	pte_t entry;
 
 	/* Read-only mapping of ZERO_PAGE. */
+	// 如果是只读操作, 那么把虚拟地址映射到zero_page页, 这是一个空白页
+	// 必须要把页表项设置为写保护, 因为这个zero_page是不能写的
 	entry = pte_wrprotect(mk_pte(ZERO_PAGE(addr), vma->vm_page_prot));
 
 	/* ..except if it's a write access */
-	if (write_access) {
+	if (write_access) { // 如果是由写操作引起的
 		struct page *page;
 
 		/* Allocate our own private page. */
 		spin_unlock(&mm->page_table_lock);
 
-		page = alloc_page(GFP_HIGHUSER);
+		page = alloc_page(GFP_HIGHUSER); // 申请一个新的内存页
 		if (!page)
 			goto no_mem;
 		clear_user_highpage(page, addr);
@@ -1219,6 +1222,7 @@ static int do_no_page(struct mm_struct * mm, struct vm_area_struct * vma,
 	/*
 	 * Should we do an early C-O-W break?
 	 */
+	 // 如果是写操作触发的, 而且不是共享页
 	if (write_access && !(vma->vm_flags & VM_SHARED)) {
 		struct page * page = alloc_page(GFP_HIGHUSER);
 		if (!page)
@@ -1290,7 +1294,7 @@ static inline int handle_pte_fault(struct mm_struct *mm,
 	pte_t entry;
 
 	entry = *pte;
-	if (!pte_present(entry)) {
+	if (!pte_present(entry)) { // 如果不在物理内存中
 		/*
 		 * If it truly wasn't present, we know that kswapd
 		 * and the PTE updates will not touch it later. So
@@ -1301,13 +1305,13 @@ static inline int handle_pte_fault(struct mm_struct *mm,
 		return do_swap_page(mm, vma, address, pte, entry, write_access);
 	}
 
-	if (write_access) {
+	if (write_access) { // 这里是因为写操作导致的
 		if (!pte_write(entry))
 			return do_wp_page(mm, vma, address, pte, entry);
 
 		entry = pte_mkdirty(entry);
 	}
-	entry = pte_mkyoung(entry);
+	entry = pte_mkyoung(entry); // 添加被访问标志
 	establish_pte(vma, address, pte, entry);
 	spin_unlock(&mm->page_table_lock);
 	return 1;
@@ -1319,18 +1323,18 @@ static inline int handle_pte_fault(struct mm_struct *mm,
 int handle_mm_fault(struct mm_struct *mm, struct vm_area_struct * vma,
 	unsigned long address, int write_access)
 {
-	pgd_t *pgd;
-	pmd_t *pmd;
+	pgd_t *pgd;  // page global dirctory
+	pmd_t *pmd;  // page middel dirctory
 
 	current->state = TASK_RUNNING;
-	pgd = pgd_offset(mm, address);
+	pgd = pgd_offset(mm, address); // 获取页目录entry
 
 	/*
 	 * We need the page table lock to synchronize with kswapd
 	 * and the SMP-safe atomic PTE updates.
 	 */
 	spin_lock(&mm->page_table_lock);
-	pmd = pmd_alloc(mm, pgd, address);
+	pmd = pmd_alloc(mm, pgd, address); // pmd equls pgd
 
 	if (pmd) {
 		pte_t * pte = pte_alloc(mm, pmd, address);
@@ -1392,7 +1396,7 @@ pte_t *pte_alloc(struct mm_struct *mm, pmd_t *pmd, unsigned long address)
 		new = pte_alloc_one_fast(mm, address);
 		if (!new) {
 			spin_unlock(&mm->page_table_lock);
-			new = pte_alloc_one(mm, address);
+			new = pte_alloc_one(mm, address);  // 申请一个页
 			spin_lock(&mm->page_table_lock);
 			if (!new)
 				return NULL;

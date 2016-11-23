@@ -72,7 +72,7 @@ asmlinkage void do_softirq()
 
 	pending = softirq_pending(cpu);
 
-	if (pending) {
+	if (pending) { // 如果有中断发生了
 		struct softirq_action *h;
 
 		mask = ~pending;
@@ -370,7 +370,7 @@ static int ksoftirqd(void * __bind_cpu)
 
 	/* Migrate to the right CPU */
 	current->cpus_allowed = 1UL << cpu;
-	while (smp_processor_id() != cpu)
+	while (smp_processor_id() != cpu) // 判断进程是否运行在绑定的CPU上
 		schedule();
 
 	sprintf(current->comm, "ksoftirqd_CPU%d", bind_cpu);

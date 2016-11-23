@@ -158,7 +158,7 @@ asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long error_code)
 	siginfo_t info;
 
 	/* get the address */
-	__asm__("movl %%cr2,%0":"=r" (address));
+	__asm__("movl %%cr2,%0":"=r" (address));  // 获取出错的虚拟地址
 
 	/* It's safe to allow irq's after cr2 has been saved */
 	if (regs->eflags & X86_EFLAGS_IF)
@@ -192,7 +192,7 @@ asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long error_code)
 	if (in_interrupt() || !mm)
 		goto no_context;
 
-	down_read(&mm->mmap_sem);
+	down_read(&mm->mmap_sem); // 因为这里可能会因为读取磁盘导致阻塞, 所以使用信号量锁
 
 	vma = find_vma(mm, address);
 	if (!vma)
@@ -211,7 +211,8 @@ asmlinkage void do_page_fault(struct pt_regs *regs, unsigned long error_code)
 		if (address + 32 < regs->esp)
 			goto bad_area;
 	}
-	if (expand_stack(vma, address))
+	// 到这里代表访问栈空间
+	if (expand_stack(vma, address)) // 扩充栈空间
 		goto bad_area;
 /*
  * Ok, we have a good vm_area for this memory access, so
@@ -294,7 +295,7 @@ bad_area:
 	 */
 	if (boot_cpu_data.f00f_bug) {
 		unsigned long nr;
-		
+
 		nr = (address - idt) >> 3;
 
 		if (nr == 6) {
@@ -396,7 +397,7 @@ vmalloc_fault:
 		if (!pgd_present(*pgd_k))
 			goto no_context;
 		set_pgd(pgd, *pgd_k);
-		
+
 		pmd = pmd_offset(pgd, address);
 		pmd_k = pmd_offset(pgd_k, address);
 		if (!pmd_present(*pmd_k))

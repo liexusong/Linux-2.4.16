@@ -27,6 +27,7 @@
 #include <asm/mmu_context.h>
 
 /* The idle threads do not count.. */
+/* kernel_thread() */
 int nr_threads;
 int nr_running;
 
@@ -170,7 +171,7 @@ static inline int dup_mmap(struct mm_struct * mm)
 			get_file(file);
 			if (tmp->vm_flags & VM_DENYWRITE)
 				atomic_dec(&inode->i_writecount);
-      
+
 			/* insert tmp into the share list, just after mpnt */
 			spin_lock(&inode->i_mapping->i_shared_lock);
 			if((tmp->vm_next_share = mpnt->vm_next_share) != NULL)
@@ -224,7 +225,7 @@ static struct mm_struct * mm_init(struct mm_struct * mm)
 	free_mm(mm);
 	return NULL;
 }
-	
+
 
 /*
  * Allocate and initialize an mm_struct.
@@ -378,7 +379,7 @@ static inline struct fs_struct *__copy_fs_struct(struct fs_struct *old)
 		} else {
 			fs->altrootmnt = NULL;
 			fs->altroot = NULL;
-		}	
+		}
 		read_unlock(&old->lock);
 	}
 	return fs;
@@ -404,7 +405,7 @@ static inline int copy_fs(unsigned long clone_flags, struct task_struct * tsk)
 static int count_open_files(struct files_struct *files, int size)
 {
 	int i;
-	
+
 	/* Find the last open fd */
 	for (i = size/(8*sizeof(long)); i > 0; ) {
 		if (files->open_fds->fds_bits[--i])
@@ -435,7 +436,7 @@ static int copy_files(unsigned long clone_flags, struct task_struct * tsk)
 	tsk->files = NULL;
 	error = -ENOMEM;
 	newf = kmem_cache_alloc(files_cachep, SLAB_KERNEL);
-	if (!newf) 
+	if (!newf)
 		goto out;
 
 	atomic_set(&newf->count, 1);
@@ -475,7 +476,7 @@ static int copy_files(unsigned long clone_flags, struct task_struct * tsk)
 		write_lock(&newf->file_lock);
 		error = expand_fd_array(newf, open_files-1);
 		write_unlock(&newf->file_lock);
-		if (error) 
+		if (error)
 			goto out_release;
 		nfds = newf->max_fds;
 		read_lock(&oldf->file_lock);
@@ -498,13 +499,13 @@ static int copy_files(unsigned long clone_flags, struct task_struct * tsk)
 	/* compute the remainder to be cleared */
 	size = (newf->max_fds - open_files) * sizeof(struct file *);
 
-	/* This is long word aligned thus could use a optimized version */ 
-	memset(new_fds, 0, size); 
+	/* This is long word aligned thus could use a optimized version */
+	memset(new_fds, 0, size);
 
 	if (newf->max_fdset > open_files) {
 		int left = (newf->max_fdset-open_files)/8;
 		int start = open_files / (8 * sizeof(unsigned long));
-		
+
 		memset(&newf->open_fds->fds_bits[start], 0, left);
 		memset(&newf->close_on_exec->fds_bits[start], 0, left);
 	}
@@ -568,7 +569,7 @@ int do_fork(unsigned long clone_flags, unsigned long stack_start,
 
 	retval = -EPERM;
 
-	/* 
+	/*
 	 * CLONE_PID is only allowed for the initial SMP swapper
 	 * calls
 	 */
@@ -598,7 +599,7 @@ int do_fork(unsigned long clone_flags, unsigned long stack_start,
 	 */
 	if (nr_threads >= max_threads)
 		goto bad_fork_cleanup_count;
-	
+
 	get_exec_domain(p->exec_domain);
 
 	if (p->binfmt && p->binfmt->module)
@@ -665,10 +666,10 @@ int do_fork(unsigned long clone_flags, unsigned long stack_start,
 	if (retval)
 		goto bad_fork_cleanup_mm;
 	p->semundo = NULL;
-	
+
 	/* Our parent execution domain becomes current domain
 	   These must match for thread signalling to apply */
-	   
+
 	p->parent_exec_id = p->self_exec_id;
 
 	/* ok, now we should be set up.. */
@@ -773,18 +774,18 @@ void __init proc_caches_init(void)
 	if (!sigact_cachep)
 		panic("Cannot create signal action SLAB cache");
 
-	files_cachep = kmem_cache_create("files_cache", 
-			 sizeof(struct files_struct), 0, 
+	files_cachep = kmem_cache_create("files_cache",
+			 sizeof(struct files_struct), 0,
 			 SLAB_HWCACHE_ALIGN, NULL, NULL);
-	if (!files_cachep) 
+	if (!files_cachep)
 		panic("Cannot create files SLAB cache");
 
-	fs_cachep = kmem_cache_create("fs_cache", 
-			 sizeof(struct fs_struct), 0, 
+	fs_cachep = kmem_cache_create("fs_cache",
+			 sizeof(struct fs_struct), 0,
 			 SLAB_HWCACHE_ALIGN, NULL, NULL);
-	if (!fs_cachep) 
+	if (!fs_cachep)
 		panic("Cannot create fs_struct SLAB cache");
- 
+
 	vm_area_cachep = kmem_cache_create("vm_area_struct",
 			sizeof(struct vm_area_struct), 0,
 			SLAB_HWCACHE_ALIGN, NULL, NULL);

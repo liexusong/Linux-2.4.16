@@ -70,6 +70,7 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 	struct page *base;
 	zone_t *zone;
 
+	// check something
 	if (page->buffers)
 		BUG();
 	if (page->mapping)
@@ -84,9 +85,11 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 		BUG();
 	if (PageActive(page))
 		BUG();
-	page->flags &= ~((1<<PG_referenced) | (1<<PG_dirty)); // 清除referenced和dirty标志
 
-	if (current->flags & PF_FREE_PAGES)
+	// 清除referenced和dirty标志
+	page->flags &= ~((1<<PG_referenced) | (1<<PG_dirty));
+
+	if (current->flags & PF_FREE_PAGES) // 如果当前进程正在释放内存
 		goto local_freelist;
  back_local_freelist:
 
@@ -94,7 +97,7 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 
 	mask = (~0UL) << order;
 	base = zone->zone_mem_map;
-	page_idx = page - base;          // page所在区域的索引
+	page_idx = page - base;  // page所在区域的索引
 	if (page_idx & ~mask)
 		BUG();
 	index = page_idx >> (1 + order); // page的伙伴索引
@@ -151,7 +154,7 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 #define MARK_USED(index, order, area) \
 	__change_bit((index) >> (1+(order)), (area)->map)
 
-static inline struct page * expand (zone_t *zone, struct page *page,
+static inline struct page * expand(zone_t *zone, struct page *page,
 	 unsigned long index, int low, int high, free_area_t * area)
 {
 	unsigned long size = 1 << high;
@@ -192,12 +195,13 @@ static struct page * rmqueue(zone_t *zone, unsigned int order)
 			page = memlist_entry(curr, struct page, list); // 获取page
 			if (BAD_RANGE(zone,page))
 				BUG();
-			memlist_del(curr); // 把page从free链表中删除
-			index = page - zone->zone_mem_map;
+			memlist_del(curr);                      // 把page从free链表中删除
+			index = page - zone->zone_mem_map;      // page所处所有page的位置
 			if (curr_order != MAX_ORDER-1)
 				MARK_USED(index, curr_order, area); // 设置位图为已经使用
 			zone->free_pages -= 1UL << order;
 
+			// =================================================================
 			// 根据order分裂page(伙伴算法)
 			// 因为伙伴算法会把更大的page分裂成更小的page
 			//     expand(zone, page, index, low,   high,       area);
@@ -306,10 +310,13 @@ static struct page * balance_classzone(zone_t * classzone, unsigned int gfp_mask
 /*
  * This is the 'heart' of the zoned buddy allocator:
  */
-// gfp_mask: 标志
-// order: 分配的内存大小
-// zonelist: 分配策略
-struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_t *zonelist)
+/*
+ * gfp_mask: 标志
+ * order: 分配的内存大小
+ * zonelist: 分配策略
+ */
+struct page * __alloc_pages(unsigned int gfp_mask,
+	unsigned int order, zonelist_t *zonelist)
 {
 	unsigned long min;
 	zone_t **zone, * classzone;
@@ -324,7 +331,7 @@ struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_
 		if (!z)
 			break;
 
-		min += z->pages_low;       // 加上最低水位线
+		min += z->pages_low;       // 加上low水位线
 		if (z->free_pages > min) { // 如果当前zone有足够的空闲page
 			page = rmqueue(z, order);
 			if (page)
@@ -333,7 +340,9 @@ struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_
 	}
 
 	classzone->need_balance = 1;
-	mb();
+
+	mb();  // 内存屏障(防止乱序)
+
 	if (waitqueue_active(&kswapd_wait))       // 如果kswapd在睡眠
 		wake_up_interruptible(&kswapd_wait);  // 那么就唤醒kswapd
 
@@ -345,7 +354,7 @@ struct page * __alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_
 		if (!z)
 			break;
 
-		local_min = z->pages_min;
+		local_min = z->pages_min;     // 加上min水位线
 		if (!(gfp_mask & __GFP_WAIT)) // 如果不能等待, 那么先降低最低水位值
 			local_min >>= 2;
 		min += local_min;

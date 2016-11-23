@@ -125,7 +125,7 @@ extern pgprot_t protection_map[16];
 /*
  * These are the virtual MM functions - opening of an area, closing and
  * unmapping it (needed to keep files on disk up-to-date etc), pointer
- * to the functions called when a no-page or a wp-page exception occurs. 
+ * to the functions called when a no-page or a wp-page exception occurs.
  */
 struct vm_operations_struct {
 	void (*open)(struct vm_area_struct * area);
@@ -144,7 +144,7 @@ struct vm_operations_struct {
  * beneficial on 32-bit processors.
  *
  * The first line is data used in page cache lookup, the second line
- * is used for linear searches (eg. clock algorithm scans). 
+ * is used for linear searches (eg. clock algorithm scans).
  *
  * TODO: make this structure smaller, it could be as small as 32 bytes.
  */
@@ -439,7 +439,7 @@ extern int check_pgt_cache(void);
 
 extern void free_area_init(unsigned long * zones_size);
 extern void free_area_init_node(int nid, pg_data_t *pgdat, struct page *pmap,
-	unsigned long * zones_size, unsigned long zone_start_paddr, 
+	unsigned long * zones_size, unsigned long zone_start_paddr,
 	unsigned long *zholes_size);
 extern void mem_init(void);
 extern void show_mem(void);
@@ -557,6 +557,7 @@ static inline int expand_stack(struct vm_area_struct * vma, unsigned long addres
 	 * before relocating the vma range ourself.
 	 */
 	address &= PAGE_MASK;
+	// vma->vm_start一定大于address
 	grow = (vma->vm_start - address) >> PAGE_SHIFT;
 	if (vma->vm_end - address > current->rlim[RLIMIT_STACK].rlim_cur ||
 	    ((vma->vm_mm->total_vm + grow) << PAGE_SHIFT) > current->rlim[RLIMIT_AS].rlim_cur)

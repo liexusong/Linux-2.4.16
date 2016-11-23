@@ -21,7 +21,7 @@
 
 /*
  * Access to this subsystem has to be serialized externally. (this is
- * true for the boot process anyway)
+ * true for the boot process anyway) mb();
  */
 unsigned long max_low_pfn;
 unsigned long min_low_pfn;
@@ -77,7 +77,7 @@ static void __init reserve_bootmem_core(bootmem_data_t *bdata, unsigned long add
 	 * fully reserved.
 	 */
 	unsigned long sidx = (addr - bdata->node_boot_start)/PAGE_SIZE;
-	unsigned long eidx = (addr + size - bdata->node_boot_start + 
+	unsigned long eidx = (addr + size - bdata->node_boot_start +
 							PAGE_SIZE-1)/PAGE_SIZE;
 	unsigned long end = (addr + size + PAGE_SIZE-1)/PAGE_SIZE;
 
@@ -139,7 +139,7 @@ static void __init free_bootmem_core(bootmem_data_t *bdata, unsigned long addr, 
 /*
  * alignment has to be a power of 2 value.
  */
-static void * __init __alloc_bootmem_core (bootmem_data_t *bdata, 
+static void * __init __alloc_bootmem_core (bootmem_data_t *bdata,
 	unsigned long size, unsigned long align, unsigned long goal)
 {
 	unsigned long i, start = 0;
@@ -158,7 +158,7 @@ static void * __init __alloc_bootmem_core (bootmem_data_t *bdata,
 	 * We try to allocate bootmem pages above 'goal'
 	 * first, then we try to allocate lower pages.
 	 */
-	if (goal && (goal >= bdata->node_boot_start) && 
+	if (goal && (goal >= bdata->node_boot_start) &&
 			((goal >> PAGE_SHIFT) < bdata->node_low_pfn)) {
 		preferred = goal - bdata->node_boot_start;
 	} else

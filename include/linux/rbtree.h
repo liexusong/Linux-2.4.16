@@ -1,7 +1,7 @@
 /*
   Red Black Trees
   (C) 1999  Andrea Arcangeli <andrea@suse.de>
-  
+
   This program is free software; you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation; either version 2 of the License, or
@@ -105,14 +105,12 @@ typedef struct rb_node_s
 #define	RB_BLACK	1
 	struct rb_node_s * rb_right;
 	struct rb_node_s * rb_left;
-}
-rb_node_t;
+} rb_node_t;
 
 typedef struct rb_root_s
 {
 	struct rb_node_s * rb_node;
-}
-rb_root_t;
+} rb_root_t;
 
 #define RB_ROOT	(rb_root_t) { NULL, }
 #define	rb_entry(ptr, type, member)					\

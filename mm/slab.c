@@ -192,7 +192,7 @@ struct kmem_cache_s {
 	struct list_head	slabs_free;     // 全空列表
 	unsigned int		objsize;        // 对象的大小
 	unsigned int	 	flags;	/* constant flags */
-	unsigned int		num;	/* # of objs per slab */
+	unsigned int		num;	/* # of objs per slab */ // 一个slab块有多少个对象
 	spinlock_t			spinlock;
 #ifdef CONFIG_SMP
 	unsigned int		batchcount;
@@ -200,13 +200,15 @@ struct kmem_cache_s {
 
 /* 2) slab additions /removals */
 	/* order of pgs per slab (2^n) */
-	unsigned int		gfporder;
+	unsigned int		gfporder;  // 有多少个page组成(2的gfporder次方个)
 
 	/* force GFP flags, e.g. GFP_DMA */
 	unsigned int		gfpflags;
 
+	// 最大着色区等于: colour * colour_off
 	size_t				colour;			/* cache colouring range */
 	unsigned int		colour_off;		/* colour offset */
+	// 下一个colour的位置
 	unsigned int		colour_next;	/* cache colouring */
 	kmem_cache_t		*slabp_cache;
 	unsigned int		growing;
@@ -358,7 +360,7 @@ static kmem_cache_t cache_cache = {
 	objsize:		sizeof(kmem_cache_t),
 	flags:			SLAB_NO_REAP,
 	spinlock:		SPIN_LOCK_UNLOCKED,
-	colour_off:		L1_CACHE_BYTES,
+	colour_off:		L1_CACHE_BYTES, // 16?
 	name:			"kmem_cache",
 };
 
@@ -386,7 +388,7 @@ static void kmem_cache_estimate (unsigned long gfporder, size_t size,
 		 int flags, size_t *left_over, unsigned int *num)
 {
 	int i;
-	size_t wastage = PAGE_SIZE<<gfporder;
+	size_t wastage = PAGE_SIZE<<gfporder;  // 缓冲区的大小
 	size_t extra = 0;
 	size_t base = 0;
 
@@ -417,11 +419,13 @@ void __init kmem_cache_init(void)
 	init_MUTEX(&cache_chain_sem);
 	INIT_LIST_HEAD(&cache_chain);
 
+	// 初始化cache_cache
 	kmem_cache_estimate(0, cache_cache.objsize, 0,
 			&left_over, &cache_cache.num);
 	if (!cache_cache.num)
 		BUG();
 
+	// 最大可以有多少个off
 	cache_cache.colour = left_over/cache_cache.colour_off;
 	cache_cache.colour_next = 0;
 }
@@ -1407,6 +1411,7 @@ static inline void kmem_cache_free_one(kmem_cache_t *cachep, void *objp)
 		slabp = (void*)((unsigned long)objp&(~(PAGE_SIZE-1)));
 	 else
 	 */
+	// virt_to_page()用于把虚拟内存转换成page
 	slabp = GET_PAGE_SLAB(virt_to_page(objp)); // first slab_t
 
 #if DEBUG
@@ -1542,12 +1547,12 @@ void * kmalloc (size_t size, int flags)
 	cache_sizes_t *csizep = cache_sizes;
 
 	for (; csizep->cs_size; csizep++) {
-		if (size > csizep->cs_size)
+		if (size > csizep->cs_size) // 寻找合适的cache
 			continue;
 		return __kmem_cache_alloc(flags & GFP_DMA ?
 			 csizep->cs_dmacachep : csizep->cs_cachep, flags);
 	}
-	return NULL;
+	return NULL; // 如果找不到合适的cache, 返回NULL
 }
 
 /**

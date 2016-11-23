@@ -33,7 +33,7 @@
  * MAP_SHARED	r: (no) no	r: (yes) yes	r: (no) yes	r: (no) yes
  *		w: (no) no	w: (no) no	w: (yes) yes	w: (no) no
  *		x: (no) no	x: (no) yes	x: (no) yes	x: (yes) yes
- *		
+ *
  * MAP_PRIVATE	r: (no) no	r: (yes) yes	r: (no) yes	r: (no) yes
  *		w: (no) no	w: (no) no	w: (copy) copy	w: (no) no
  *		x: (no) no	x: (no) yes	x: (no) yes	x: (yes) yes
@@ -62,7 +62,7 @@ int vm_enough_memory(long pages)
 	 */
 
 	unsigned long free;
-	
+
         /* Sometimes we want to use more memory than we have. */
 	if (sysctl_overcommit_memory)
 	    return 1;
@@ -147,9 +147,9 @@ asmlinkage unsigned long sys_brk(unsigned long brk)
 {
 	unsigned long rlim, retval;
 	unsigned long newbrk, oldbrk;
-	struct mm_struct *mm = current->mm;
+	struct mm_struct *mm = current->mm; // 当前进程的内存管理结构
 
-	down_write(&mm->mmap_sem);
+	down_write(&mm->mmap_sem); // 锁住当前的mm
 
 	if (brk < mm->end_code)
 		goto out;
@@ -259,17 +259,26 @@ static struct vm_area_struct * find_vma_prepare(struct mm_struct * mm, unsigned 
 		__rb_parent = *__rb_link;
 		vma_tmp = rb_entry(__rb_parent, struct vm_area_struct, vm_rb);
 
+		/*
+		 * vma_tmp
+		 *     \
+		 *      [.................]
+		 *  vm_start           vm_end
+		 *            |
+		 *      <-   addr   ->
+		 */
 		if (vma_tmp->vm_end > addr) {
 			vma = vma_tmp;
-			if (vma_tmp->vm_start <= addr)
+			if (vma_tmp->vm_start <= addr)     // addr在vma里面
 				return vma;
-			__rb_link = &__rb_parent->rb_left;
+			__rb_link = &__rb_parent->rb_left; // 找一个更小的vma
 		} else {
 			rb_prev = __rb_parent;
 			__rb_link = &__rb_parent->rb_right;
 		}
 	}
 
+	// 到这里表示addr地址不在任何一个vma里面
 	*pprev = NULL;
 	if (rb_prev)
 		*pprev = rb_entry(rb_prev, struct vm_area_struct, vm_rb);
@@ -314,9 +323,9 @@ static inline void __vma_link_file(struct vm_area_struct * vma)
 			atomic_dec(&inode->i_writecount);
 
 		head = &mapping->i_mmap;
-		if (vma->vm_flags & VM_SHARED)
+		if (vma->vm_flags & VM_SHARED) // 如果是共享内存, 那么就连接到共享列表中
 			head = &mapping->i_mmap_shared;
-      
+
 		/* insert vma into inode's share list */
 		if((vma->vm_next_share = *head) != NULL)
 			(*head)->vm_pprev_share = &vma->vm_next_share;
@@ -389,8 +398,9 @@ static int vma_merge(struct mm_struct * mm, struct vm_area_struct * prev,
 	return 0;
 }
 
-unsigned long do_mmap_pgoff(struct file * file, unsigned long addr, unsigned long len,
-	unsigned long prot, unsigned long flags, unsigned long pgoff)
+unsigned long do_mmap_pgoff(struct file * file, unsigned long addr,
+	unsigned long len, unsigned long prot,
+	unsigned long flags, unsigned long pgoff)
 {
 	struct mm_struct * mm = current->mm;
 	struct vm_area_struct * vma, * prev;
@@ -399,6 +409,7 @@ unsigned long do_mmap_pgoff(struct file * file, unsigned long addr, unsigned lon
 	int error;
 	rb_node_t ** rb_link, * rb_parent;
 
+	// 如果与文件关联的, 就必须提供mmap操作函数
 	if (file && (!file->f_op || !file->f_op->mmap))
 		return -ENODEV;
 
@@ -419,25 +430,27 @@ unsigned long do_mmap_pgoff(struct file * file, unsigned long addr, unsigned lon
 	/* Obtain the address to map to. we verify (or select) it and ensure
 	 * that it represents a valid section of the address space.
 	 */
+	// 找一个还没使用的虚拟地址
 	addr = get_unmapped_area(file, addr, len, pgoff, flags);
-	if (addr & ~PAGE_MASK)
+	if (addr & ~PAGE_MASK) // 是否页对齐?
 		return addr;
 
 	/* Do simple checking here so the lower-level routines won't have
 	 * to. we assume access permissions have been handled by the open
 	 * of the memory object, so we don't do any here.
 	 */
+	// 计算虚拟内存的权限信息
 	vm_flags = calc_vm_flags(prot,flags) | mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
 
 	/* mlock MCL_FUTURE? */
-	if (vm_flags & VM_LOCKED) {
+	if (vm_flags & VM_LOCKED) { // 是否需要锁定内存不让swap出去
 		unsigned long locked = mm->locked_vm << PAGE_SHIFT;
 		locked += len;
 		if (locked > current->rlim[RLIMIT_MEMLOCK].rlim_cur)
 			return -EAGAIN;
 	}
 
-	if (file) {
+	if (file) { // 如果有文件与其关联
 		switch (flags & MAP_TYPE) {
 		case MAP_SHARED:
 			if ((prot & PROT_WRITE) && !(file->f_mode & FMODE_WRITE))
@@ -481,8 +494,9 @@ unsigned long do_mmap_pgoff(struct file * file, unsigned long addr, unsigned lon
 	error = -ENOMEM;
 munmap_back:
 	vma = find_vma_prepare(mm, addr, &prev, &rb_link, &rb_parent);
-	if (vma && vma->vm_start < addr + len) {
-		if (do_munmap(mm, addr, len))
+	// 如果vma不为空, 那么vma的vm_end一定大于addr(vma->vm_end > addr)
+	if (vma && vma->vm_start < addr + len) { // 如果有重合的虚拟地址
+		if (do_munmap(mm, addr, len))        // 解除映射
 			return -ENOMEM;
 		goto munmap_back;
 	}
@@ -500,6 +514,7 @@ munmap_back:
 
 	/* Can we just expand an old anonymous mapping? */
 	if (!file && !(vm_flags & VM_SHARED) && rb_parent)
+		// 尝试合并vma
 		if (vma_merge(mm, prev, rb_parent, addr, addr + len, vm_flags))
 			goto out;
 
@@ -534,6 +549,7 @@ munmap_back:
 		}
 		vma->vm_file = file;
 		get_file(file);
+		// 一般是generic_file_mmap()函数
 		error = file->f_op->mmap(file, vma);
 		if (error)
 			goto unmap_and_free_vma;
@@ -554,11 +570,11 @@ munmap_back:
 	if (correct_wcount)
 		atomic_inc(&file->f_dentry->d_inode->i_writecount);
 
-out:	
+out:
 	mm->total_vm += len >> PAGE_SHIFT;
 	if (vm_flags & VM_LOCKED) {
 		mm->locked_vm += len >> PAGE_SHIFT;
-		make_pages_present(addr, addr + len);
+		make_pages_present(addr, addr + len); // 立刻申请物理内存
 	}
 	return addr;
 
@@ -603,6 +619,7 @@ static inline unsigned long arch_get_unmapped_area(struct file *filp, unsigned l
 	}
 	addr = PAGE_ALIGN(TASK_UNMAPPED_BASE);
 
+	// 从vm中找到一个还没有使用的虚拟内存地址
 	for (vma = find_vma(current->mm, addr); ; vma = vma->vm_next) {
 		/* At this point:  (!vma || addr < vma->vm_end). */
 		if (TASK_SIZE - len < addr)
@@ -614,7 +631,7 @@ static inline unsigned long arch_get_unmapped_area(struct file *filp, unsigned l
 }
 #else
 extern unsigned long arch_get_unmapped_area(struct file *, unsigned long, unsigned long, unsigned long, unsigned long);
-#endif	
+#endif
 
 unsigned long get_unmapped_area(struct file *file, unsigned long addr, unsigned long len, unsigned long pgoff, unsigned long flags)
 {
@@ -633,6 +650,7 @@ unsigned long get_unmapped_area(struct file *file, unsigned long addr, unsigned 
 }
 
 /* Look up the first VMA which satisfies  addr < vm_end,  NULL if none. */
+// 找到第一个vm_end大于addr的vma
 struct vm_area_struct * find_vma(struct mm_struct * mm, unsigned long addr)
 {
 	struct vm_area_struct *vma = NULL;
@@ -675,7 +693,7 @@ struct vm_area_struct * find_vma_prev(struct mm_struct * mm, unsigned long addr,
 		/* Go through the RB tree quickly. */
 		struct vm_area_struct * vma;
 		rb_node_t * rb_node, * rb_last_right, * rb_prev;
-		
+
 		rb_node = mm->mm_rb.rb_node;
 		rb_last_right = rb_prev = NULL;
 		vma = NULL;
@@ -759,8 +777,8 @@ struct vm_area_struct * find_extend_vma(struct mm_struct * mm, unsigned long add
  * allocate a new one, and the return indicates whether the old
  * area was reused.
  */
-static struct vm_area_struct * unmap_fixup(struct mm_struct *mm, 
-	struct vm_area_struct *area, unsigned long addr, size_t len, 
+static struct vm_area_struct * unmap_fixup(struct mm_struct *mm,
+	struct vm_area_struct *area, unsigned long addr, size_t len,
 	struct vm_area_struct *extra)
 {
 	struct vm_area_struct *mpnt;
@@ -923,7 +941,7 @@ int do_munmap(struct mm_struct *mm, unsigned long addr, size_t len)
 		return -ENOMEM;
 
 	/*
-	 * We may need one additional vma to fix up the mappings ... 
+	 * We may need one additional vma to fix up the mappings ...
 	 * and this is the last chance for an easy error exit.
 	 */
 	extra = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL);
