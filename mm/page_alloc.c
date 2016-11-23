@@ -100,7 +100,7 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 	page_idx = page - base;  // page所在区域的索引
 	if (page_idx & ~mask)
 		BUG();
-	index = page_idx >> (1 + order); // page的伙伴索引
+	index = page_idx >> (1 + order); // page所使用的伙伴算法bit索引
 
 	area = zone->free_area + order;  // page所在的空闲链表
 
@@ -114,7 +114,10 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 
 		if (area >= zone->free_area + MAX_ORDER)
 			BUG();
-		if (!__test_and_change_bit(index, area->map)) // 如果之前此索引为0
+		// 改变index位的bit, 如果index位是0, 则此函数会改变位1, 并返回原来index的值
+		// 如果调用__test_and_change_bit()得到的结果是1, 那么表示此page的伙伴也释放了
+		// 此时可以合并这两个块, 同时index处的bit值变回0
+		if (!__test_and_change_bit(index, area->map)) // 如果伙伴块没有释放, 直接添加到链表中
 			/*
 			 * the buddy page is still allocated.
 			 */
@@ -122,18 +125,18 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 		/*
 		 * Move the buddy up one level.
 		 */
-		buddy1 = base + (page_idx ^ -mask);
-		buddy2 = base + page_idx;
+		buddy1 = base + (page_idx ^ -mask); // 第一块伙伴
+		buddy2 = base + page_idx;           // 第二块伙伴
 		if (BAD_RANGE(zone,buddy1))
 			BUG();
 		if (BAD_RANGE(zone,buddy2))
 			BUG();
 
 		memlist_del(&buddy1->list);
-		mask <<= 1;
+		mask <<= 1; // 向左移动1位
 		area++;
-		index >>= 1;
-		page_idx &= mask;
+		index >>= 1; // 因为level提升了一级, 所以索引值应该除以2, 也就是右移动1位
+		page_idx &= mask; // 这个操作会得到合并之后的块所在page数组的索引值
 	}
 	memlist_add_head(&(base + page_idx)->list, &area->free_list);
 
@@ -437,7 +440,7 @@ unsigned long get_zeroed_page(unsigned int gfp_mask)
 
 	page = alloc_pages(gfp_mask, 0);
 	if (page) {
-		void *address = page_address(page);
+		void *address = page_address(page); // 获取page映射的虚拟内存
 		clear_page(address);
 		return (unsigned long) address;
 	}
