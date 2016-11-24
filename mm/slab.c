@@ -384,11 +384,12 @@ static void enable_all_cpucaches (void);
 #endif
 
 /* Cal the num objs, wastage, and bytes left over for a given slab size. */
+/* 计算可以容纳多少个object */
 static void kmem_cache_estimate (unsigned long gfporder, size_t size,
 		 int flags, size_t *left_over, unsigned int *num)
 {
 	int i;
-	size_t wastage = PAGE_SIZE<<gfporder;  // 缓冲区的大小
+	size_t wastage = PAGE_SIZE<<gfporder;  // 内存块大小
 	size_t extra = 0;
 	size_t base = 0;
 
@@ -425,7 +426,7 @@ void __init kmem_cache_init(void)
 	if (!cache_cache.num)
 		BUG();
 
-	// 最大可以有多少个off
+	// 最大可以有多少个colour_off
 	cache_cache.colour = left_over/cache_cache.colour_off;
 	cache_cache.colour_next = 0;
 }
@@ -444,7 +445,7 @@ void __init kmem_cache_sizes_init(void)
 	 */
 	if (num_physpages > (32 << 20) >> PAGE_SHIFT)
 		slab_break_gfp_order = BREAK_GFP_ORDER_HI;
-	do {
+	do { // 初始化通用缓存slab
 		/* For performance, all the general caches are L1 aligned.
 		 * This should be particularly beneficial on SMP boxes, as it
 		 * eliminates "false sharing".
@@ -494,6 +495,7 @@ static inline void * kmem_getpages (kmem_cache_t *cachep, unsigned long flags)
 	 * would be relatively rare and ignorable.
 	 */
 	flags |= cachep->gfpflags;
+	// 从伙伴算法获取(1<<gfporder)个内存页
 	addr = (void*) __get_free_pages(flags, cachep->gfporder);
 	/* Assume that now we have the pages no one else can legally
 	 * messes with the 'struct page's.
@@ -586,6 +588,7 @@ static void kmem_slab_destroy (kmem_cache_t *cachep, slab_t *slabp)
 		}
 	}
 
+	// 释放不使用的slab页
 	kmem_freepages(cachep, slabp->s_mem-slabp->colouroff);
 	if (OFF_SLAB(cachep))
 		kmem_cache_free(cachep->slabp_cache, slabp);
@@ -702,11 +705,11 @@ kmem_cache_create (
 	}
 #endif
 	align = BYTES_PER_WORD;
-	if (flags & SLAB_HWCACHE_ALIGN)
+	if (flags & SLAB_HWCACHE_ALIGN) // 高速硬件缓存对齐
 		align = L1_CACHE_BYTES;
 
 	/* Determine if the slab management is 'on' or 'off' slab. */
-	if (size >= (PAGE_SIZE>>3))
+	if (size >= (PAGE_SIZE>>3)) // 如果size大于等于4096/8=512, 那么slab结构分离
 		/*
 		 * Size is large, assume best to place the slab management obj
 		 * off-slab (should allow better packing of objs).
@@ -717,7 +720,7 @@ kmem_cache_create (
 		/* Need to adjust size so that objs are cache aligned. */
 		/* Small obj size, can get at least two per cache line. */
 		/* FIXME: only power of 2 supported, was better */
-		while (size < align/2)
+		while (size < align/2) // 如果对象太小, 需要重新计算align值(原align的二次方)
 			align /= 2;
 		size = (size+align-1)&(~(align-1));
 	}
@@ -727,6 +730,7 @@ kmem_cache_create (
 	 * using high page-orders for slabs.  When the gfp() funcs are more
 	 * friendly towards high-order requests, this should be changed.
 	 */
+	// 这里的算法是不断探测gfporder, 以使获得一个比较合适的值
 	do {
 		unsigned int break_flag = 0;
 cal_wastage:
@@ -738,6 +742,9 @@ cal_wastage:
 			break;
 		if (!cachep->num)
 			goto next;
+
+		// offslab_limit这个值是由非off_slab的slab计算出来的
+		// 就是一个slab管理块里的object数量不能超过offslab_limit
 		if (flags & CFLGS_OFF_SLAB && cachep->num > offslab_limit) {
 			/* Oops, this num of objs will cause problems. */
 			cachep->gfporder--;
@@ -764,6 +771,7 @@ next:
 		cachep = NULL;
 		goto opps;
 	}
+	// CPU line1缓存对齐
 	slab_size = L1_CACHE_ALIGN(cachep->num*sizeof(kmem_bufctl_t)+sizeof(slab_t));
 
 	/*
@@ -917,6 +925,7 @@ static void drain_cpu_caches(kmem_cache_t *cachep)
 #define drain_cpu_caches(cachep)	do { } while (0)
 #endif
 
+// 收缩cache
 static int __kmem_cache_shrink(kmem_cache_t *cachep)
 {
 	slab_t *slabp;
@@ -942,7 +951,7 @@ static int __kmem_cache_shrink(kmem_cache_t *cachep)
 		list_del(&slabp->list);
 
 		spin_unlock_irq(&cachep->spinlock);
-		kmem_slab_destroy(cachep, slabp);
+		kmem_slab_destroy(cachep, slabp); // 这里有可能会导致growing变为1
 		spin_lock_irq(&cachep->spinlock);
 	}
 	ret = !list_empty(&cachep->slabs_full) || !list_empty(&cachep->slabs_partial);
@@ -1160,8 +1169,8 @@ static int kmem_cache_grow (kmem_cache_t * cachep, int flags)
 	i = 1 << cachep->gfporder;
 	page = virt_to_page(objp); // 获取page号
 	do {
-		SET_PAGE_CACHE(page, cachep);
-		SET_PAGE_SLAB(page, slabp);
+		SET_PAGE_CACHE(page, cachep); // page->list.next = cachep
+		SET_PAGE_SLAB(page, slabp);   // page->list.prev = slabp
 		PageSetSlab(page);
 		page++;
 	} while (--i);
@@ -1237,10 +1246,10 @@ static inline void * kmem_cache_alloc_one_tail (kmem_cache_t *cachep,
 
 	/* get obj pointer */
 	slabp->inuse++;
-	objp = slabp->s_mem + slabp->free*cachep->objsize;
+	objp = slabp->s_mem + slabp->free*cachep->objsize; // next object pointer
 	slabp->free=slab_bufctl(slabp)[slabp->free];
 
-	if (unlikely(slabp->free == BUFCTL_END)) {
+	if (unlikely(slabp->free == BUFCTL_END)) { // 如果slab已经用光, 把他移到full链表
 		list_del(&slabp->list);
 		list_add(&slabp->list, &cachep->slabs_full);
 	}
@@ -1412,7 +1421,7 @@ static inline void kmem_cache_free_one(kmem_cache_t *cachep, void *objp)
 	 else
 	 */
 	// virt_to_page()用于把虚拟内存转换成page
-	slabp = GET_PAGE_SLAB(virt_to_page(objp)); // first slab_t
+	slabp = GET_PAGE_SLAB(virt_to_page(objp)); // (slab_t *)page->list.prev
 
 #if DEBUG
 	if (cachep->flags & SLAB_DEBUG_INITIAL)
@@ -1438,8 +1447,10 @@ static inline void kmem_cache_free_one(kmem_cache_t *cachep, void *objp)
 		return;
 #endif
 	{
-		unsigned int objnr = (objp-slabp->s_mem)/cachep->objsize; // objp前面有几个object
+		// objp前面有几个object
+		unsigned int objnr = (objp-slabp->s_mem)/cachep->objsize;
 
+		// 加入到空闲链表
 		slab_bufctl(slabp)[objnr] = slabp->free;
 		slabp->free = objnr;
 	}
@@ -1448,11 +1459,11 @@ static inline void kmem_cache_free_one(kmem_cache_t *cachep, void *objp)
 	/* fixup slab chains */
 	{
 		int inuse = slabp->inuse;
-		if (unlikely(!--slabp->inuse)) {
+		if (unlikely(!--slabp->inuse)) { // 移动到free链表
 			/* Was partial or full, now empty. */
 			list_del(&slabp->list);
 			list_add(&slabp->list, &cachep->slabs_free);
-		} else if (unlikely(inuse == cachep->num)) {
+		} else if (unlikely(inuse == cachep->num)) { // 移动到partial链表
 			/* Was full. */
 			list_del(&slabp->list);
 			list_add(&slabp->list, &cachep->slabs_partial);
@@ -1572,7 +1583,7 @@ void kmem_cache_free (kmem_cache_t *cachep, void *objp)
 		BUG();
 #endif
 
-	local_irq_save(flags);
+	local_irq_save(flags); // 禁止中断
 	__kmem_cache_free(cachep, objp);
 	local_irq_restore(flags);
 }
@@ -1716,6 +1727,7 @@ static void enable_all_cpucaches (void)
  * @gfp_mask: the type of memory required.
  *
  * Called from do_try_to_free_pages() and __alloc_pages()
+ * 这个函数用于释放一些不使用的slab页面
  */
 int kmem_cache_reap (int gfp_mask)
 {
@@ -1747,7 +1759,7 @@ int kmem_cache_reap (int gfp_mask)
 		if (searchp->flags & SLAB_NO_REAP)
 			goto next;
 		spin_lock_irq(&searchp->spinlock);
-		if (searchp->growing)
+		if (searchp->growing) // 正在增长中, 不能释放
 			goto next_unlock;
 		if (searchp->dflags & DFLGS_GROWN) {
 			searchp->dflags &= ~DFLGS_GROWN;
@@ -1763,7 +1775,7 @@ int kmem_cache_reap (int gfp_mask)
 		}
 #endif
 
-		full_free = 0;
+		full_free = 0; // free链表的长度
 		p = searchp->slabs_free.next;
 		while (p != &searchp->slabs_free) {
 			slabp = list_entry(p, slab_t, list);
@@ -1780,7 +1792,7 @@ int kmem_cache_reap (int gfp_mask)
 		 * more than one page per slab (as it can be difficult
 		 * to get high orders from gfp()).
 		 */
-		pages = full_free * (1<<searchp->gfporder);
+		pages = full_free * (1<<searchp->gfporder); // 可以释放的内存页数量
 		if (searchp->ctor)
 			pages = (pages*4+1)/5;
 		if (searchp->gfporder)
