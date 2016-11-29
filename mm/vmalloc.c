@@ -120,10 +120,10 @@ static inline int alloc_area_pmd(pmd_t * pmd, unsigned long address, unsigned lo
 {
 	unsigned long end;
 
-	address &= ~PGDIR_MASK;
+	address &= ~PGDIR_MASK;  // 屏蔽4MB之上的位
 	end = address + size;
-	if (end > PGDIR_SIZE)
-		end = PGDIR_SIZE;
+	if (end > PGDIR_SIZE)    // 如果大于4MB
+		end = PGDIR_SIZE;    // 只能最大4MB
 	do {
 		pte_t * pte = pte_alloc(&init_mm, pmd, address);
 		if (!pte)
