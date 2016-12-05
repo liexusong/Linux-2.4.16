@@ -311,13 +311,13 @@ static inline int zap_pte_range(mmu_gather_t *tlb, pmd_t * pmd, unsigned long ad
 		pte_t pte = *ptep;
 		if (pte_none(pte))
 			continue;
-		if (pte_present(pte)) {
+		if (pte_present(pte)) { // 如果此页已经映射到物理内存
 			struct page *page = pte_page(pte);
 			if (VALID_PAGE(page) && !PageReserved(page))
 				freed ++;
 			/* This will eventually call __free_pte on the pte. */
-			tlb_remove_page(tlb, ptep, address + offset);
-		} else {
+			tlb_remove_page(tlb, ptep, address + offset); // 释放内存页
+		} else { // 没有映射到物理内存, 那么直接清除页表项即可
 			free_swap_and_cache(pte_to_swp_entry(pte));
 			pte_clear(ptep);
 		}

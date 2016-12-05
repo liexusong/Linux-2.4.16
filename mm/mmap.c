@@ -149,7 +149,7 @@ asmlinkage unsigned long sys_brk(unsigned long brk)
 	unsigned long newbrk, oldbrk;
 	struct mm_struct *mm = current->mm; // 当前进程的内存管理结构
 
-	down_write(&mm->mmap_sem); // 锁住当前的mm
+	down_write(&mm->mmap_sem); // 锁住当前的mm(因为有可能mm会被其他线程公用)
 
 	if (brk < mm->end_code)
 		goto out;
@@ -398,6 +398,7 @@ static int vma_merge(struct mm_struct * mm, struct vm_area_struct * prev,
 	return 0;
 }
 
+/* sys_mmap() call this function */
 unsigned long do_mmap_pgoff(struct file * file, unsigned long addr,
 	unsigned long len, unsigned long prot,
 	unsigned long flags, unsigned long pgoff)
@@ -430,7 +431,7 @@ unsigned long do_mmap_pgoff(struct file * file, unsigned long addr,
 	/* Obtain the address to map to. we verify (or select) it and ensure
 	 * that it represents a valid section of the address space.
 	 */
-	// 找一个还没使用的虚拟地址
+	// 找一个还没使用的虚拟地址(查找虚拟内存树)
 	addr = get_unmapped_area(file, addr, len, pgoff, flags);
 	if (addr & ~PAGE_MASK) // 是否页对齐?
 		return addr;
@@ -449,6 +450,8 @@ unsigned long do_mmap_pgoff(struct file * file, unsigned long addr,
 		if (locked > current->rlim[RLIMIT_MEMLOCK].rlim_cur)
 			return -EAGAIN;
 	}
+
+	// 权限验证
 
 	if (file) { // 如果有文件与其关联
 		switch (flags & MAP_TYPE) {
@@ -549,12 +552,12 @@ munmap_back:
 		}
 		vma->vm_file = file;
 		get_file(file);
-		// 一般是generic_file_mmap()函数
+		// 一般是 generic_file_mmap() 函数
 		error = file->f_op->mmap(file, vma);
 		if (error)
 			goto unmap_and_free_vma;
 	} else if (flags & MAP_SHARED) {
-		error = shmem_zero_setup(vma);
+		error = shmem_zero_setup(vma); // 打开/dev/zero文件映射
 		if (error)
 			goto free_vma;
 	}
@@ -585,6 +588,7 @@ unmap_and_free_vma:
 	fput(file);
 
 	/* Undo any partial mapping done by a device driver. */
+	// 删除物理内存页与内存页表项
 	zap_page_range(mm, vma->vm_start, vma->vm_end - vma->vm_start);
 free_vma:
 	kmem_cache_free(vm_area_cachep, vma);
@@ -928,16 +932,16 @@ int do_munmap(struct mm_struct *mm, unsigned long addr, size_t len)
 	 * on the list.  If nothing is put on, nothing is affected.
 	 */
 	mpnt = find_vma_prev(mm, addr, &prev);
-	if (!mpnt)
+	if (!mpnt)  // Not found address's vm
 		return 0;
 	/* we have  addr < mpnt->vm_end  */
 
-	if (mpnt->vm_start >= addr+len)
+	if (mpnt->vm_start >= addr+len) // Not found address's vm
 		return 0;
 
 	/* If we'll make "hole", check the vm areas limit */
-	if ((mpnt->vm_start < addr && mpnt->vm_end > addr+len)
-	    && mm->map_count >= MAX_MAP_COUNT)
+	if ((mpnt->vm_start < addr && mpnt->vm_end > addr+len) // 这里需要分裂成两个vm
+	    && mm->map_count >= MAX_MAP_COUNT) // 但是vm数已经超过最大值, 返回错误
 		return -ENOMEM;
 
 	/*
@@ -950,12 +954,12 @@ int do_munmap(struct mm_struct *mm, unsigned long addr, size_t len)
 
 	npp = (prev ? &prev->vm_next : &mm->mmap);
 	free = NULL;
-	spin_lock(&mm->page_table_lock);
+	spin_lock(&mm->page_table_lock); // 只允许一个CPU运行(防止 swappd 进程修改)
 	for ( ; mpnt && mpnt->vm_start < addr+len; mpnt = *npp) {
 		*npp = mpnt->vm_next;
 		mpnt->vm_next = free;
 		free = mpnt;
-		rb_erase(&mpnt->vm_rb, &mm->mm_rb);
+		rb_erase(&mpnt->vm_rb, &mm->mm_rb); // 从红黑树中删除
 	}
 	mm->mmap_cache = NULL;	/* Kill the cache. */
 	spin_unlock(&mm->page_table_lock);
@@ -982,9 +986,10 @@ int do_munmap(struct mm_struct *mm, unsigned long addr, size_t len)
 		    (file = mpnt->vm_file) != NULL) {
 			atomic_dec(&file->f_dentry->d_inode->i_writecount);
 		}
-		remove_shared_vm_struct(mpnt);
+		remove_shared_vm_struct(mpnt); // 从共享链表中删除
 		mm->map_count--;
 
+		// 释放物理内存页和页表项(从st地址开始, 大小为size)
 		zap_page_range(mm, st, size);
 
 		/*

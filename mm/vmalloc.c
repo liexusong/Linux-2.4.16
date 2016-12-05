@@ -144,7 +144,7 @@ inline int vmalloc_area_pages (unsigned long address, unsigned long size,
 	int ret;
 
 	dir = pgd_offset_k(address);
-	spin_lock(&init_mm.page_table_lock);
+	spin_lock(&init_mm.page_table_lock); // lock kernel memory manager
 	do {
 		pmd_t *pmd;
 
@@ -238,6 +238,7 @@ void * __vmalloc (unsigned long size, int gfp_mask, pgprot_t prot)
 	if (!area)
 		return NULL;
 	addr = area->addr;
+	// 映射物理内存地址
 	if (vmalloc_area_pages(VMALLOC_VMADDR(addr), size, gfp_mask, prot)) {
 		vfree(addr);
 		return NULL;

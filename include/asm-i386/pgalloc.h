@@ -50,11 +50,11 @@ out_oom:
 
 static __inline__ pgd_t *get_pgd_slow(void)
 {
-	pgd_t *pgd = (pgd_t *)__get_free_page(GFP_KERNEL);
+	pgd_t *pgd = (pgd_t *)__get_free_page(GFP_KERNEL); // 获取一个内存页作为pgd
 
 	if (pgd) {
-		memset(pgd, 0, USER_PTRS_PER_PGD * sizeof(pgd_t));
-		memcpy(pgd + USER_PTRS_PER_PGD, swapper_pg_dir + USER_PTRS_PER_PGD, (PTRS_PER_PGD - USER_PTRS_PER_PGD) * sizeof(pgd_t));
+		memset(pgd, 0, USER_PTRS_PER_PGD * sizeof(pgd_t)); // 清空用户空间虚拟地址
+		memcpy(pgd + USER_PTRS_PER_PGD, swapper_pg_dir + USER_PTRS_PER_PGD, (PTRS_PER_PGD - USER_PTRS_PER_PGD) * sizeof(pgd_t)); // 复制内核空间
 	}
 	return pgd;
 }

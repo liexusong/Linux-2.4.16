@@ -55,7 +55,7 @@ static inline long do_mmap2(
 			goto out;
 	}
 
-	down_write(&current->mm->mmap_sem);
+	down_write(&current->mm->mmap_sem); // 锁住内存管理结构mm
 	error = do_mmap_pgoff(file, addr, len, prot, flags, pgoff);
 	up_write(&current->mm->mmap_sem);
 
@@ -152,7 +152,7 @@ asmlinkage int sys_ipc (uint call, int first, int second,
 	}
 
 	case MSGSND:
-		return sys_msgsnd (first, (struct msgbuf *) ptr, 
+		return sys_msgsnd (first, (struct msgbuf *) ptr,
 				   second, third);
 	case MSGRCV:
 		switch (version) {
@@ -160,9 +160,9 @@ asmlinkage int sys_ipc (uint call, int first, int second,
 			struct ipc_kludge tmp;
 			if (!ptr)
 				return -EINVAL;
-			
+
 			if (copy_from_user(&tmp,
-					   (struct ipc_kludge *) ptr, 
+					   (struct ipc_kludge *) ptr,
 					   sizeof (tmp)))
 				return -EFAULT;
 			return sys_msgrcv (first, tmp.msgp, second,
@@ -192,7 +192,7 @@ asmlinkage int sys_ipc (uint call, int first, int second,
 				return -EINVAL;
 			return sys_shmat (first, (char *) ptr, second, (ulong *) third);
 		}
-	case SHMDT: 
+	case SHMDT:
 		return sys_shmdt ((char *)ptr);
 	case SHMGET:
 		return sys_shmget (first, second, third);
@@ -226,9 +226,9 @@ asmlinkage int sys_olduname(struct oldold_utsname * name)
 		return -EFAULT;
 	if (!access_ok(VERIFY_WRITE,name,sizeof(struct oldold_utsname)))
 		return -EFAULT;
-  
+
   	down_read(&uts_sem);
-	
+
 	error = __copy_to_user(&name->sysname,&system_utsname.sysname,__OLD_UTS_LEN);
 	error |= __put_user(0,name->sysname+__OLD_UTS_LEN);
 	error |= __copy_to_user(&name->nodename,&system_utsname.nodename,__OLD_UTS_LEN);
@@ -239,9 +239,9 @@ asmlinkage int sys_olduname(struct oldold_utsname * name)
 	error |= __put_user(0,name->version+__OLD_UTS_LEN);
 	error |= __copy_to_user(&name->machine,&system_utsname.machine,__OLD_UTS_LEN);
 	error |= __put_user(0,name->machine+__OLD_UTS_LEN);
-	
+
 	up_read(&uts_sem);
-	
+
 	error = error ? -EFAULT : 0;
 
 	return error;
