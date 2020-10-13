@@ -124,7 +124,7 @@ void show_mem(void)
 extern char _text, _etext, _edata, __bss_start, _end;
 extern char __init_begin, __init_end;
 
-static inline void set_pte_phys (unsigned long vaddr,
+static inline void set_pte_phys(unsigned long vaddr,
 			unsigned long phys, pgprot_t flags)
 {
 	pgprot_t prot;
@@ -155,7 +155,7 @@ static inline void set_pte_phys (unsigned long vaddr,
 	__flush_tlb_one(vaddr);
 }
 
-void __set_fixmap (enum fixed_addresses idx, unsigned long phys, pgprot_t flags)
+void __set_fixmap(enum fixed_addresses idx, unsigned long phys, pgprot_t flags)
 {
 	unsigned long address = __fix_to_virt(idx);
 
@@ -166,7 +166,7 @@ void __set_fixmap (enum fixed_addresses idx, unsigned long phys, pgprot_t flags)
 	set_pte_phys(address, phys, flags);
 }
 
-static void __init fixrange_init (unsigned long start, unsigned long end, pgd_t *pgd_base)
+static void __init fixrange_init(unsigned long start, unsigned long end, pgd_t *pgd_base)
 {
 	pgd_t *pgd;
 	pmd_t *pmd;
@@ -204,7 +204,7 @@ static void __init fixrange_init (unsigned long start, unsigned long end, pgd_t 
 	}
 }
 
-static void __init pagetable_init (void)
+static void __init pagetable_init(void)
 {
 	unsigned long vaddr, end;
 	pgd_t *pgd, *pgd_base;

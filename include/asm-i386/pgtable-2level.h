@@ -5,14 +5,14 @@
  * traditional i386 two-level paging structure:
  */
 
-#define PGDIR_SHIFT	22
+#define PGDIR_SHIFT	    22
 #define PTRS_PER_PGD	1024
 
 /*
  * the i386 is two-level, so we don't really have any
  * PMD directory physically.
  */
-#define PMD_SHIFT	22
+#define PMD_SHIFT   	22
 #define PTRS_PER_PMD	1
 
 #define PTRS_PER_PTE	1024
@@ -32,7 +32,8 @@
 static inline int pgd_none(pgd_t pgd)		{ return 0; }
 static inline int pgd_bad(pgd_t pgd)		{ return 0; }
 static inline int pgd_present(pgd_t pgd)	{ return 1; }
-#define pgd_clear(xp)				do { } while (0)
+
+#define pgd_clear(xp)   do { } while (0)
 
 /*
  * Certain architectures need to do special things when PTEs
@@ -52,7 +53,7 @@ static inline int pgd_present(pgd_t pgd)	{ return 1; }
 
 static inline pmd_t * pmd_offset(pgd_t * dir, unsigned long address)
 {
-	return (pmd_t *) dir;
+	return (pmd_t *)dir;
 }
 #define ptep_get_and_clear(xp)	__pte(xchg(&(xp)->pte_low, 0))
 #define pte_same(a, b)		((a).pte_low == (b).pte_low)

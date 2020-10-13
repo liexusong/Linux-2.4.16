@@ -57,7 +57,7 @@ startup_32:
 
 /*
  *	New page tables may be in 4Mbyte page mode and may
- *	be using the global pages. 
+ *	be using the global pages.
  *
  *	NOTE! If we are on a 486 we may have no cr4 at all!
  *	So we do not try to touch it unless we really have
@@ -259,7 +259,7 @@ is386:	pushl %ecx		# restore original EFLAGS
 	lldt %ax
 	cld			# gcc2 wants the direction flag cleared at all times
 #ifdef CONFIG_SMP
-	movb ready, %cl	
+	movb ready, %cl
 	cmpb $1,%cl
 	je 1f			# the first CPU calls start_kernel
 				# all other CPUs call initialize_secondary
@@ -302,6 +302,20 @@ check_x87:
  *  and the kernel moved to PAGE_OFFSET. Interrupts
  *  are enabled elsewhere, when we can be relatively
  *  sure everything is ok.
+ */
+/* like this c codes:
+ * ------------------
+ * void setup_idt() {
+ *     int eax, edx;
+ *     edx = ignore_int;
+ *     eax = (__KERNEL_CS << 16) | (edx & 0xFFFF);
+ *     edx = (edx & 0xFFFF00) | 0x8E00;
+ *
+ *     for (i = 0; i < 256; i++) {
+ *         idt_table[i].a = eax;
+ *         idt_table[i].b = edx;
+ *     }
+ * }
  */
 setup_idt:
 	lea ignore_int,%edx
@@ -364,7 +378,7 @@ ignore_int:
 idt_descr:
 	.word IDT_ENTRIES*8-1		# idt contains 256 entries
 SYMBOL_NAME(idt):
-	.long SYMBOL_NAME(idt_table)
+	.long SYMBOL_NAME(idt_table) # idt pointer
 
 	.word 0
 gdt_descr:
@@ -446,7 +460,7 @@ ENTRY(gdt_table)
 	.quad 0x00009a0000000000	/* 0x50 APM CS 16 code (16 bit) */
 	.quad 0x0040920000000000	/* 0x58 APM DS    data */
 	.fill NR_CPUS*4,8,0		/* space for TSS's and LDT's */
-		
+
 /*
  * This is to aid debugging, the various locking macros will be putting
  * code fragments here.  When an oops occurs we'd rather know that it's

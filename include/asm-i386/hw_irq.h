@@ -162,7 +162,7 @@ __asm__( \
 	"call " SYMBOL_NAME_STR(do_IRQ) "\n\t" \
 	"jmp ret_from_intr\n");
 
-/* 
+/*
  * subtle. orig_eax is used by the signal code to distinct between
  * system calls and interrupted 'random user-space'. Thus we have
  * to put a negative value into orig_eax here. (the problem is that
@@ -172,12 +172,12 @@ __asm__( \
  * Subtle as a pigs ear.  VY
  */
 
-#define BUILD_IRQ(nr) \
-asmlinkage void IRQ_NAME(nr); \
-__asm__( \
-"\n"__ALIGN_STR"\n" \
-SYMBOL_NAME_STR(IRQ) #nr "_interrupt:\n\t" \
-	"pushl $"#nr"-256\n\t" \
+#define BUILD_IRQ(nr) 						\
+asmlinkage void IRQ_NAME(nr); 				\
+__asm__( 									\
+"\n"__ALIGN_STR"\n" 						\
+SYMBOL_NAME_STR(IRQ) #nr "_interrupt:\n\t" 	\
+	"pushl $"#nr"-256\n\t" 					\
 	"jmp common_interrupt");
 
 extern unsigned long prof_cpu_mask;

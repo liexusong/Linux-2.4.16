@@ -90,7 +90,7 @@ int kstack_depth_to_print = 24;
 
 /*
  * If the address is either in the .text section of the
- * kernel, or in the vmalloc'ed module regions, it *may* 
+ * kernel, or in the vmalloc'ed module regions, it *may*
  * be the address of a calling routine
  */
 
@@ -235,7 +235,7 @@ bad:
 		}
 	}
 	printk("\n");
-}	
+}
 
 spinlock_t die_lock = SPIN_LOCK_UNLOCKED;
 
@@ -289,7 +289,7 @@ static void inline do_trap(int trapnr, int signr, char *str, int vm86,
 		unsigned long fixup = search_exception_table(regs->eip);
 		if (fixup)
 			regs->eip = fixup;
-		else	
+		else
 			die(str, regs, error_code);
 		return;
 	}
@@ -462,7 +462,7 @@ asmlinkage void do_nmi(struct pt_regs * regs, long error_code)
  * from user space. Such code must not hold kernel locks (since it
  * can equally take a page fault), therefore it is safe to call
  * force_sig_info even though that claims and releases locks.
- * 
+ *
  * Code in ./signal.c ensures that the debug control register
  * is restored before we deliver any signal, and therefore that
  * user code runs with the correct debug control register even though
@@ -515,11 +515,11 @@ asmlinkage void do_debug(struct pt_regs * regs, long error_code)
 	info.si_signo = SIGTRAP;
 	info.si_errno = 0;
 	info.si_code = TRAP_BRKPT;
-	
-	/* If this is a kernel mode trap, save the user PC on entry to 
+
+	/* If this is a kernel mode trap, save the user PC on entry to
 	 * the kernel, that's what the debugger can make sense of.
 	 */
-	info.si_addr = ((regs->xcs & 3) == 0) ? (void *)tsk->thread.eip : 
+	info.si_addr = ((regs->xcs & 3) == 0) ? (void *)tsk->thread.eip :
 	                                        (void *)regs->eip;
 	force_sig_info(SIGTRAP, &info, tsk);
 
@@ -728,7 +728,7 @@ void __init trap_init_f00f_bug(void)
 	pte_t * pte;
 
 	/*
-	 * Allocate a new page in virtual address space, 
+	 * Allocate a new page in virtual address space,
 	 * move the IDT into it and write protect this page.
 	 */
 	page = (unsigned long) vmalloc(PAGE_SIZE);
@@ -752,17 +752,38 @@ void __init trap_init_f00f_bug(void)
 }
 #endif
 
-#define _set_gate(gate_addr,type,dpl,addr) \
-do { \
-  int __d0, __d1; \
-  __asm__ __volatile__ ("movw %%dx,%%ax\n\t" \
-	"movw %4,%%dx\n\t" \
-	"movl %%eax,%0\n\t" \
-	"movl %%edx,%1" \
-	:"=m" (*((long *) (gate_addr))), \
-	 "=m" (*(1+(long *) (gate_addr))), "=&a" (__d0), "=&d" (__d1) \
-	:"i" ((short) (0x8000+(dpl<<13)+(type<<8))), \
-	 "3" ((char *) (addr)),"2" (__KERNEL_CS << 16)); \
+/*
+0                    15                     31
++---------------------+----------------------+
+| gate address 0 ~ 15 |  code segment desc   |
++---------------------+----------------------+
+|    type and dpl     | gate address 16 ~ 31 |
++---------------------+----------------------+
+
+void _set_gate(int gate_addr[2], int type, int dpl, int addr) {
+	eax = __KERNEL_CS << 16;
+	eax |= addr & 0x0000FFFF;
+	edx = addr & 0xFFFF0000;
+	edx |= (0x8000+(dpl<<13)+(type<<8)) & 0x0000FFFF;
+
+	gate_addr[0] = eax;
+	gate_addr[1] = edx;
+}
+*/
+
+#define _set_gate(gate_addr,type,dpl,addr)							\
+do {																\
+	int __d0, __d1;													\
+	__asm__ __volatile__ ("movw %%dx,%%ax\n\t"						\
+	"movw %4,%%dx\n\t"												\
+	"movl %%eax,%0\n\t"												\
+	"movl %%edx,%1"													\
+	/* output */													\
+	:"=m" (*((long *) (gate_addr))),								\
+	 "=m" (*(1+(long *) (gate_addr))), "=&a" (__d0), "=&d" (__d1)	\
+	/* input */														\
+	:"i" ((short)(0x8000+(dpl<<13)+(type<<8))),						\
+	 "3" ((char *)(addr)), "2" (__KERNEL_CS << 16));				\
 } while (0)
 
 
@@ -941,7 +962,7 @@ void __init trap_init(void)
 	set_trap_gate(18,&machine_check);
 	set_trap_gate(19,&simd_coprocessor_error);
 
-	set_system_gate(SYSCALL_VECTOR,&system_call);
+	set_system_gate(SYSCALL_VECTOR,&system_call); // SYSCALL_VECTOR = 0x80
 
 	/*
 	 * default LDT is a single-entry callgate to lcall7 for iBCS

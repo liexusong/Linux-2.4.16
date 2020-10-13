@@ -40,7 +40,7 @@ BUILD_COMMON_IRQ()
 #define BI(x,y) \
 	BUILD_IRQ(x##y)
 
-#define BUILD_16_IRQS(x) \
+#define BUILD_16_IRQS(x) 			\
 	BI(x,0) BI(x,1) BI(x,2) BI(x,3) \
 	BI(x,4) BI(x,5) BI(x,6) BI(x,7) \
 	BI(x,8) BI(x,9) BI(x,a) BI(x,b) \
@@ -54,7 +54,7 @@ BUILD_16_IRQS(0x0)
 
 #ifdef CONFIG_X86_IO_APIC
 /*
- * The IO-APIC gives us many more interrupt sources. Most of these 
+ * The IO-APIC gives us many more interrupt sources. Most of these
  * are unused but an SMP system is supposed to have enough memory ...
  * sometimes (mostly wrt. hw bugs) we get corrupted vectors all
  * across the spectrum, so we really want to be prepared to get all
@@ -63,7 +63,7 @@ BUILD_16_IRQS(0x0)
  *
  * (these are usually mapped into the 0x30-0xff vector range)
  */
-		   BUILD_16_IRQS(0x1) BUILD_16_IRQS(0x2) BUILD_16_IRQS(0x3)
+BUILD_16_IRQS(0x1) BUILD_16_IRQS(0x2) BUILD_16_IRQS(0x3)
 BUILD_16_IRQS(0x4) BUILD_16_IRQS(0x5) BUILD_16_IRQS(0x6) BUILD_16_IRQS(0x7)
 BUILD_16_IRQS(0x8) BUILD_16_IRQS(0x9) BUILD_16_IRQS(0xa) BUILD_16_IRQS(0xb)
 BUILD_16_IRQS(0xc) BUILD_16_IRQS(0xd)
@@ -110,7 +110,7 @@ void (*interrupt[NR_IRQS])(void) = {
 	IRQLIST_16(0x0),
 
 #ifdef CONFIG_X86_IO_APIC
-			 IRQLIST_16(0x1), IRQLIST_16(0x2), IRQLIST_16(0x3),
+	IRQLIST_16(0x1), IRQLIST_16(0x2), IRQLIST_16(0x3),
 	IRQLIST_16(0x4), IRQLIST_16(0x5), IRQLIST_16(0x6), IRQLIST_16(0x7),
 	IRQLIST_16(0x8), IRQLIST_16(0x9), IRQLIST_16(0xa), IRQLIST_16(0xb),
 	IRQLIST_16(0xc), IRQLIST_16(0xd)
@@ -142,7 +142,7 @@ static void end_8259A_irq (unsigned int irq)
 void mask_and_ack_8259A(unsigned int);
 
 static unsigned int startup_8259A_irq(unsigned int irq)
-{ 
+{
 	enable_8259A_irq(irq);
 	return 0; /* never anything pending */
 }
@@ -387,7 +387,7 @@ void __init init_8259A(int auto_eoi)
  * leads to races. IBM designers who came up with it should
  * be shot.
  */
- 
+
 static void math_error_irq(int cpl, void *dev_id, struct pt_regs *regs)
 {
 	extern void math_error(void *);
@@ -456,7 +456,7 @@ void __init init_IRQ(void)
 	 */
 	for (i = 0; i < NR_IRQS; i++) {
 		int vector = FIRST_EXTERNAL_VECTOR + i;
-		if (vector != SYSCALL_VECTOR) 
+		if (vector != SYSCALL_VECTOR)
 			set_intr_gate(vector, interrupt[i]);
 	}
 
@@ -478,7 +478,7 @@ void __init init_IRQ(void)
 
 	/* IPI for generic function call */
 	set_intr_gate(CALL_FUNCTION_VECTOR, call_function_interrupt);
-#endif	
+#endif
 
 #ifdef CONFIG_X86_LOCAL_APIC
 	/* self generated IPI for local APIC timer */
@@ -493,9 +493,9 @@ void __init init_IRQ(void)
 	 * Set the clock to HZ Hz, we already have a valid
 	 * vector now:
 	 */
-	outb_p(0x34,0x43);		/* binary, mode 2, LSB/MSB, ch 0 */
+	outb_p(0x34,0x43);				/* binary, mode 2, LSB/MSB, ch 0 */
 	outb_p(LATCH & 0xff , 0x40);	/* LSB */
-	outb(LATCH >> 8 , 0x40);	/* MSB */
+	outb(LATCH >> 8 , 0x40);		/* MSB */
 
 #ifndef CONFIG_VISWS
 	setup_irq(2, &irq2);

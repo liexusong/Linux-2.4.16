@@ -659,7 +659,7 @@ struct fcb_type  /*  File, char, block type  */
     uid_t default_uid;
     gid_t default_gid;
     void *ops;
-    union 
+    union
     {
 	struct file_type file;
 	struct device_type device;
@@ -699,7 +699,7 @@ struct devfs_inode  /*  This structure is for "persistent" inode storage  */
 struct devfs_entry
 {
     void *info;
-    union 
+    union
     {
 	struct directory_type dir;
 	struct fcb_type fcb;
@@ -2306,7 +2306,7 @@ static void devfs_clear_inode(struct inode *inode)
 }
 
 static struct super_operations devfs_sops =
-{ 
+{
     put_inode:     force_delete,
     clear_inode:   devfs_clear_inode,
     statfs:        devfs_statfs,

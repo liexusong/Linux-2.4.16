@@ -281,6 +281,7 @@ error_code:
 	movl %eax, ORIG_EAX(%esp)
 	movl %ecx, ES(%esp)
 	movl %esp,%edx
+	# void exception_handler(struct pt_regs *regs, long error_code)
 	pushl %esi			# push the error code
 	pushl %edx			# push the pt_regs pointer
 	movl $(__KERNEL_DS),%edx
