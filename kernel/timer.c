@@ -535,7 +535,7 @@ static inline void do_process_times(struct task_struct *p,
 	}
 }
 
-static inline void do_it_virt(struct task_struct * p, unsigned long ticks)
+static inline void do_it_virt(struct task_struct *p, unsigned long ticks)
 {
 	unsigned long it_virt = p->it_virt_value;
 
@@ -656,7 +656,7 @@ static inline void update_times(void)
 	 */
 	write_lock_irq(&xtime_lock);
 
-	ticks = jiffies - wall_jiffies;
+	ticks = jiffies - wall_jiffies; // 执行timer中断下半部时, 已经发生了多少次时钟中断
 	if (ticks) {
 		wall_jiffies += ticks;
 		update_wall_time(ticks);

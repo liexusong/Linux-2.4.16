@@ -13,24 +13,24 @@ struct task_struct;	/* one of the stranger aspects of C forward declarations.. *
 extern void FASTCALL(__switch_to(struct task_struct *prev, struct task_struct *next));
 
 #define prepare_to_switch()	do { } while(0)
-#define switch_to(prev,next,last) do {					\
-	asm volatile("pushl %%esi\n\t"					\
-		     "pushl %%edi\n\t"					\
-		     "pushl %%ebp\n\t"					\
-		     "movl %%esp,%0\n\t"	/* save ESP */		\
-		     "movl %3,%%esp\n\t"	/* restore ESP */	\
-		     "movl $1f,%1\n\t"		/* save EIP */		\
-		     "pushl %4\n\t"		/* restore EIP */	\
-		     "jmp __switch_to\n"				\
-		     "1:\t"						\
-		     "popl %%ebp\n\t"					\
-		     "popl %%edi\n\t"					\
-		     "popl %%esi\n\t"					\
-		     :"=m" (prev->thread.esp),"=m" (prev->thread.eip),	\
-		      "=b" (last)					\
-		     :"m" (next->thread.esp),"m" (next->thread.eip),	\
-		      "a" (prev), "d" (next),				\
-		      "b" (prev));					\
+#define switch_to(prev,next,last) do {							\
+	asm volatile("pushl %%esi\n\t"								\
+			"pushl %%edi\n\t"									\
+			"pushl %%ebp\n\t"									\
+			"movl %%esp,%0\n\t"		/* save prev ESP */			\
+			"movl %3,%%esp\n\t"		/* restore next ESP */		\
+			"movl $1f,%1\n\t"		/* save prev EIP */			\
+			"pushl %4\n\t"			/* restore next EIP */		\
+			"jmp __switch_to\n"									\
+			"1:\t"												\
+			"popl %%ebp\n\t"									\
+			"popl %%edi\n\t"									\
+			"popl %%esi\n\t"									\
+			:"=m" (prev->thread.esp),"=m" (prev->thread.eip),	\
+				"=b" (last)										\
+			:"m" (next->thread.esp),"m" (next->thread.eip),		\
+				"a" (prev), "d" (next),							\
+				"b" (prev));									\
 } while (0)
 
 #define _set_base(addr,base) do { unsigned long __pr; \
@@ -264,7 +264,7 @@ static inline unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
 #define cmpxchg(ptr,o,n)\
 	((__typeof__(*(ptr)))__cmpxchg((ptr),(unsigned long)(o),\
 					(unsigned long)(n),sizeof(*(ptr))))
-    
+
 #else
 /* Compiling for a 386 proper.	Is it worth implementing via cli/sti?  */
 #endif
@@ -286,7 +286,7 @@ static inline unsigned long __cmpxchg(volatile void *ptr, unsigned long old,
  * Some non intel clones support out of order store. wmb() ceases to be a
  * nop for these.
  */
- 
+
 #define mb() 	__asm__ __volatile__ ("lock; addl $0,0(%%esp)": : :"memory")
 #define rmb()	mb()
 

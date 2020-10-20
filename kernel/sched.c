@@ -100,7 +100,7 @@ static LIST_HEAD(runqueue_head);
  */
 static union {
 	struct schedule_data {
-		struct task_struct * curr;
+		struct task_struct *curr; // CPU当前运行的进程
 		cycles_t last_schedule;
 	} schedule_data;
 	char __pad [SMP_CACHE_BYTES];
@@ -140,8 +140,8 @@ void scheduling_functions_start_here(void) { }
  *	   +ve: "goodness" value (the larger, the better)
  *	 +1000: realtime process, select this.
  */
-
-static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struct *this_mm)
+// 计算一个进程的nice值
+static inline int goodness(struct task_struct *p, int this_cpu, struct mm_struct *this_mm)
 {
 	int weight;
 
@@ -151,13 +151,13 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	 * Also, dont trigger a counter recalculation.
 	 */
 	weight = -1;
-	if (p->policy & SCHED_YIELD)
+	if (p->policy & SCHED_YIELD) // 如果进程设置了 `SCHED_YIELD` 标志
 		goto out;
 
 	/*
 	 * Non-RT process - normal case first.
 	 */
-	if (p->policy == SCHED_OTHER) {
+	if (p->policy == SCHED_OTHER) { // 不是实时进程
 		/*
 		 * Give the process a first-approximation goodness value
 		 * according to the number of clock-ticks it has left.
@@ -172,7 +172,7 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 #ifdef CONFIG_SMP
 		/* Give a largish advantage to the same processor...   */
 		/* (this is equivalent to penalizing other processors) */
-		if (p->processor == this_cpu)
+		if (p->processor == this_cpu) // 如果当前进程运行在当前CPU, 那么奖励15分
 			weight += PROC_CHANGE_PENALTY;
 #endif
 
@@ -188,7 +188,7 @@ static inline int goodness(struct task_struct * p, int this_cpu, struct mm_struc
 	 * runqueue (taking priorities within processes
 	 * into account).
 	 */
-	weight = 1000 + p->rt_priority;
+	weight = 1000 + p->rt_priority; // 如果是实时进程, 直接返回1000+..., 这样就必须先运行实时进程
 out:
 	return weight;
 }
@@ -532,20 +532,20 @@ asmlinkage void schedule_tail(struct task_struct *prev)
  * tasks can run. It can not be killed, and it cannot sleep. The 'state'
  * information in task[0] is never used.
  */
+// 进程调度函数...
 asmlinkage void schedule(void)
 {
-	struct schedule_data * sched_data;
-	struct task_struct *prev, *next, *p;
+	struct schedule_data *sched_data;
+	struct task_struct *prev, *next, *p; // prev: 要切换的进程, next: 要被运行的进程
 	struct list_head *tmp;
 	int this_cpu, c;
-
 
 	spin_lock_prefetch(&runqueue_lock);
 
 	if (!current->active_mm) BUG();
 need_resched_back:
 	prev = current;
-	this_cpu = prev->processor;
+	this_cpu = prev->processor; // 当前CPU
 
 	if (unlikely(in_interrupt())) {
 		printk("Scheduling in interrupt\n");
@@ -571,7 +571,7 @@ need_resched_back:
 
 	switch (prev->state) {
 		case TASK_INTERRUPTIBLE:
-			if (signal_pending(prev)) {
+			if (signal_pending(prev)) { // 如果接收到信号, 把当前进程设置为running
 				prev->state = TASK_RUNNING;
 				break;
 			}
@@ -593,15 +593,15 @@ repeat_schedule:
 	c = -1000;
 	list_for_each(tmp, &runqueue_head) {
 		p = list_entry(tmp, struct task_struct, run_list);
-		if (can_schedule(p, this_cpu)) {
-			int weight = goodness(p, this_cpu, prev->active_mm);
+		if (can_schedule(p, this_cpu)) { // 进程是否能够在当前CPU运行
+			int weight = goodness(p, this_cpu, prev->active_mm); // 计算权重
 			if (weight > c)
 				c = weight, next = p;
 		}
 	}
 
 	/* Do we need to re-calculate counters? */
-	if (unlikely(!c)) {
+	if (unlikely(!c)) { // 如果所有进程时间片都用光, 重新计算进程的时间片
 		struct task_struct *p;
 
 		spin_unlock_irq(&runqueue_lock);
@@ -646,7 +646,7 @@ repeat_schedule:
 
 #endif /* CONFIG_SMP */
 
-	kstat.context_swtch++;
+	kstat.context_swtch++; // 统计上下文切换的次数
 	/*
 	 * there are 3 processes which are affected by a context switch:
 	 *
@@ -656,18 +656,18 @@ repeat_schedule:
 	 * but prev is set to (the just run) 'last' process by switch_to().
 	 * This might sound slightly confusing but makes tons of sense.
 	 */
-	prepare_to_switch();
+	prepare_to_switch(); // 切换内存空间
 	{
 		struct mm_struct *mm = next->mm;
 		struct mm_struct *oldmm = prev->active_mm;
-		if (!mm) {
+		if (!mm) { // 如果要被运行的进程是一个内核进程
 			if (next->active_mm) BUG();
-			next->active_mm = oldmm;
+			next->active_mm = oldmm; // 借用上一个进程的内存空间
 			atomic_inc(&oldmm->mm_count);
 			enter_lazy_tlb(oldmm, next, this_cpu);
 		} else {
 			if (next->active_mm != mm) BUG();
-			switch_mm(oldmm, mm, next, this_cpu);
+			switch_mm(oldmm, mm, next, this_cpu); // 切换内存空间
 		}
 
 		if (!prev->mm) {
@@ -680,7 +680,7 @@ repeat_schedule:
 	 * This just switches the register state and the
 	 * stack.
 	 */
-	switch_to(prev, next, prev);
+	switch_to(prev, next, prev); // 开始进行调度
 	__schedule_tail(prev);
 
 same_process:
@@ -699,7 +699,7 @@ same_process:
  * started to run but is not in state TASK_RUNNING.  try_to_wake_up() returns zero
  * in this (rare) case, and we handle it by contonuing to scan the queue.
  */
-static inline void __wake_up_common (wait_queue_head_t *q, unsigned int mode,
+static inline void __wake_up_common(wait_queue_head_t *q, unsigned int mode,
 			 	     int nr_exclusive, const int sync)
 {
 	struct list_head *tmp;

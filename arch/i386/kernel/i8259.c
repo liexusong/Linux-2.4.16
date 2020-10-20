@@ -345,9 +345,9 @@ void __init init_8259A(int auto_eoi)
 	/*
 	 * outb_p - this has to work on a wide range of PC hardware.
 	 */
-	outb_p(0x11, 0x20);	/* ICW1: select 8259A-1 init */
+	outb_p(0x11, 0x20);		/* ICW1: select 8259A-1 init */
 	outb_p(0x20 + 0, 0x21);	/* ICW2: 8259A-1 IR0-7 mapped to 0x20-0x27 */
-	outb_p(0x04, 0x21);	/* 8259A-1 (the master) has a slave on IR2 */
+	outb_p(0x04, 0x21);		/* 8259A-1 (the master) has a slave on IR2 */
 	if (auto_eoi)
 		outb_p(0x03, 0x21);	/* master does Auto EOI */
 	else
@@ -493,9 +493,9 @@ void __init init_IRQ(void)
 	 * Set the clock to HZ Hz, we already have a valid
 	 * vector now:
 	 */
-	outb_p(0x34,0x43);				/* binary, mode 2, LSB/MSB, ch 0 */
-	outb_p(LATCH & 0xff , 0x40);	/* LSB */
-	outb(LATCH >> 8 , 0x40);		/* MSB */
+	outb_p(0x34, 0x43);			/* binary, mode 2, LSB/MSB, ch 0 */
+	outb_p(LATCH & 0xff, 0x40);	/* LSB */
+	outb(LATCH >> 8, 0x40);		/* MSB */
 
 #ifndef CONFIG_VISWS
 	setup_irq(2, &irq2);

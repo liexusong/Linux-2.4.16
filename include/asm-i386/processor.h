@@ -383,41 +383,41 @@ struct thread_struct {
 	unsigned long	io_bitmap[IO_BITMAP_SIZE+1];
 };
 
-#define INIT_THREAD  {						\
-	0,							\
-	0, 0, 0, 0, 						\
+#define INIT_THREAD  {								\
+	0,												\
+	0, 0, 0, 0, 									\
 	{ [0 ... 7] = 0 },	/* debugging registers */	\
-	0, 0, 0,						\
-	{ { 0, }, },		/* 387 state */			\
-	0,0,0,0,0,0,						\
-	0,{~0,}			/* io permissions */		\
+	0, 0, 0,										\
+	{ { 0, }, },		/* 387 state */				\
+	0,0,0,0,0,0,									\
+	0,{~0,}			/* io permissions */			\
 }
 
-#define INIT_TSS  {						\
-	0,0, /* back_link, __blh */				\
+#define INIT_TSS  {										\
+	0,0, /* back_link, __blh */							\
 	sizeof(init_stack) + (long) &init_stack, /* esp0 */	\
-	__KERNEL_DS, 0, /* ss0 */				\
-	0,0,0,0,0,0, /* stack1, stack2 */			\
-	0, /* cr3 */						\
-	0,0, /* eip,eflags */					\
-	0,0,0,0, /* eax,ecx,edx,ebx */				\
-	0,0,0,0, /* esp,ebp,esi,edi */				\
-	0,0,0,0,0,0, /* es,cs,ss */				\
-	0,0,0,0,0,0, /* ds,fs,gs */				\
-	__LDT(0),0, /* ldt */					\
+	__KERNEL_DS, 0, /* ss0 */							\
+	0,0,0,0,0,0, /* stack1, stack2 */					\
+	0, /* cr3 */										\
+	0,0, /* eip,eflags */								\
+	0,0,0,0, /* eax,ecx,edx,ebx */						\
+	0,0,0,0, /* esp,ebp,esi,edi */						\
+	0,0,0,0,0,0, /* es,cs,ss */							\
+	0,0,0,0,0,0, /* ds,fs,gs */							\
+	__LDT(0),0, /* ldt */								\
 	0, INVALID_IO_BITMAP_OFFSET, /* tace, bitmap */		\
-	{~0, } /* ioperm */					\
+	{~0, } /* ioperm */									\
 }
 
 #define start_thread(regs, new_eip, new_esp) do {		\
 	__asm__("movl %0,%%fs ; movl %0,%%gs": :"r" (0));	\
-	set_fs(USER_DS);					\
-	regs->xds = __USER_DS;					\
-	regs->xes = __USER_DS;					\
-	regs->xss = __USER_DS;					\
-	regs->xcs = __USER_CS;					\
-	regs->eip = new_eip;					\
-	regs->esp = new_esp;					\
+	set_fs(USER_DS);									\
+	regs->xds = __USER_DS;								\
+	regs->xes = __USER_DS;								\
+	regs->xss = __USER_DS;								\
+	regs->xcs = __USER_CS;								\
+	regs->eip = new_eip;								\
+	regs->esp = new_esp;								\
 } while (0)
 
 /* Forward declaration, a strange C thing */

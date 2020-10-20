@@ -120,9 +120,9 @@ extern spinlock_t i8259A_lock;
 
 #ifndef CONFIG_X86_TSC
 
-/* This function must be called with interrupts disabled 
+/* This function must be called with interrupts disabled
  * It was inspired by Steve McCanne's microtime-i386 for BSD.  -- jrs
- * 
+ *
  * However, the pc-audio speaker driver changes the divisor so that
  * it gets interrupted rather more often - it loads 64 into the
  * counter rather than 11932! This has an adverse impact on
@@ -136,7 +136,7 @@ extern spinlock_t i8259A_lock;
  * using either the RTC or the 8253 timer. The decision would be
  * based on whether there was any other device around that needed
  * to trample on the 8253. I'd set up the RTC to interrupt at 1024 Hz,
- * and then do some jiggery to have a version of do_timer that 
+ * and then do some jiggery to have a version of do_timer that
  * advanced the clock by 1/1024 s. Every time that reached over 1/100
  * of a second, then do all the old code. If the time was kept correct
  * then do_gettimeoffset could just return 0 - there is no low order
@@ -147,7 +147,7 @@ extern spinlock_t i8259A_lock;
  * often than every 120 us or so.
  *
  * Anyway, this needs more thought....		pjsg (1993-08-28)
- * 
+ *
  * If you are really that interested, you should be reading
  * comp.protocols.time.ntp!
  */
@@ -160,7 +160,7 @@ static unsigned long do_slow_gettimeoffset(void)
 	static unsigned long jiffies_p = 0;
 
 	/*
-	 * cache volatile jiffies temporarily; we have IRQs turned off. 
+	 * cache volatile jiffies temporarily; we have IRQs turned off.
 	 */
 	unsigned long jiffies_t;
 
@@ -172,13 +172,13 @@ static unsigned long do_slow_gettimeoffset(void)
 	count = inb_p(0x40);	/* read the latched count */
 
 	/*
-	 * We do this guaranteed double memory access instead of a _p 
+	 * We do this guaranteed double memory access instead of a _p
 	 * postfix in the previous port access. Wheee, hackady hack
 	 */
  	jiffies_t = jiffies;
 
 	count |= inb_p(0x40) << 8;
-	
+
         /* VIA686a test code... reset the latch if count > max + 1 */
         if (count > LATCH) {
                 outb_p(0x34, 0x43);
@@ -186,7 +186,7 @@ static unsigned long do_slow_gettimeoffset(void)
                 outb(LATCH >> 8, 0x40);
                 count = LATCH - 1;
         }
-	
+
 	spin_unlock(&i8253_lock);
 
 	/*
@@ -219,7 +219,7 @@ static unsigned long do_slow_gettimeoffset(void)
 			/* assumption about timer being IRQ0 */
 			if (i & 0x01) {
 				/*
-				 * We cannot detect lost timer interrupts ... 
+				 * We cannot detect lost timer interrupts ...
 				 * well, that's why we call them lost, don't we? :)
 				 * [hmm, on the Pentium and Alpha we can ... sort of]
 				 */
@@ -229,8 +229,8 @@ static unsigned long do_slow_gettimeoffset(void)
 				/*
 				 * for the Neptun bug we know that the 'latch'
 				 * command doesnt latch the high and low value
-				 * of the counter atomically. Thus we have to 
-				 * substract 256 from the counter 
+				 * of the counter atomically. Thus we have to
+				 * substract 256 from the counter
 				 * ... funny, isnt it? :)
 				 */
 
@@ -440,7 +440,7 @@ static inline void do_timer_interrupt(int irq, void *dev_id, struct pt_regs *reg
 		else
 			last_rtc_update = xtime.tv_sec - 600; /* do it again in 60 s */
 	}
-	    
+
 #ifdef CONFIG_MCA
 	if( MCA_bus ) {
 		/* The PS/2 uses level-triggered interrupts.  You can't
@@ -452,8 +452,8 @@ static inline void do_timer_interrupt(int irq, void *dev_id, struct pt_regs *reg
 		high bit of the PPI port B (0x61).  Note that some PS/2s,
 		notably the 55SX, work fine if this is removed.  */
 
-		irq = inb_p( 0x61 );	/* read the current state */
-		outb_p( irq|0x80, 0x61 );	/* reset the IRQ */
+		irq = inb_p(0x61);	/* read the current state */
+		outb_p(irq|0x80, 0x61);	/* reset the IRQ */
 	}
 #endif
 }
@@ -491,7 +491,7 @@ static void timer_interrupt(int irq, void *dev_id, struct pt_regs *regs)
 		 * Interrupts are just disabled locally since the timer irq
 		 * has the SA_INTERRUPT flag set. -arca
 		 */
-	
+
 		/* read Pentium cycle counter */
 
 		rdtscl(last_tsc_low);
@@ -506,7 +506,7 @@ static void timer_interrupt(int irq, void *dev_id, struct pt_regs *regs)
 		count = ((LATCH-1) - count) * TICK_SIZE;
 		delay_at_last_interrupt = (count + LATCH/2) / LATCH;
 	}
- 
+
 	do_timer_interrupt(irq, NULL, regs);
 
 	write_unlock(&xtime_lock);
@@ -555,9 +555,9 @@ unsigned long get_cmos_time(void)
 	return mktime(year, mon, day, hour, min, sec);
 }
 
-static struct irqaction irq0  = { timer_interrupt, SA_INTERRUPT, 0, "timer", NULL, NULL};
+static struct irqaction irq0  = {timer_interrupt, SA_INTERRUPT, 0, "timer", NULL, NULL};
 
-/* ------ Calibrate the TSC ------- 
+/* ------ Calibrate the TSC -------
  * Return 2^32 * (1 / (TSC clocks per usec)) for do_fast_gettimeoffset().
  * Too much 64-bit arithmetic here to do this cleanly in C, and for
  * accuracy's sake we want to keep the overhead on the CTC speaker (channel 2)
@@ -637,7 +637,7 @@ bad_ctc:
 void __init time_init(void)
 {
 	extern int x86_udelay_tsc;
-	
+
 	xtime.tv_sec = get_cmos_time();
 	xtime.tv_usec = 0;
 
@@ -665,9 +665,9 @@ void __init time_init(void)
  	 *	some CPU's have a TSC. Thats never worked and nobody has
  	 *	moaned if you have the only one in the world - you fix it!
  	 */
- 
+
  	dodgy_tsc();
- 	
+
 	if (cpu_has_tsc) {
 		unsigned long tsc_quotient = calibrate_tsc();
 		if (tsc_quotient) {

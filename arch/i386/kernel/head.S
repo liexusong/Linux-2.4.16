@@ -84,7 +84,7 @@ startup_32:
 	movl $pg0-__PAGE_OFFSET,%edi /* initialize page tables */
 	movl $007,%eax		/* "007" doesn't mean with right to kill, but
 				   PRESENT+RW+USER */
-2:	stosl
+2:	stosl              /* stosl 指令: 将AL/AX/EAX的值存储到[EDI]指定的内存单元 */
 	add $0x1000,%eax
 	cmp $empty_zero_page-__PAGE_OFFSET,%edi
 	jne 2b

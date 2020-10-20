@@ -579,7 +579,7 @@ asmlinkage unsigned int do_IRQ(struct pt_regs regs)
 	unsigned int status;
 
 	kstat.irqs[cpu][irq]++;
-	spin_lock(&desc->lock);
+	spin_lock(&desc->lock); // 防止其他CPU并发访问
 	desc->handler->ack(irq);
 	/*
 	   REPLAY is when Linux resends an IRQ that was dropped earlier

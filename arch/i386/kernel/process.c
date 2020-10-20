@@ -181,10 +181,10 @@ static int __init reboot_setup(char *str)
 			reboot_smp = 1;
 			if (is_digit(*(str+1))) {
 				reboot_cpu = (int) (*(str+1) - '0');
-				if (is_digit(*(str+2))) 
+				if (is_digit(*(str+2)))
 					reboot_cpu = reboot_cpu*10 + (int)(*(str+2) - '0');
 			}
-				/* we will leave sorting out the final value 
+				/* we will leave sorting out the final value
 				when we are ready to reboot, since we might not
  				have set up boot_cpu_id or smp_num_cpu */
 			break;
@@ -366,28 +366,28 @@ void machine_restart(char * __unused)
 {
 #if CONFIG_SMP
 	int cpuid;
-	
+
 	cpuid = GET_APIC_ID(apic_read(APIC_ID));
 
 	if (reboot_smp) {
 
-		/* check to see if reboot_cpu is valid 
+		/* check to see if reboot_cpu is valid
 		   if its not, default to the BSP */
-		if ((reboot_cpu == -1) ||  
-		      (reboot_cpu > (NR_CPUS -1))  || 
-		      !(phys_cpu_present_map & (1<<cpuid))) 
+		if ((reboot_cpu == -1) ||
+		      (reboot_cpu > (NR_CPUS -1))  ||
+		      !(phys_cpu_present_map & (1<<cpuid)))
 			reboot_cpu = boot_cpu_physical_apicid;
 
 		reboot_smp = 0;  /* use this as a flag to only go through this once*/
 		/* re-run this function on the other CPUs
-		   it will fall though this section since we have 
+		   it will fall though this section since we have
 		   cleared reboot_smp, and do the reboot if it is the
 		   correct CPU, otherwise it halts. */
 		if (reboot_cpu != cpuid)
 			smp_call_function((void *)machine_restart , NULL, 1, 0);
 	}
 
-	/* if reboot_cpu is still -1, then we want a tradional reboot, 
+	/* if reboot_cpu is still -1, then we want a tradional reboot,
 	   and if we are not running on the reboot_cpu,, halt */
 	if ((reboot_cpu != -1) && (cpuid != reboot_cpu)) {
 		for (;;)
@@ -497,7 +497,7 @@ int kernel_thread(int (*fn)(void *), void * arg, unsigned long flags)
 		 * not matter whether the called function is compiled with
 		 * -mregparm or not.  */
 		"movl %4,%%eax\n\t"
-		"pushl %%eax\n\t"		
+		"pushl %%eax\n\t"
 		"call *%5\n\t"		/* call fn */
 		"movl %3,%0\n\t"	/* exit */
 		"int $0x80\n"
@@ -616,7 +616,7 @@ void dump_thread(struct pt_regs * regs, struct user * dump)
 	dump->u_dsize -= dump->u_tsize;
 	dump->u_ssize = 0;
 	for (i = 0; i < 8; i++)
-		dump->u_debugreg[i] = current->thread.debugreg[i];  
+		dump->u_debugreg[i] = current->thread.debugreg[i];
 
 	if (dump->start_stack < TASK_SIZE)
 		dump->u_ssize = ((unsigned long) (TASK_SIZE - dump->start_stack)) >> PAGE_SHIFT;
@@ -675,8 +675,7 @@ void dump_thread(struct pt_regs * regs, struct user * dump)
  */
 void __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 {
-	struct thread_struct *prev = &prev_p->thread,
-				 *next = &next_p->thread;
+	struct thread_struct *prev = &prev_p->thread, *next = &next_p->thread;
 	struct tss_struct *tss = init_tss + smp_processor_id();
 
 	unlazy_fpu(prev_p);
@@ -684,7 +683,7 @@ void __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 	/*
 	 * Reload esp0, LDT and the page table pointer:
 	 */
-	tss->esp0 = next->esp0;
+	tss->esp0 = next->esp0; // 设置成新进程的内核栈
 
 	/*
 	 * Save away %fs and %gs. No need to save %es and %ds, as
