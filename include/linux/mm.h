@@ -41,36 +41,37 @@ extern struct list_head inactive_list;
  * library, the executable area etc).
  */
 struct vm_area_struct {
-	struct mm_struct * vm_mm;	/* The address space we belong to. */
-	unsigned long vm_start;		/* Our start address within vm_mm. */
-	unsigned long vm_end;		/* The first byte after our end address
+	struct mm_struct *vm_mm;	/* The address space we belong to. */ // 属于哪个mm_stcut结构
+	unsigned long vm_start;		/* Our start address within vm_mm. */ // 内存区开始地址
+	unsigned long vm_end;		/* The first byte after our end address // 内存区结束地址
 					   within vm_mm. */
 
 	/* linked list of VM areas per task, sorted by address */
-	struct vm_area_struct *vm_next;
+	struct vm_area_struct *vm_next; // 用于连接同一个内存空间的不同内存区
 
-	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */
+	pgprot_t vm_page_prot;		/* Access permissions of this VMA. */ // 访问权限
 	unsigned long vm_flags;		/* Flags, listed below. */
 
-	rb_node_t vm_rb;
+	rb_node_t vm_rb;            // 用于插入到mm_struct的红黑树中
 
 	/*
 	 * For areas with an address space and backing store,
 	 * one of the address_space->i_mmap{,shared} lists,
 	 * for shm areas, the list of attaches, otherwise unused.
 	 */
+	// 用于共享内存区
 	struct vm_area_struct *vm_next_share;
 	struct vm_area_struct **vm_pprev_share;
 
 	/* Function pointers to deal with this struct. */
-	struct vm_operations_struct * vm_ops;
+	struct vm_operations_struct *vm_ops; // 内存区相关的操作函数指针
 
 	/* Information about our backing store: */
 	unsigned long vm_pgoff;		/* Offset (within vm_file) in PAGE_SIZE
-					   units, *not* PAGE_CACHE_SIZE */
-	struct file * vm_file;		/* File we map to (can be NULL). */
+								   units, *not* PAGE_CACHE_SIZE */
+	struct file *vm_file;		/* File we map to (can be NULL). */ // 映射的文件对象
 	unsigned long vm_raend;		/* XXX: put full readahead info here. */
-	void * vm_private_data;		/* was vm_pte (shared mem) */
+	void *vm_private_data;		/* was vm_pte (shared mem) */
 };
 
 /*
@@ -149,22 +150,22 @@ struct vm_operations_struct {
  * TODO: make this structure smaller, it could be as small as 32 bytes.
  */
 typedef struct page {
-	struct list_head list;		/* ->mapping has some page lists. */
+	struct list_head list;			/* ->mapping has some page lists. */
 	struct address_space *mapping;	/* The inode (or ...) we belong to. */
-	unsigned long index;		/* Our offset within mapping. */
-	struct page *next_hash;		/* Next page sharing our hash bucket in
-					   the pagecache hash table. */
-	atomic_t count;			/* Usage count, see below. */
-	unsigned long flags;		/* atomic flags, some possibly
-					   updated asynchronously */
-	struct list_head lru;		/* Pageout list, eg. active_list;
-					   protected by pagemap_lru_lock !! */
-	wait_queue_head_t wait;		/* Page locked?  Stand in line... */
-	struct page **pprev_hash;	/* Complement to *next_hash. */
-	struct buffer_head * buffers;	/* Buffer maps us to a disk block. */
-	void *virtual;			/* Kernel virtual address (NULL if
-					   not kmapped, ie. highmem) */
-	struct zone_struct *zone;	/* Memory zone we are in. */
+	unsigned long index;			/* Our offset within mapping. */
+	struct page *next_hash;			/* Next page sharing our hash bucket in
+									   the pagecache hash table. */
+	atomic_t count;					/* Usage count, see below. */
+	unsigned long flags;			/* atomic flags, some possibly
+									   updated asynchronously */
+	struct list_head lru;			/* Pageout list, eg. active_list;
+									   protected by pagemap_lru_lock !! */
+	wait_queue_head_t wait;			/* Page locked?  Stand in line... */
+	struct page **pprev_hash;		/* Complement to *next_hash. */
+	struct buffer_head *buffers;	/* Buffer maps us to a disk block. */
+	void *virtual;					/* Kernel virtual address (NULL if
+									   not kmapped, ie. highmem) */ // 直接映射的虚拟地址(3GB ~ 3GB+896MB)
+	struct zone_struct *zone;		/* Memory zone we are in. */
 } mem_map_t;
 
 /*
@@ -473,12 +474,13 @@ extern unsigned long do_mmap_pgoff(struct file *file, unsigned long addr,
 	unsigned long len, unsigned long prot,
 	unsigned long flag, unsigned long pgoff);
 
-static inline unsigned long do_mmap(struct file *file, unsigned long addr,
+static inline unsigned long do_mmap(
+	struct file *file, unsigned long addr,
 	unsigned long len, unsigned long prot,
 	unsigned long flag, unsigned long offset)
 {
 	unsigned long ret = -EINVAL;
-	if ((offset + PAGE_ALIGN(len)) < offset)
+	if ((offset + PAGE_ALIGN(len)) < offset) // out of memroy range...
 		goto out;
 	if (!(offset & ~PAGE_MASK))
 		ret = do_mmap_pgoff(file, addr, len, prot, flag, offset >> PAGE_SHIFT);
@@ -520,25 +522,25 @@ extern struct page *filemap_nopage(struct vm_area_struct *, unsigned long, int);
  * GFP bitmasks..
  */
 /* Zone modifiers in GFP_ZONEMASK (see linux/mmzone.h - low four bits) */
-#define __GFP_DMA	0x01
+#define __GFP_DMA		0x01
 #define __GFP_HIGHMEM	0x02
 
 /* Action modifiers - doesn't change the zoning */
-#define __GFP_WAIT	0x10	/* Can wait and reschedule? */
-#define __GFP_HIGH	0x20	/* Should access emergency pools? */
-#define __GFP_IO	0x40	/* Can start low memory physical IO? */
+#define __GFP_WAIT		0x10	/* Can wait and reschedule? */
+#define __GFP_HIGH		0x20	/* Should access emergency pools? */
+#define __GFP_IO		0x40	/* Can start low memory physical IO? */
 #define __GFP_HIGHIO	0x80	/* Can start high mem physical IO? */
-#define __GFP_FS	0x100	/* Can call down to low-level FS? */
+#define __GFP_FS		0x100	/* Can call down to low-level FS? */
 
 #define GFP_NOHIGHIO	(__GFP_HIGH | __GFP_WAIT | __GFP_IO)
-#define GFP_NOIO	(__GFP_HIGH | __GFP_WAIT)
-#define GFP_NOFS	(__GFP_HIGH | __GFP_WAIT | __GFP_IO | __GFP_HIGHIO)
-#define GFP_ATOMIC	(__GFP_HIGH)
-#define GFP_USER	(             __GFP_WAIT | __GFP_IO | __GFP_HIGHIO | __GFP_FS)
+#define GFP_NOIO		(__GFP_HIGH | __GFP_WAIT)
+#define GFP_NOFS		(__GFP_HIGH | __GFP_WAIT | __GFP_IO | __GFP_HIGHIO)
+#define GFP_ATOMIC		(__GFP_HIGH)
+#define GFP_USER		(             __GFP_WAIT | __GFP_IO | __GFP_HIGHIO | __GFP_FS)
 #define GFP_HIGHUSER	(             __GFP_WAIT | __GFP_IO | __GFP_HIGHIO | __GFP_FS | __GFP_HIGHMEM)
-#define GFP_KERNEL	(__GFP_HIGH | __GFP_WAIT | __GFP_IO | __GFP_HIGHIO | __GFP_FS)
-#define GFP_NFS		(__GFP_HIGH | __GFP_WAIT | __GFP_IO | __GFP_HIGHIO | __GFP_FS)
-#define GFP_KSWAPD	(             __GFP_WAIT | __GFP_IO | __GFP_HIGHIO | __GFP_FS)
+#define GFP_KERNEL		(__GFP_HIGH | __GFP_WAIT | __GFP_IO | __GFP_HIGHIO | __GFP_FS)
+#define GFP_NFS			(__GFP_HIGH | __GFP_WAIT | __GFP_IO | __GFP_HIGHIO | __GFP_FS)
+#define GFP_KSWAPD		(             __GFP_WAIT | __GFP_IO | __GFP_HIGHIO | __GFP_FS)
 
 /* Flag - indicates that the buffer will be suitable for DMA.  Ignored on some
    platforms, used as appropriate on others */

@@ -270,7 +270,7 @@ extern unsigned int mca_pentium_flag;
 /* This decides where the kernel will search for a free chunk of vm
  * space during mmap's.
  */
-#define TASK_UNMAPPED_BASE	(TASK_SIZE / 3)
+#define TASK_UNMAPPED_BASE	(TASK_SIZE / 3) // start from 1GB
 
 /*
  * Size of io_bitmap in longwords: 32 is ports 0-0x3ff.
@@ -450,7 +450,7 @@ unsigned long get_wchan(struct task_struct *p);
 #define THREAD_SIZE (2*PAGE_SIZE)
 #define alloc_task_struct() ((struct task_struct *) __get_free_pages(GFP_KERNEL,1))
 #define free_task_struct(p) free_pages((unsigned long) (p), 1)
-#define get_task_struct(tsk)      atomic_inc(&virt_to_page(tsk)->count)
+#define get_task_struct(tsk) atomic_inc(&virt_to_page(tsk)->count)
 
 #define init_task	(init_task_union.task)
 #define init_stack	(init_task_union.stack)

@@ -74,7 +74,7 @@ int do_check_pgt_cache(int low, int high)
 pte_t *kmap_pte;
 pgprot_t kmap_prot;
 
-#define kmap_get_fixmap_pte(vaddr)					\
+#define kmap_get_fixmap_pte(vaddr)	\
 	pte_offset(pmd_offset(pgd_offset_k(vaddr), (vaddr)), (vaddr))
 
 void __init kmap_init(void)
@@ -223,7 +223,7 @@ static void __init pagetable_init(void)
 	for (i = 0; i < PTRS_PER_PGD; i++)
 		set_pgd(pgd_base + i, __pgd(1 + __pa(empty_zero_page)));
 #endif
-	i = __pgd_offset(PAGE_OFFSET);  // 获取地址为PAGE_OFFSET的页目录索引(PAGE_OFFSET等于3GB)
+	i = __pgd_offset(PAGE_OFFSET);  // 获取地址为PAGE_OFFSET的页目录索引(PAGE_OFFSET等于3GB) == 768
 	pgd = pgd_base + i; // 页目录entry
 
 	/*
@@ -273,7 +273,6 @@ static void __init pagetable_init(void)
 			set_pmd(pmd, __pmd(_KERNPG_TABLE + __pa(pte_base)));
 			if (pte_base != pte_offset(pmd, 0))
 				BUG();
-
 		}
 	}
 
@@ -282,14 +281,14 @@ static void __init pagetable_init(void)
 	 * created - mappings will be set by set_fixmap():
 	 */
 	vaddr = __fix_to_virt(__end_of_fixed_addresses - 1) & PMD_MASK;
-	fixrange_init(vaddr, 0, pgd_base);
+	fixrange_init(vaddr, 0, pgd_base); // 映射8k的内存地址(开始地址: 0xffffe000)
 
 #if CONFIG_HIGHMEM
 	/*
 	 * Permanent kmaps:
 	 */
 	vaddr = PKMAP_BASE;
-	fixrange_init(vaddr, vaddr + PAGE_SIZE*LAST_PKMAP, pgd_base);
+	fixrange_init(vaddr, vaddr + PAGE_SIZE*LAST_PKMAP, pgd_base); // 映射4MB的内存地址(开始地址: 0xfe000000)
 
 	pgd = swapper_pg_dir + __pgd_offset(vaddr);
 	pmd = pmd_offset(pgd, vaddr);
@@ -485,6 +484,7 @@ void __init mem_init(void)
 		 */
 		if (page_is_ram(tmp) && PageReserved(mem_map+tmp)) // 如果是内存并且被保留
 			reservedpages++;
+
 #ifdef CONFIG_HIGHMEM
 	for (tmp = highstart_pfn; tmp < highend_pfn; tmp++) {
 		struct page *page = mem_map + tmp;
@@ -506,6 +506,7 @@ void __init mem_init(void)
 	}
 	totalram_pages += totalhigh_pages;
 #endif
+
 	codesize =  (unsigned long) &_etext - (unsigned long) &_text;
 	datasize =  (unsigned long) &_edata - (unsigned long) &_etext;
 	initsize =  (unsigned long) &__init_end - (unsigned long) &__init_begin;
@@ -518,7 +519,7 @@ void __init mem_init(void)
 		datasize >> 10,
 		initsize >> 10,
 		(unsigned long) (totalhigh_pages << (PAGE_SHIFT-10))
-	       );
+	);
 
 #if CONFIG_X86_PAE
 	if (!cpu_has_pae)
@@ -536,7 +537,6 @@ void __init mem_init(void)
 #ifndef CONFIG_SMP
 	zap_low_mappings();
 #endif
-
 }
 
 /* Put this after the callers, so that it cannot be inlined */

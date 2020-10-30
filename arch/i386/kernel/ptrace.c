@@ -36,14 +36,14 @@
 /*
  * Offset of eflags on child stack..
  */
-#define EFL_OFFSET ((EFL-2)*4-sizeof(struct pt_regs))
+#define EFL_OFFSET ((EFL-2)*4-sizeof(struct pt_regs)) // 除去fs和gs
 
 /*
- * this routine will get a word off of the processes privileged stack. 
- * the offset is how far from the base addr as stored in the TSS.  
+ * this routine will get a word off of the processes privileged stack.
+ * the offset is how far from the base addr as stored in the TSS.
  * this routine assumes that all the privileged stacks are in our
  * data space.
- */   
+ */
 static inline int get_stack_long(struct task_struct *task, int offset)
 {
 	unsigned char *stack;
@@ -54,15 +54,15 @@ static inline int get_stack_long(struct task_struct *task, int offset)
 }
 
 /*
- * this routine will put a word on the processes privileged stack. 
- * the offset is how far from the base addr as stored in the TSS.  
+ * this routine will put a word on the processes privileged stack.
+ * the offset is how far from the base addr as stored in the TSS.
  * this routine assumes that all the privileged stacks are in our
  * data space.
  */
 static inline int put_stack_long(struct task_struct *task, int offset,
 	unsigned long data)
 {
-	unsigned char * stack;
+	unsigned char *stack;
 
 	stack = (unsigned char *) task->thread.esp0;
 	stack += offset;
@@ -140,7 +140,7 @@ static unsigned long getreg(struct task_struct *child,
  * Make sure the single step bit is not set.
  */
 void ptrace_disable(struct task_struct *child)
-{ 
+{
 	long tmp;
 
 	tmp = get_stack_long(child, EFL_OFFSET) & ~TRAP_FLAG;
@@ -150,7 +150,7 @@ void ptrace_disable(struct task_struct *child)
 asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 {
 	struct task_struct *child;
-	struct user * dummy = NULL;
+	struct user *dummy = NULL;
 	int i, ret;
 
 	lock_kernel();
@@ -166,7 +166,7 @@ asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 	}
 	ret = -ESRCH;
 	read_lock(&tasklist_lock);
-	child = find_task_by_pid(pid);
+	child = find_task_by_pid(pid); // 获取pid对用的task_struct
 	if (child)
 		get_task_struct(child);
 	read_unlock(&tasklist_lock);
@@ -188,7 +188,7 @@ asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 
 	switch (request) {
 	/* when I and D space are separate, these will need to be fixed. */
-	case PTRACE_PEEKTEXT: /* read word at location addr. */ 
+	case PTRACE_PEEKTEXT: /* read word at location addr. */
 	case PTRACE_PEEKDATA: {
 		unsigned long tmp;
 		int copied;
@@ -206,7 +206,7 @@ asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 		unsigned long tmp;
 
 		ret = -EIO;
-		if ((addr & 3) || addr < 0 || 
+		if ((addr & 3) || addr < 0 ||
 		    addr > sizeof(struct user) - 3)
 			break;
 
@@ -234,7 +234,7 @@ asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 
 	case PTRACE_POKEUSR: /* write the word at location addr in the USER area */
 		ret = -EIO;
-		if ((addr & 3) || addr < 0 || 
+		if ((addr & 3) || addr < 0 ||
 		    addr > sizeof(struct user) - 3)
 			break;
 
@@ -255,7 +255,7 @@ asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 			  if(addr == (long) &dummy->u_debugreg[5]) break;
 			  if(addr < (long) &dummy->u_debugreg[4] &&
 			     ((unsigned long) data) >= TASK_SIZE-3) break;
-			  
+
 			  if(addr == (long) &dummy->u_debugreg[7]) {
 				  data &= ~DR_CONTROL_RESERVED;
 				  for(i=0; i<4; i++)
@@ -291,8 +291,8 @@ asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 	}
 
 /*
- * make the child exit.  Best I can do is send it a sigkill. 
- * perhaps it should be put in the status that it wants to 
+ * make the child exit.  Best I can do is send it a sigkill.
+ * perhaps it should be put in the status that it wants to
  * exit.
  */
 	case PTRACE_KILL: {
@@ -313,7 +313,7 @@ asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 		long tmp;
 
 		ret = -EIO;
-		if ((unsigned long) data > _NSIG)
+		if ((unsigned long)data > _NSIG)
 			break;
 		child->ptrace &= ~PT_TRACESYS;
 		if ((child->ptrace & PT_DTRACE) == 0) {

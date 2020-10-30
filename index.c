@@ -1,6 +1,6 @@
-setup_irq();
-do_softirq();
-struct task_struct;
-timer_bh();
-goodness();
-__switch_to();
+mem_map_t;
+mm_struct;
+vm_area_struct;
+do_mmap();
+sys_ptrace();
+do_signal();

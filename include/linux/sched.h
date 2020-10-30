@@ -175,48 +175,48 @@ struct files_struct {
 	int max_fds;
 	int max_fdset;
 	int next_fd;
-	struct file ** fd;	/* current fd array */
+	struct file **fd;	/* current fd array */
 	fd_set *close_on_exec;
 	fd_set *open_fds;
 	fd_set close_on_exec_init;
 	fd_set open_fds_init;
-	struct file * fd_array[NR_OPEN_DEFAULT];
+	struct file *fd_array[NR_OPEN_DEFAULT];
 };
 
-#define INIT_FILES \
-{ 							\
-	count:		ATOMIC_INIT(1), 		\
-	file_lock:	RW_LOCK_UNLOCKED, 		\
-	max_fds:	NR_OPEN_DEFAULT, 		\
-	max_fdset:	__FD_SETSIZE, 			\
-	next_fd:	0, 				\
-	fd:		&init_files.fd_array[0], 	\
+#define INIT_FILES									\
+{ 													\
+	count:		ATOMIC_INIT(1), 					\
+	file_lock:	RW_LOCK_UNLOCKED, 					\
+	max_fds:	NR_OPEN_DEFAULT, 					\
+	max_fdset:	__FD_SETSIZE, 						\
+	next_fd:	0, 									\
+	fd:		&init_files.fd_array[0], 				\
 	close_on_exec:	&init_files.close_on_exec_init, \
-	open_fds:	&init_files.open_fds_init, 	\
-	close_on_exec_init: { { 0, } }, 		\
-	open_fds_init:	{ { 0, } }, 			\
-	fd_array:	{ NULL, } 			\
+	open_fds:	&init_files.open_fds_init, 			\
+	close_on_exec_init: { { 0, } }, 				\
+	open_fds_init:	{ { 0, } }, 					\
+	fd_array:	{ NULL, } 							\
 }
 
 /* Maximum number of active map areas.. This is a random (large) number */
 #define MAX_MAP_COUNT	(65536)
 
 struct mm_struct {
-	struct vm_area_struct * mmap;		/* list of VMAs */
-	rb_root_t mm_rb;					/* 用来管理VMAs */
-	struct vm_area_struct * mmap_cache;	/* last find_vma result */
-	pgd_t * pgd;						/* 页目录指针 */
-	atomic_t mm_users;			/* How many users with user space? */
-	atomic_t mm_count;			/* How many references to "struct mm_struct" (users count as 1) */
-	int map_count;				/* number of VMAs */
-	struct rw_semaphore mmap_sem;
-	spinlock_t page_table_lock;		/* Protects task page tables and mm->rss */
-									/* 此锁为了防止swappd进程释放内存页 */
+	struct vm_area_struct *mmap;		/* list of VMAs */
+	rb_root_t mm_rb;					/* 用来快速查找VMAs(红黑树的头节点) */
+	struct vm_area_struct *mmap_cache;	/* last find_vma result */
+	pgd_t *pgd;							/* 页目录指针 */
+	atomic_t mm_users;					/* How many users with user space? */
+	atomic_t mm_count;					/* How many references to "struct mm_struct" (users count as 1) */
+	int map_count;						/* number of VMAs */
+	struct rw_semaphore mmap_sem;		// mm_struct的信号量
+	spinlock_t page_table_lock;			/* Protects task page tables and mm->rss */
+										/* 此锁为了防止swappd进程释放内存页 */
 
-	struct list_head mmlist;		/* List of all active mm's.  These are globally strung
-						 * together off init_mm.mmlist, and are protected
-						 * by mmlist_lock
-						 */
+	struct list_head mmlist;			/* List of all active mm's.  These are globally strung
+										 * together off init_mm.mmlist, and are protected
+										 * by mmlist_lock
+										 */ // 用于连接所有mm_struct结构
 
 	unsigned long start_code, end_code, start_data, end_data;
 	unsigned long start_brk, brk, start_stack;
@@ -252,7 +252,7 @@ struct signal_struct {
 };
 
 
-#define INIT_SIGNALS {	\
+#define INIT_SIGNALS {					\
 	count:		ATOMIC_INIT(1), 		\
 	action:		{ {{0,}}, }, 			\
 	siglock:	SPIN_LOCK_UNLOCKED 		\
@@ -271,9 +271,9 @@ struct user_struct {
 	uid_t uid;
 };
 
-#define get_current_user() ({ 				\
+#define get_current_user() ({ 					\
 	struct user_struct *__user = current->user;	\
-	atomic_inc(&__user->__count);			\
+	atomic_inc(&__user->__count);				\
 	__user; })
 
 extern struct user_struct root_user;

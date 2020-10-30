@@ -29,17 +29,17 @@ extern int vmalloc_area_pages(unsigned long address, unsigned long size,
 /*
  *	Allocate any pages
  */
- 
-static inline void * vmalloc (unsigned long size)
+
+static inline void * vmalloc(unsigned long size)
 {
-	return __vmalloc(size, GFP_KERNEL | __GFP_HIGHMEM, PAGE_KERNEL);
+	return __vmalloc(size, GFP_KERNEL|__GFP_HIGHMEM, PAGE_KERNEL);
 }
 
 /*
  *	Allocate ISA addressable pages for broke crap
  */
 
-static inline void * vmalloc_dma (unsigned long size)
+static inline void * vmalloc_dma(unsigned long size)
 {
 	return __vmalloc(size, GFP_KERNEL|GFP_DMA, PAGE_KERNEL);
 }
@@ -47,7 +47,7 @@ static inline void * vmalloc_dma (unsigned long size)
 /*
  *	vmalloc 32bit PA addressable pages - eg for PCI 32bit devices
  */
- 
+
 static inline void * vmalloc_32(unsigned long size)
 {
 	return __vmalloc(size, GFP_KERNEL, PAGE_KERNEL);

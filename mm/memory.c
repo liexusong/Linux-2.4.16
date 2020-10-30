@@ -68,7 +68,7 @@ static inline void copy_cow_page(struct page * from, struct page * to, unsigned 
 	copy_user_highpage(to, from, address);
 }
 
-mem_map_t * mem_map;
+mem_map_t *mem_map;
 
 /*
  * Called by TLB shootdown

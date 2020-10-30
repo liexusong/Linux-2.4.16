@@ -28,8 +28,8 @@ pg_data_t *pgdat_list;
 
 static char *zone_names[MAX_NR_ZONES] = { "DMA", "Normal", "HighMem" };
 static int zone_balance_ratio[MAX_NR_ZONES] __initdata = { 128, 128, 128, };
-static int zone_balance_min[MAX_NR_ZONES] __initdata = { 20 , 20, 20, };
-static int zone_balance_max[MAX_NR_ZONES] __initdata = { 255 , 255, 255, };
+static int zone_balance_min[MAX_NR_ZONES]   __initdata = { 20 , 20, 20, };
+static int zone_balance_max[MAX_NR_ZONES]   __initdata = { 255 , 255, 255, };
 
 /*
  * Free_page() adds the page to the free lists. This is optimized for
@@ -62,8 +62,8 @@ static int zone_balance_max[MAX_NR_ZONES] __initdata = { 255 , 255, 255, };
  * Hint: -mask = 1+~mask
  */
 
-static void FASTCALL(__free_pages_ok (struct page *page, unsigned int order));
-static void __free_pages_ok (struct page *page, unsigned int order)
+static void FASTCALL(__free_pages_ok(struct page *page, unsigned int order));
+static void __free_pages_ok(struct page *page, unsigned int order)
 {
 	unsigned long index, page_idx, mask, flags;
 	free_area_t *area;
@@ -97,7 +97,7 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 
 	mask = (~0UL) << order;
 	base = zone->zone_mem_map;
-	page_idx = page - base;  // page所在区域的索引
+	page_idx = page - base;  // page所在map区域的索引
 	if (page_idx & ~mask)
 		BUG();
 	index = page_idx >> (1 + order); // page所使用的伙伴算法bit索引
@@ -108,8 +108,9 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 
 	zone->free_pages -= mask; // 这个是一个技巧, 可以加上对应(1<<order)个页面数
 
-	// (1<<9)的二进制为: 000000000000000000000001000000000
-	while (mask + (1 << (MAX_ORDER-1))) {
+	// 如果order为3时, mask为: 111111111111111111111111111111000
+	// (1<<9)的二进制为:       000000000000000000000001000000000
+	while (mask + (1 << (MAX_ORDER-1))) { // 遍历 MAX_ORDER-order 次
 		struct page *buddy1, *buddy2;
 
 		if (area >= zone->free_area + MAX_ORDER)
@@ -132,10 +133,10 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 		if (BAD_RANGE(zone,buddy2))
 			BUG();
 
-		memlist_del(&buddy1->list);
+		memlist_del(&buddy1->list); // 把伙伴page从空闲链表中删除
 		mask <<= 1; // 向左移动1位
 		area++;
-		index >>= 1; // 因为level提升了一级, 所以索引值应该除以2, 也就是右移动1位
+		index >>= 1;      // 因为level提升了一级, 所以索引值应该除以2, 也就是右移动1位
 		page_idx &= mask; // 这个操作会得到合并之后的块所在page数组的索引值
 	}
 	memlist_add_head(&(base + page_idx)->list, &area->free_list);
@@ -157,8 +158,8 @@ static void __free_pages_ok (struct page *page, unsigned int order)
 #define MARK_USED(index, order, area) \
 	__change_bit((index) >> (1+(order)), (area)->map)
 
-static inline struct page * expand(zone_t *zone, struct page *page,
-	 unsigned long index, int low, int high, free_area_t * area)
+static inline struct page *expand(zone_t *zone, struct page *page,
+	 unsigned long index, int low, int high, free_area_t *area)
 {
 	unsigned long size = 1 << high;
 
@@ -181,7 +182,7 @@ static inline struct page * expand(zone_t *zone, struct page *page,
 static FASTCALL(struct page * rmqueue(zone_t *zone, unsigned int order));
 static struct page * rmqueue(zone_t *zone, unsigned int order)
 {
-	free_area_t * area = zone->free_area + order; // 优先从哪个链表分配
+	free_area_t *area = zone->free_area + order; // 优先从哪个链表分配
 	unsigned int curr_order = order;
 	struct list_head *head, *curr;
 	unsigned long flags;
@@ -192,7 +193,7 @@ static struct page * rmqueue(zone_t *zone, unsigned int order)
 		head = &area->free_list;
 		curr = memlist_next(head);
 
-		if (curr != head) {
+		if (curr != head) { // 如果链表不为空
 			unsigned int index;
 
 			page = memlist_entry(curr, struct page, list); // 获取page
@@ -237,7 +238,7 @@ struct page *_alloc_pages(unsigned int gfp_mask, unsigned int order)
 #endif
 
 static struct page * FASTCALL(balance_classzone(zone_t *, unsigned int, unsigned int, int *));
-static struct page * balance_classzone(zone_t * classzone, unsigned int gfp_mask, unsigned int order, int * freed)
+static struct page * balance_classzone(zone_t *classzone, unsigned int gfp_mask, unsigned int order, int * freed)
 {
 	struct page * page = NULL;
 	int __freed = 0;
@@ -250,12 +251,12 @@ static struct page * balance_classzone(zone_t * classzone, unsigned int gfp_mask
 	current->allocation_order = order;
 	current->flags |= PF_MEMALLOC | PF_FREE_PAGES;
 
-	__freed = try_to_free_pages(classzone, gfp_mask, order);
+	__freed = try_to_free_pages(classzone, gfp_mask, order); // 尝试释放一些内存页
 
 	current->flags &= ~(PF_MEMALLOC | PF_FREE_PAGES);
 
 	if (current->nr_local_pages) {
-		struct list_head * entry, * local_pages;
+		struct list_head *entry, *local_pages;
 		struct page * tmp;
 		int nr_pages;
 
@@ -318,8 +319,8 @@ static struct page * balance_classzone(zone_t * classzone, unsigned int gfp_mask
  * order: 分配的内存大小
  * zonelist: 分配策略
  */
-struct page * __alloc_pages(unsigned int gfp_mask,
-	unsigned int order, zonelist_t *zonelist)
+struct page *__alloc_pages(unsigned int gfp_mask,
+						   unsigned int order, zonelist_t *zonelist)
 {
 	unsigned long min;
 	zone_t **zone, * classzone;
@@ -391,7 +392,7 @@ rebalance:
 	if (!(gfp_mask & __GFP_WAIT)) // 如果进程不能等待, 那么分配不成功时直接返回NULL
 		return NULL;
 
-	page = balance_classzone(classzone, gfp_mask, order, &freed);
+	page = balance_classzone(classzone, gfp_mask, order, &freed); // 平衡内存管理区
 	if (page)
 		return page;
 
@@ -704,7 +705,7 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 	map_size = (totalpages + 1)*sizeof(struct page);
 	if (lmem_map == (struct page *)0) {
 		// 从内存节点那里申请内存
-		lmem_map = (struct page *) alloc_bootmem_node(pgdat, map_size);
+		lmem_map = (struct page *)alloc_bootmem_node(pgdat, map_size); // 返回虚拟内存地址
 		lmem_map = (struct page *)(PAGE_OFFSET +
 			MAP_ALIGN((unsigned long)lmem_map - PAGE_OFFSET));
 	}
@@ -713,7 +714,7 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 	*gmap = pgdat->node_mem_map = lmem_map;
 	pgdat->node_size = totalpages;
 	pgdat->node_start_paddr = zone_start_paddr;     // 内存区开始地址
-	pgdat->node_start_mapnr = (lmem_map - mem_map); // 一般这里等于0
+	pgdat->node_start_mapnr = (lmem_map - mem_map); // map的开始编号, 一般这里等于0
 	pgdat->nr_zones = 0;
 
 	/*
@@ -771,7 +772,7 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 			struct page *page = mem_map + offset + i;
 			page->zone = zone;       // 内存页所属的内存区域
 			if (j != ZONE_HIGHMEM)   // 是不是可以直接映射?
-				page->virtual = __va(zone_start_paddr);
+				page->virtual = __va(zone_start_paddr); // 内存页的虚拟地址(处理896MB以上的内存外, 都有默认的虚拟地址)
 			zone_start_paddr += PAGE_SIZE;
 		}
 
@@ -812,8 +813,7 @@ void __init free_area_init_core(int nid, pg_data_t *pgdat, struct page **gmap,
 			// bitmap的大小计算
 			bitmap_size = (size-1) >> (i+4);
 			bitmap_size = LONG_ALIGN(bitmap_size+1);
-			zone->free_area[i].map =
-			  (unsigned long *) alloc_bootmem_node(pgdat, bitmap_size);
+			zone->free_area[i].map = (unsigned long *)alloc_bootmem_node(pgdat, bitmap_size);
 		}
 	}
 	build_zonelists(pgdat);

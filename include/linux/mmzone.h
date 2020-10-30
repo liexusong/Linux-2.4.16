@@ -43,33 +43,33 @@ typedef struct zone_struct {
 	/*
 	 * Commonly accessed fields:
 	 */
-	spinlock_t		lock;
+	spinlock_t			lock;
 	unsigned long		free_pages;  // 这个区域空闲的页数
 	unsigned long		pages_min, pages_low, pages_high;
-	int			need_balance;  // 与kswapd相关
+	int					need_balance;  // 与kswapd相关
 
 	/*
 	 * free areas of different sizes
 	 */
-	free_area_t		free_area[MAX_ORDER];  // 用于伙伴分配器
+	free_area_t			free_area[MAX_ORDER];  // 用于伙伴分配器
 
 	/*
 	 * Discontig memory support fields.
 	 */
 	struct pglist_data	*zone_pgdat;  // 属于哪个内存节点
-	struct page		*zone_mem_map;
+	struct page			*zone_mem_map;
 	unsigned long		zone_start_paddr;  // 内存区域的物理起始地址
 	unsigned long		zone_start_mapnr;
 
 	/*
 	 * rarely used fields:
 	 */
-	char			*name;     // 内存区域的名字
+	char				*name; // 内存区域的名字
 	unsigned long		size;  // 内存区域的总大小
 } zone_t;
 
-#define ZONE_DMA		0
-#define ZONE_NORMAL		1
+#define ZONE_DMA			0
+#define ZONE_NORMAL			1
 #define ZONE_HIGHMEM		2
 #define MAX_NR_ZONES		3
 
@@ -88,7 +88,7 @@ typedef struct zonelist_struct {
 	zone_t * zones [MAX_NR_ZONES+1]; // NULL delimited
 } zonelist_t;
 
-#define GFP_ZONEMASK	0x0f   /* 00001111 */
+#define GFP_ZONEMASK	0x0f   /* 0000 1111 */
 
 /*
  * The pg_data_t structure is used in machines with CONFIG_DISCONTIGMEM
@@ -104,7 +104,7 @@ typedef struct zonelist_struct {
 struct bootmem_data;
 typedef struct pglist_data {
 	zone_t node_zones[MAX_NR_ZONES];
-	zonelist_t node_zonelists[GFP_ZONEMASK+1];
+	zonelist_t node_zonelists[GFP_ZONEMASK+1]; // 9 items
 	int nr_zones;
 	struct page *node_mem_map;
 	unsigned long *valid_addr_bitmap;

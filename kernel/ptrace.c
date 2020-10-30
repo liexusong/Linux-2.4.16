@@ -45,7 +45,7 @@ int ptrace_check_attach(struct task_struct *child, int kill)
 			} while (task_has_cpu(child));
 		}
 		task_unlock(child);
-#endif		
+#endif
 	}
 
 	/* All systems go.. */
@@ -61,11 +61,11 @@ int ptrace_attach(struct task_struct *task)
 		goto bad;
 	if (!task->mm)
 		goto bad;
-	if(((current->uid != task->euid) ||
-	    (current->uid != task->suid) ||
-	    (current->uid != task->uid) ||
- 	    (current->gid != task->egid) ||
- 	    (current->gid != task->sgid) ||
+	if (((current->uid != task->euid) ||
+	    (current->uid != task->suid)  ||
+	    (current->uid != task->uid)   ||
+ 	    (current->gid != task->egid)  ||
+ 	    (current->gid != task->sgid)  ||
  	    (!cap_issubset(task->cap_permitted, current->cap_permitted)) ||
  	    (current->gid != task->gid)) && !capable(CAP_SYS_PTRACE))
 		goto bad;
@@ -90,7 +90,7 @@ int ptrace_attach(struct task_struct *task)
 	}
 	write_unlock_irq(&tasklist_lock);
 
-	send_sig(SIGSTOP, task, 1);
+	send_sig(SIGSTOP, task, 1); // 发送stop信号给进程
 	return 0;
 
 bad:
@@ -128,7 +128,7 @@ static int access_one_page(struct mm_struct * mm, struct vm_area_struct * vma, u
 	pgd_t * pgdir;
 	pmd_t * pgmiddle;
 	pte_t * pgtable;
-	char *maddr; 
+	char *maddr;
 	struct page *page;
 
 repeat:
@@ -218,12 +218,12 @@ static int access_mm(struct mm_struct *mm, struct vm_area_struct * vma, unsigned
 		buf += retval;
 
 		if (addr < vma->vm_end)
-			continue;	
+			continue;
 		if (!vma->vm_next)
 			break;
 		if (vma->vm_next->vm_start != vma->vm_end)
 			break;
-	
+
 		vma = vma->vm_next;
 	}
 	return copied;
@@ -275,7 +275,7 @@ int ptrace_readdata(struct task_struct *tsk, unsigned long src, char *dst, int l
 		copied += retval;
 		src += retval;
 		dst += retval;
-		len -= retval;			
+		len -= retval;
 	}
 	return copied;
 }
@@ -300,7 +300,7 @@ int ptrace_writedata(struct task_struct *tsk, char * src, unsigned long dst, int
 		copied += retval;
 		src += retval;
 		dst += retval;
-		len -= retval;			
+		len -= retval;
 	}
 	return copied;
 }

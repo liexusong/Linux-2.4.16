@@ -41,12 +41,13 @@ unsigned long __init bootmem_bootmap_pages (unsigned long pages)
 /*
  * Called once to set up the allocator itself.
  */
-static unsigned long __init init_bootmem_core (pg_data_t *pgdat,
+static unsigned long __init init_bootmem_core(pg_data_t *pgdat,
 	unsigned long mapstart, unsigned long start, unsigned long end)
 {
 	bootmem_data_t *bdata = pgdat->bdata;
 	unsigned long mapsize = ((end - start)+7)/8;
 
+	// Link pgdat to pgdat_list
 	pgdat->node_next = pgdat_list;
 	pgdat_list = pgdat;
 
@@ -59,7 +60,7 @@ static unsigned long __init init_bootmem_core (pg_data_t *pgdat,
 	 * Initially all pages are reserved - setup_arch() has to
 	 * register free RAM areas explicitly.
 	 */
-	memset(bdata->node_bootmem_map, 0xff, mapsize);
+	memset(bdata->node_bootmem_map, 0xff, mapsize); // 先把所有页面标记为保留
 
 	return mapsize;
 }
@@ -139,7 +140,7 @@ static void __init free_bootmem_core(bootmem_data_t *bdata, unsigned long addr, 
 /*
  * alignment has to be a power of 2 value.
  */
-static void * __init __alloc_bootmem_core (bootmem_data_t *bdata,
+static void * __init __alloc_bootmem_core(bootmem_data_t *bdata,
 	unsigned long size, unsigned long align, unsigned long goal)
 {
 	unsigned long i, start = 0;
@@ -176,7 +177,7 @@ restart_scan:
 		for (j = i + 1; j < i + areasize; ++j) {
 			if (j >= eidx)
 				goto fail_block;
-			if (test_bit (j, bdata->node_bootmem_map))
+			if (test_bit(j, bdata->node_bootmem_map))
 				goto fail_block;
 		}
 		start = i;
@@ -197,8 +198,8 @@ found:
 	 * of this allocation's buffer? If yes then we can 'merge'
 	 * the previous partial page with this allocation.
 	 */
-	if (align <= PAGE_SIZE
-	    && bdata->last_offset && bdata->last_pos+1 == start) {
+	if (align <= PAGE_SIZE && bdata->last_offset && bdata->last_pos+1 == start)
+	{
 		offset = (bdata->last_offset+align-1) & ~(align-1);
 		if (offset > PAGE_SIZE)
 			BUG();
@@ -249,7 +250,7 @@ static unsigned long __init free_all_bootmem_core(pg_data_t *pgdat)
 			count++;
 			ClearPageReserved(page);
 			set_page_count(page, 1);
-			__free_page(page);
+			__free_page(page); // 归还给伙伴分配系统
 		}
 	}
 	total += count;
@@ -260,11 +261,14 @@ static unsigned long __init free_all_bootmem_core(pg_data_t *pgdat)
 	 */
 	page = virt_to_page(bdata->node_bootmem_map);  // 虚拟内存转换成page结构指针
 	count = 0;
-	for (i = 0; i < ((bdata->node_low_pfn-(bdata->node_boot_start >> PAGE_SHIFT))/8 + PAGE_SIZE-1)/PAGE_SIZE; i++,page++) {
+	for (i = 0;
+		 i < ((bdata->node_low_pfn-(bdata->node_boot_start >> PAGE_SHIFT))/8 + PAGE_SIZE-1)/PAGE_SIZE;
+		 i++, page++)
+	{
 		count++;
 		ClearPageReserved(page);
 		set_page_count(page, 1);
-		__free_page(page);
+		__free_page(page); // 归还给伙伴分配系统
 	}
 	total += count;
 	bdata->node_bootmem_map = NULL;
@@ -274,7 +278,7 @@ static unsigned long __init free_all_bootmem_core(pg_data_t *pgdat)
 
 unsigned long __init init_bootmem_node (pg_data_t *pgdat, unsigned long freepfn, unsigned long startpfn, unsigned long endpfn)
 {
-	return(init_bootmem_core(pgdat, freepfn, startpfn, endpfn));
+	return (init_bootmem_core(pgdat, freepfn, startpfn, endpfn));
 }
 
 void __init reserve_bootmem_node (pg_data_t *pgdat, unsigned long physaddr, unsigned long size)
@@ -284,19 +288,19 @@ void __init reserve_bootmem_node (pg_data_t *pgdat, unsigned long physaddr, unsi
 
 void __init free_bootmem_node (pg_data_t *pgdat, unsigned long physaddr, unsigned long size)
 {
-	return(free_bootmem_core(pgdat->bdata, physaddr, size));
+	return (free_bootmem_core(pgdat->bdata, physaddr, size));
 }
 
 unsigned long __init free_all_bootmem_node (pg_data_t *pgdat)
 {
-	return(free_all_bootmem_core(pgdat));
+	return (free_all_bootmem_core(pgdat));
 }
 
 unsigned long __init init_bootmem (unsigned long start, unsigned long pages)
 {
 	max_low_pfn = pages;
 	min_low_pfn = start;
-	return(init_bootmem_core(&contig_page_data, start, 0, pages));
+	return (init_bootmem_core(&contig_page_data, start, 0, pages));
 }
 
 void __init reserve_bootmem (unsigned long addr, unsigned long size)
@@ -306,12 +310,12 @@ void __init reserve_bootmem (unsigned long addr, unsigned long size)
 
 void __init free_bootmem (unsigned long addr, unsigned long size)
 {
-	return(free_bootmem_core(contig_page_data.bdata, addr, size));
+	return (free_bootmem_core(contig_page_data.bdata, addr, size));
 }
 
 unsigned long __init free_all_bootmem (void)
 {
-	return(free_all_bootmem_core(&contig_page_data));
+	return (free_all_bootmem_core(&contig_page_data));
 }
 
 void * __init __alloc_bootmem (unsigned long size, unsigned long align, unsigned long goal)

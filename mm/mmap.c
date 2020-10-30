@@ -399,16 +399,17 @@ static int vma_merge(struct mm_struct * mm, struct vm_area_struct * prev,
 }
 
 /* sys_mmap() call this function */
-unsigned long do_mmap_pgoff(struct file * file, unsigned long addr,
+unsigned long do_mmap_pgoff(
+	struct file * file, unsigned long addr,
 	unsigned long len, unsigned long prot,
 	unsigned long flags, unsigned long pgoff)
 {
-	struct mm_struct * mm = current->mm;
-	struct vm_area_struct * vma, * prev;
+	struct mm_struct *mm = current->mm; // 当前进程的内存管理结构
+	struct vm_area_struct *vma, *prev;
 	unsigned int vm_flags;
 	int correct_wcount = 0;
 	int error;
-	rb_node_t ** rb_link, * rb_parent;
+	rb_node_t **rb_link, *rb_parent;
 
 	// 如果与文件关联的, 就必须提供mmap操作函数
 	if (file && (!file->f_op || !file->f_op->mmap))
@@ -431,7 +432,7 @@ unsigned long do_mmap_pgoff(struct file * file, unsigned long addr,
 	/* Obtain the address to map to. we verify (or select) it and ensure
 	 * that it represents a valid section of the address space.
 	 */
-	// 找一个还没使用的虚拟地址(查找虚拟内存树)
+	// 找一个还没使用的虚拟地址
 	addr = get_unmapped_area(file, addr, len, pgoff, flags);
 	if (addr & ~PAGE_MASK) // 是否页对齐?
 		return addr;
@@ -451,16 +452,16 @@ unsigned long do_mmap_pgoff(struct file * file, unsigned long addr,
 			return -EAGAIN;
 	}
 
-	// 权限验证
+	// 这里进行权限验证
 
-	if (file) { // 如果有文件与其关联
+	if (file) { // 如果与文件进行映射
 		switch (flags & MAP_TYPE) {
 		case MAP_SHARED:
-			if ((prot & PROT_WRITE) && !(file->f_mode & FMODE_WRITE))
+			if ((prot & PROT_WRITE) && !(file->f_mode & FMODE_WRITE)) // 如果虚拟内存区需要写权限, 但文件没有写权限 - (出错)
 				return -EACCES;
 
 			/* Make sure we don't allow writing to an append-only file.. */
-			if (IS_APPEND(file->f_dentry->d_inode) && (file->f_mode & FMODE_WRITE))
+			if (IS_APPEND(file->f_dentry->d_inode) && (file->f_mode & FMODE_WRITE)) // 追加模式的文件不能设置为写模式
 				return -EACCES;
 
 			/* make sure there are no mandatory locks on the file. */
@@ -468,7 +469,7 @@ unsigned long do_mmap_pgoff(struct file * file, unsigned long addr,
 				return -EAGAIN;
 
 			vm_flags |= VM_SHARED | VM_MAYSHARE;
-			if (!(file->f_mode & FMODE_WRITE))
+			if (!(file->f_mode & FMODE_WRITE)) // 如果文件不能写, 那么去掉VM_MAYWRITE和VM_SHARED标志
 				vm_flags &= ~(VM_MAYWRITE | VM_SHARED);
 
 			/* fall through */
@@ -497,21 +498,22 @@ unsigned long do_mmap_pgoff(struct file * file, unsigned long addr,
 	error = -ENOMEM;
 munmap_back:
 	vma = find_vma_prepare(mm, addr, &prev, &rb_link, &rb_parent);
-	// 如果vma不为空, 那么vma的vm_end一定大于addr(vma->vm_end > addr)
-	if (vma && vma->vm_start < addr + len) { // 如果有重合的虚拟地址
+	// 如果vma不为空, 那么 vma->vm_end 一定大于addr (vma->vm_end > addr)
+	if (vma && vma->vm_start < addr + len) { // 如果新的内存区与旧的内存区有重合的地址
 		if (do_munmap(mm, addr, len))        // 解除映射
 			return -ENOMEM;
 		goto munmap_back;
 	}
 
 	/* Check against address space limit. */
-	if ((mm->total_vm << PAGE_SHIFT) + len
-	    > current->rlim[RLIMIT_AS].rlim_cur)
+	// 检测内存使用是否超过限制
+	if ((mm->total_vm << PAGE_SHIFT) + len > current->rlim[RLIMIT_AS].rlim_cur)
 		return -ENOMEM;
 
 	/* Private writable mapping? Check memory availability.. */
+	// 是否有足够内存?
 	if ((vm_flags & (VM_SHARED | VM_WRITE)) == VM_WRITE &&
-	    !(flags & MAP_NORESERVE)				 &&
+	    !(flags & MAP_NORESERVE) &&
 	    !vm_enough_memory(len >> PAGE_SHIFT))
 		return -ENOMEM;
 
@@ -525,7 +527,7 @@ munmap_back:
 	 * specific mapper. the address has already been validated, but
 	 * not unmapped, but the maps are removed from the list.
 	 */
-	vma = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL);
+	vma = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL); // 申请一个vm_struct对象
 	if (!vma)
 		return -ENOMEM;
 
@@ -552,12 +554,12 @@ munmap_back:
 		}
 		vma->vm_file = file;
 		get_file(file);
-		// 一般是 generic_file_mmap() 函数
+		// 调用文件操作的 mmap() 函数, 一般是 generic_file_mmap() 函数
 		error = file->f_op->mmap(file, vma);
 		if (error)
 			goto unmap_and_free_vma;
 	} else if (flags & MAP_SHARED) {
-		error = shmem_zero_setup(vma); // 打开/dev/zero文件映射
+		error = shmem_zero_setup(vma); // 打开/dev/zero文件映射, 并与虚拟内存区关联
 		if (error)
 			goto free_vma;
 	}
@@ -569,15 +571,15 @@ munmap_back:
 	 */
 	addr = vma->vm_start;
 
-	vma_link(mm, vma, prev, rb_link, rb_parent);
+	vma_link(mm, vma, prev, rb_link, rb_parent); // 把虚拟内存区插入到内存管理红黑树中
 	if (correct_wcount)
 		atomic_inc(&file->f_dentry->d_inode->i_writecount);
 
 out:
 	mm->total_vm += len >> PAGE_SHIFT;
-	if (vm_flags & VM_LOCKED) {
+	if (vm_flags & VM_LOCKED) { // 如果设置了锁定内存标志
 		mm->locked_vm += len >> PAGE_SHIFT;
-		make_pages_present(addr, addr + len); // 立刻申请物理内存
+		make_pages_present(addr, addr + len); // 立刻申请物理内存并且映射
 	}
 	return addr;
 
@@ -607,7 +609,9 @@ free_vma:
  * This function "knows" that -ENOMEM has the bits set.
  */
 #ifndef HAVE_ARCH_UNMAPPED_AREA
-static inline unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr, unsigned long len, unsigned long pgoff, unsigned long flags)
+static inline unsigned long
+arch_get_unmapped_area(struct file *filp, unsigned long addr,
+	unsigned long len, unsigned long pgoff, unsigned long flags)
 {
 	struct vm_area_struct *vma;
 
@@ -621,7 +625,8 @@ static inline unsigned long arch_get_unmapped_area(struct file *filp, unsigned l
 		    (!vma || addr + len <= vma->vm_start))
 			return addr;
 	}
-	addr = PAGE_ALIGN(TASK_UNMAPPED_BASE);
+
+	addr = PAGE_ALIGN(TASK_UNMAPPED_BASE); // 1GB开始
 
 	// 从vm中找到一个还没有使用的虚拟内存地址
 	for (vma = find_vma(current->mm, addr); ; vma = vma->vm_next) {

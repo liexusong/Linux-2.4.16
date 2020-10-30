@@ -705,7 +705,7 @@ static void __init setup_memory_region(void)
 } /* setup_memory_region */
 
 
-static void __init parse_mem_cmdline (char ** cmdline_p)
+static void __init parse_mem_cmdline(char ** cmdline_p)
 {
 	char c = ' ', *to = command_line, *from = COMMAND_LINE;
 	int len = 0;
@@ -830,8 +830,8 @@ void __init setup_arch(char **cmdline_p)
  * 128MB for vmalloc and initrd
  */
 #define VMALLOC_RESERVE	(unsigned long)(128 << 20)
-#define MAXMEM		(unsigned long)(-PAGE_OFFSET-VMALLOC_RESERVE)
-#define MAXMEM_PFN	PFN_DOWN(MAXMEM)
+#define MAXMEM			(unsigned long)(-PAGE_OFFSET-VMALLOC_RESERVE)
+#define MAXMEM_PFN		PFN_DOWN(MAXMEM)
 #define MAX_NONPAE_PFN	(1 << 20)
 
 	/*
@@ -860,7 +860,7 @@ void __init setup_arch(char **cmdline_p)
 	/*
 	 * Determine low and high memory ranges:
 	 */
-	max_low_pfn = max_pfn;
+	max_low_pfn = max_pfn; // 内核能够直接映射的内存页面数
 	if (max_low_pfn > MAXMEM_PFN) {
 		max_low_pfn = MAXMEM_PFN;
 #ifndef CONFIG_HIGHMEM
@@ -927,7 +927,7 @@ void __init setup_arch(char **cmdline_p)
 			continue;
 
 		size = last_pfn - curr_pfn;
-		free_bootmem(PFN_PHYS(curr_pfn), PFN_PHYS(size));
+		free_bootmem(PFN_PHYS(curr_pfn), PFN_PHYS(size)); // 释放内存页
 	}
 	/*
 	 * Reserve the bootmem bitmap itself as well. We do this in two
@@ -936,7 +936,7 @@ void __init setup_arch(char **cmdline_p)
 	 * bootmem allocator with an invalid RAM area.
 	 */
 	reserve_bootmem(HIGH_MEMORY, (PFN_PHYS(start_pfn) +
-			 bootmap_size + PAGE_SIZE-1) - (HIGH_MEMORY));
+			 bootmap_size + PAGE_SIZE-1) - (HIGH_MEMORY)); // 保留内核映像使用的内存
 
 	/*
 	 * reserve physical page 0 - it's a special BIOS page on many boxes,

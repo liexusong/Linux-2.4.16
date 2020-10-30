@@ -16,7 +16,7 @@
 #include <asm/pgalloc.h>
 
 rwlock_t vmlist_lock = RW_LOCK_UNLOCKED;
-struct vm_struct * vmlist;
+struct vm_struct *vmlist;
 
 static inline void free_area_pte(pmd_t * pmd, unsigned long address, unsigned long size)
 {
@@ -91,7 +91,7 @@ void vmfree_area_pages(unsigned long address, unsigned long size)
 	flush_tlb_all();
 }
 
-static inline int alloc_area_pte (pte_t * pte, unsigned long address,
+static inline int alloc_area_pte(pte_t * pte, unsigned long address,
 			unsigned long size, int gfp_mask, pgprot_t prot)
 {
 	unsigned long end;
@@ -224,7 +224,7 @@ void vfree(void * addr)
 	printk(KERN_ERR "Trying to vfree() nonexistent vm area (%p)\n", addr);
 }
 
-void * __vmalloc (unsigned long size, int gfp_mask, pgprot_t prot)
+void * __vmalloc(unsigned long size, int gfp_mask, pgprot_t prot)
 {
 	void * addr;
 	struct vm_struct *area;
