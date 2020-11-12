@@ -158,7 +158,8 @@ asmlinkage ssize_t sys_read(unsigned int fd, char * buf, size_t count)
 			if (!ret) {
 				ssize_t (*read)(struct file *, char *, size_t, loff_t *);
 				ret = -EINVAL;
-				if (file->f_op && (read = file->f_op->read) != NULL) // minix filesystem is generic_file_read()
+				// minix filesystem file->f_op->read is: generic_file_read()
+				if (file->f_op && (read = file->f_op->read) != NULL)
 					ret = read(file, buf, count, &file->f_pos);
 			}
 		}

@@ -271,7 +271,7 @@ asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 		  break;
 
 	case PTRACE_SYSCALL: /* continue and stop at next (return from) syscall */
-	case PTRACE_CONT: { /* restart after signal. */
+	case PTRACE_CONT: {  /* restart after signal. */
 		long tmp;
 
 		ret = -EIO;
@@ -284,7 +284,7 @@ asmlinkage int sys_ptrace(long request, long pid, long addr, long data)
 		child->exit_code = data;
 	/* make sure the single step bit is not set. */
 		tmp = get_stack_long(child, EFL_OFFSET) & ~TRAP_FLAG;
-		put_stack_long(child, EFL_OFFSET,tmp);
+		put_stack_long(child, EFL_OFFSET, tmp);
 		wake_up_process(child);
 		ret = 0;
 		break;
@@ -439,17 +439,21 @@ out:
 	return ret;
 }
 
+// -----------------------------
+// 如果进程被跟踪系统调用
+// 那么进入系统调用前会调用这个函数
+// 执行完系统调用后也会调用这个函数
+// -----------------------------
 asmlinkage void syscall_trace(void)
 {
-	if ((current->ptrace & (PT_PTRACED|PT_TRACESYS)) !=
-			(PT_PTRACED|PT_TRACESYS))
+	if ((current->ptrace&(PT_PTRACED|PT_TRACESYS)) != (PT_PTRACED|PT_TRACESYS))
 		return;
 	/* the 0x80 provides a way for the tracing parent to distinguish
 	   between a syscall stop and SIGTRAP delivery */
 	current->exit_code = SIGTRAP | ((current->ptrace & PT_TRACESYSGOOD)
 					? 0x80 : 0);
 	current->state = TASK_STOPPED;
-	notify_parent(current, SIGCHLD);
+	notify_parent(current, SIGCHLD); // 发送 SIGCHLD 信号给父进程(追踪进程)
 	schedule();
 	/*
 	 * this isn't the same as continuing with a signal, but it will do
