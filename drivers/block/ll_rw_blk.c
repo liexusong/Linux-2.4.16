@@ -8,11 +8,12 @@
  * kernel-doc documentation started by NeilBrown <neilb@cse.unsw.edu.au> -  July2000
  */
 
-/*
+/***********************************************
+
                user space
               (read,write)
                    |
--------------------|------------------------
+===================|===================
                    v
              +-----------+
              | VFS layer |
@@ -36,7 +37,8 @@
         +---------------------+
             /       |       \
           HD        CD       ...
-*/
+
+***********************************************/
 
 /*
  * This handles all read/write requests to block devices
