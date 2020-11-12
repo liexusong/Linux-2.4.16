@@ -28,7 +28,7 @@
                    |
                    v
         +---------------------+
-        | Generic Block Layer |
+        | Generic Block Layer | (ll_rw_block, wait_on_buffer, wait_on_page...)
         +---------------------+
                    |
                    v
@@ -982,7 +982,7 @@ void submit_bh(int rw, struct buffer_head *bh)
  *  All of the buffers must be for the same device, and must also be
  *  of the current approved size for the device.  */
 
-void ll_rw_block(int rw, int nr, struct buffer_head * bhs[])
+void ll_rw_block(int rw, int nr, struct buffer_head *bhs[])
 {
 	unsigned int major;
 	int correct_size;

@@ -14,7 +14,7 @@
  */
 extern void __wait_on_buffer(struct buffer_head *);
 
-static inline void wait_on_buffer(struct buffer_head * bh)
+static inline void wait_on_buffer(struct buffer_head *bh)
 {
 	if (test_bit(BH_Lock, &bh->b_state))
 		__wait_on_buffer(bh);

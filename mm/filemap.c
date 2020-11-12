@@ -1424,7 +1424,7 @@ page_not_up_to_date:
 
 readpage:
 		/* ... and start the actual read. The read will unlock the page. */
-		error = mapping->a_ops->readpage(filp, page);
+		error = mapping->a_ops->readpage(filp, page); // minix filesystem is minix_readpage()
 
 		if (!error) {
 			if (Page_Uptodate(page))
@@ -1452,7 +1452,7 @@ no_cached_page:
 		 */
 		if (!cached_page) {
 			spin_unlock(&pagecache_lock);
-			cached_page = page_cache_alloc(mapping);
+			cached_page = page_cache_alloc(mapping); // 申请一个内存页
 			if (!cached_page) {
 				desc->error = -ENOMEM;
 				break;

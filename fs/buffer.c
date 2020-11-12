@@ -737,7 +737,10 @@ void init_buffer(struct buffer_head *bh, bh_end_io_t *handler, void *private)
 	bh->b_private = private;
 }
 
-static void end_buffer_io_async(struct buffer_head * bh, int uptodate)
+// ------------------------------- //
+// 这个函数当buffer完成I/O时会被调用 //
+// ------------------------------- //
+static void end_buffer_io_async(struct buffer_head *bh, int uptodate)
 {
 	static spinlock_t page_uptodate_lock = SPIN_LOCK_UNLOCKED;
 	unsigned long flags;
@@ -767,9 +770,9 @@ static void end_buffer_io_async(struct buffer_head * bh, int uptodate)
 	spin_lock_irqsave(&page_uptodate_lock, flags);
 	mark_buffer_async(bh, 0);
 	unlock_buffer(bh);
-	tmp = bh->b_this_page;
+	tmp = bh->b_this_page; // 这是个循环链表...所以可以判断所有的buffer是否已经完成
 	while (tmp != bh) {
-		if (buffer_async(tmp) && buffer_locked(tmp))
+		if (buffer_async(tmp) && buffer_locked(tmp)) // buffer还没完成...
 			goto still_busy;
 		tmp = tmp->b_this_page;
 	}
@@ -784,7 +787,7 @@ static void end_buffer_io_async(struct buffer_head * bh, int uptodate)
 	if (!PageError(page))
 		SetPageUptodate(page);
 
-	UnlockPage(page);
+	UnlockPage(page); // 解锁page
 
 	return;
 
@@ -1700,7 +1703,7 @@ int block_read_full_page(struct page *page, get_block_t *get_block)
 		PAGE_BUG(page);
 	blocksize = 1 << inode->i_blkbits;
 	if (!page->buffers)
-		create_empty_buffers(page, inode->i_dev, blocksize);
+		create_empty_buffers(page, inode->i_dev, blocksize); // 申请页面对应的块缓冲区
 	head = page->buffers;
 
 	blocks = PAGE_CACHE_SIZE >> inode->i_blkbits;
@@ -1747,7 +1750,7 @@ int block_read_full_page(struct page *page, get_block_t *get_block)
 
 	/* Stage two: lock the buffers */
 	for (i = 0; i < nr; i++) {
-		struct buffer_head * bh = arr[i];
+		struct buffer_head *bh = arr[i];
 		lock_buffer(bh);
 		set_buffer_async_io(bh);
 	}
@@ -2433,7 +2436,7 @@ static int grow_buffers(kdev_t dev, unsigned long block, int size)
 
 static int sync_page_buffers(struct buffer_head *head, unsigned int gfp_mask)
 {
-	struct buffer_head * bh = head;
+	struct buffer_head *bh = head;
 	int tryagain = 0;
 
 	do {
