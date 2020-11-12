@@ -336,9 +336,9 @@ static void exit_notify(void)
 	 * and we were the only connection outside, so our pgrp
 	 * is about to become orphaned.
 	 */
-	 
+
 	t = current->p_pptr;
-	
+
 	if ((t->pgrp != current->pgrp) &&
 	    (t->session == current->session) &&
 	    will_become_orphaned_pgrp(current->pgrp, current) &&
@@ -347,10 +347,10 @@ static void exit_notify(void)
 		kill_pg(current->pgrp,SIGCONT,1);
 	}
 
-	/* Let father know we died 
+	/* Let father know we died
 	 *
 	 * Thread signals are configurable, but you aren't going to use
-	 * that to send signals to arbitary processes. 
+	 * that to send signals to arbitary processes.
 	 * That stops right now.
 	 *
 	 * If the parent exec id doesn't match the exec id we saved
@@ -360,12 +360,12 @@ static void exit_notify(void)
 	 * If our self_exec id doesn't match our parent_exec_id then
 	 * we have changed execution domain as these two values started
 	 * the same after a fork.
-	 *	
+	 *
 	 */
-	
+
 	if(current->exit_signal != SIGCHLD &&
 	    ( current->parent_exec_id != t->self_exec_id  ||
-	      current->self_exec_id != current->parent_exec_id) 
+	      current->self_exec_id != current->parent_exec_id)
 	    && !capable(CAP_KILL))
 		current->exit_signal = SIGCHLD;
 
@@ -473,7 +473,7 @@ NORET_TYPE void complete_and_exit(struct completion *comp, long code)
 {
 	if (comp)
 		complete(comp);
-	
+
 	do_exit(code);
 }
 
@@ -482,7 +482,7 @@ asmlinkage long sys_exit(int error_code)
 	do_exit((error_code&0xff)<<8);
 }
 
-asmlinkage long sys_wait4(pid_t pid,unsigned int * stat_addr, int options, struct rusage * ru)
+asmlinkage long sys_wait4(pid_t pid, unsigned int *stat_addr, int options, struct rusage *ru)
 {
 	int flag, retval;
 	DECLARE_WAITQUEUE(wait, current);
@@ -526,8 +526,8 @@ repeat:
 				if (!(options & WUNTRACED) && !(p->ptrace & PT_PTRACED))
 					continue;
 				read_unlock(&tasklist_lock);
-				retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0; 
-				if (!retval && stat_addr) 
+				retval = ru ? getrusage(p, RUSAGE_BOTH, ru) : 0;
+				if (!retval && stat_addr)
 					retval = put_user((p->exit_code << 8) | 0x7f, stat_addr);
 				if (!retval) {
 					p->exit_code = 0;
@@ -542,7 +542,7 @@ repeat:
 				if (!retval && stat_addr)
 					retval = put_user(p->exit_code, stat_addr);
 				if (retval)
-					goto end_wait4; 
+					goto end_wait4;
 				retval = p->pid;
 				if (p->p_opptr != p->p_pptr) {
 					write_lock_irq(&tasklist_lock);

@@ -17,7 +17,7 @@
 #include <asm/dma.h>
 #include <asm/system.h>
 
- 
+
 
 /* A note on resource allocation:
  *
@@ -71,16 +71,14 @@ int get_dma_list(char *buf)
 
 	for (i = 0 ; i < MAX_DMA_CHANNELS ; i++) {
 		if (dma_chan_busy[i].lock) {
-		    len += sprintf(buf+len, "%2d: %s\n",
-				   i,
-				   dma_chan_busy[i].device_id);
+		    len += sprintf(buf+len, "%2d: %s\n", i, dma_chan_busy[i].device_id);
 		}
 	}
 	return len;
 } /* get_dma_list */
 
 
-int request_dma(unsigned int dmanr, const char * device_id)
+int request_dma(unsigned int dmanr, const char *device_id)
 {
 	if (dmanr >= MAX_DMA_CHANNELS)
 		return -EINVAL;
@@ -105,7 +103,7 @@ void free_dma(unsigned int dmanr)
 	if (xchg(&dma_chan_busy[dmanr].lock, 0) == 0) {
 		printk("Trying to free free DMA%d\n", dmanr);
 		return;
-	}	
+	}
 
 } /* free_dma */
 
@@ -121,7 +119,7 @@ void free_dma(unsigned int dmanr)
 }
 
 int get_dma_list(char *buf)
-{	
+{
 	strcpy(buf, "No DMA\n");
 	return 7;
 }

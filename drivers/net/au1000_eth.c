@@ -23,7 +23,7 @@
  *
  * ########################################################################
  *
- * 
+ *
  */
 
 #ifndef __mips__
@@ -91,13 +91,13 @@ static int next_dev;
 /*
  * Theory of operation
  *
- * The Au1000 MACs use a simple rx and tx descriptor ring scheme. 
- * There are four receive and four transmit descriptors.  These 
- * descriptors are not in memory; rather, they are just a set of 
+ * The Au1000 MACs use a simple rx and tx descriptor ring scheme.
+ * There are four receive and four transmit descriptors.  These
+ * descriptors are not in memory; rather, they are just a set of
  * hardware registers.
  *
  * Since the Au1000 has a coherent data cache, the receive and
- * transmit buffers are allocated from the KSEG0 segment. The 
+ * transmit buffers are allocated from the KSEG0 segment. The
  * hardware registers, however, are still mapped at KSEG1 to
  * make sure there's no out-of-order writes, and that all writes
  * complete immediately.
@@ -111,7 +111,7 @@ static struct {
 	unsigned int port;
 	int irq;
 } au1000_iflist[NUM_INTERFACES] = {
-	{AU1000_ETH0_BASE, AU1000_ETH0_IRQ}, 
+	{AU1000_ETH0_BASE, AU1000_ETH0_IRQ},
 	{AU1000_ETH1_BASE, AU1000_ETH1_IRQ}
 };
 
@@ -120,7 +120,7 @@ static char version[] __devinitdata =
     "au1000eth.c:0.1 ppopov@mvista.com\n";
 
 // FIX! Need real Ethernet addresses
-static unsigned char au1000_mac_addr[2][6] __devinitdata = { 
+static unsigned char au1000_mac_addr[2][6] __devinitdata = {
 	{0x00, 0x50, 0xc2, 0x0c, 0x30, 0x00},
 	{0x00, 0x50, 0xc2, 0x0c, 0x40, 0x00}
 };
@@ -138,21 +138,21 @@ static inline void sync(void)
 	asm volatile ("sync");
 }
 
-/* FIXME 
- * All of the PHY code really should be detached from the MAC 
+/* FIXME
+ * All of the PHY code really should be detached from the MAC
  * code.
  */
 
-static char *phy_link[] = 
-	{"unknown", 
-	"10Base2", "10BaseT", 
+static char *phy_link[] =
+	{"unknown",
+	"10Base2", "10BaseT",
 	"AUI",
 	"100BaseT", "100BaseTX", "100BaseFX"};
 
 int bcm_5201_init(struct net_device *dev, int phy_addr)
 {
 	s16 data;
-	
+
 	/* Stop auto-negotiation */
 	//printk("bcm_5201_init\n");
 	data = mdio_read(dev, phy_addr, MII_CONTROL);
@@ -163,7 +163,7 @@ int bcm_5201_init(struct net_device *dev, int phy_addr)
 	data = mdio_read(dev, phy_addr, MII_ANADV);
 	data |= MII_NWAY_TX | MII_NWAY_TX_FDX | MII_NWAY_T_FDX | MII_NWAY_T;
 	mdio_write(dev, phy_addr, MII_ANADV, data);
-	
+
 	/* Restart auto-negotiation */
 	data = mdio_read(dev, phy_addr, MII_CONTROL);
 	data |= MII_CNTL_RST_AUTO | MII_CNTL_AUTO;
@@ -175,7 +175,7 @@ int bcm_5201_init(struct net_device *dev, int phy_addr)
 int bcm_5201_reset(struct net_device *dev, int phy_addr)
 {
 	s16 mii_control, timeout;
-	
+
 	//printk("bcm_5201_reset\n");
 	mii_control = mdio_read(dev, phy_addr, MII_CONTROL);
 	mdio_write(dev, phy_addr, MII_CONTROL, mii_control | MII_CNTL_RESET);
@@ -193,7 +193,7 @@ int bcm_5201_reset(struct net_device *dev, int phy_addr)
 	return 0;
 }
 
-int 
+int
 bcm_5201_status(struct net_device *dev, int phy_addr, u16 *link, u16 *speed)
 {
 	u16 mii_data;
@@ -245,7 +245,7 @@ int am79c901_reset(struct net_device *dev, int phy_addr)
 	return 0;
 }
 
-int 
+int
 am79c901_status(struct net_device *dev, int phy_addr, u16 *link, u16 *speed)
 {
 	return 0;
@@ -267,7 +267,7 @@ static struct mii_chip_info {
 	const char * name;
 	u16 phy_id0;
 	u16 phy_id1;
-	struct phy_ops *phy_ops;	
+	struct phy_ops *phy_ops;
 } mii_chip_table[] = {
 	{"Broadcom BCM5201 10/100 BaseT PHY",  0x0040, 0x6212, &bcm_5201_ops },
 	{"AMD 79C901 HomePNA PHY",  0x0000, 0x35c8, &am79c901_ops },
@@ -288,7 +288,7 @@ static int mdio_read(struct net_device *dev, int phy_id, int reg)
 		}
 	}
 
-	mii_control = MAC_SET_MII_SELECT_REG(reg) | 
+	mii_control = MAC_SET_MII_SELECT_REG(reg) |
 		MAC_SET_MII_SELECT_PHY(phy_id) | MAC_MII_READ;
 
 	aup->mac->mii_control = mii_control;
@@ -318,7 +318,7 @@ static void mdio_write(struct net_device *dev, int phy_id, int reg, u16 value)
 		}
 	}
 
-	mii_control = MAC_SET_MII_SELECT_REG(reg) | 
+	mii_control = MAC_SET_MII_SELECT_REG(reg) |
 		MAC_SET_MII_SELECT_PHY(phy_id) | MAC_MII_WRITE;
 
 	aup->mac->mii_data = value;
@@ -361,7 +361,7 @@ static int __init mii_probe (struct net_device * dev)
 		phy_id0 = mdio_read(dev, phy_addr, MII_PHY_ID0);
 		phy_id1 = mdio_read(dev, phy_addr, MII_PHY_ID1);
 
-		/* search our mii table for the current mii */ 
+		/* search our mii table for the current mii */
 		for (i = 0; mii_chip_table[i].phy_id1; i++)
 			if (phy_id0 == mii_chip_table[i].phy_id0 &&
 			    phy_id1 == mii_chip_table[i].phy_id1) {
@@ -398,7 +398,7 @@ static int __init mii_probe (struct net_device * dev)
 
 /*
  * Buffer allocation/deallocation routines. The buffer descriptor returned
- * has the virtual and dma address of a buffer suitable for 
+ * has the virtual and dma address of a buffer suitable for
  * both, receive and transmit operations.
  */
 static db_dest_t *GetFreeDB(struct au1000_private *aup)
@@ -430,7 +430,7 @@ void ReleaseDB(struct au1000_private *aup, db_dest_t *pDB)
 static void *dma_alloc(size_t size, dma_addr_t * dma_handle)
 {
 	void *ret;
-	int gfp = GFP_ATOMIC | GFP_DMA;
+	int gfp = GFP_ATOMIC | GFP_DMA; // 从DMA内存区申请
 
 	ret = (void *) __get_free_pages(gfp, get_order(size));
 
@@ -502,12 +502,12 @@ static void cleanup_buffers(struct net_device *dev)
 }
 
 
-/* 
+/*
  * Setup the receive and transmit "rings".  These pointers are the addresses
  * of the rx and tx MAC DMA registers so they are fixed by the hardware --
  * these are not descriptors sitting in memory.
  */
-static void 
+static void
 setup_hw_rings(struct au1000_private *aup, u32 rx_base, u32 tx_base)
 {
 	int i;
@@ -535,7 +535,7 @@ int __init au1000_probe(struct net_device *dev)
 #endif
 
 	if (au1000_debug > 4)
-		printk(KERN_INFO "%s: au1000_probe base_addr %x\n", 
+		printk(KERN_INFO "%s: au1000_probe base_addr %x\n",
 				dev->name, base_addr);
 
 	if (next_dev >= NUM_INTERFACES) {
@@ -574,7 +574,7 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 		dev = init_etherdev(0, sizeof(struct au1000_private));
 	}
 	if (!dev) {
-		 printk (KERN_ERR "au1000 eth: init_etherdev failed\n");  
+		 printk (KERN_ERR "au1000 eth: init_etherdev failed\n");
 		 return -ENODEV;
 	}
 
@@ -607,19 +607,17 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 	aup->mac = (volatile mac_reg_t *)ioremap_nocache((unsigned long)ioaddr, sizeof(*aup->mac));
 	/* Setup some variables for quick register address access */
 	if (ioaddr == AU1000_ETH0_BASE) {
-		aup->enable = (volatile u32 *)
-			ioremap_nocache((unsigned long)MAC0_ENABLE, sizeof(*aup->enable)); 
+		aup->enable = (volatile u32 *)ioremap_nocache((unsigned long)MAC0_ENABLE, sizeof(*aup->enable));
 		memcpy(dev->dev_addr, au1000_mac_addr[0], sizeof(dev->dev_addr));
 		setup_hw_rings(aup, MAC0_RX_DMA_ADDR, MAC0_TX_DMA_ADDR);
 	}
 	else if (ioaddr == AU1000_ETH1_BASE) {
-		aup->enable = (volatile u32 *)
-			ioremap_nocache((unsigned long)MAC1_ENABLE, sizeof(*aup->enable)); 
+		aup->enable = (volatile u32 *)ioremap_nocache((unsigned long)MAC1_ENABLE, sizeof(*aup->enable));
 		memcpy(dev->dev_addr, au1000_mac_addr[1], sizeof(dev->dev_addr));
 		setup_hw_rings(aup, MAC1_RX_DMA_ADDR, MAC1_TX_DMA_ADDR);
 	}
 	else { /* should never happen */
-		 printk (KERN_ERR "au1000 eth: bad ioaddr %x\n", (unsigned)ioaddr);  
+		 printk (KERN_ERR "au1000 eth: bad ioaddr %x\n", (unsigned)ioaddr);
 		 retval = -ENODEV;
 		 goto free_region;
 	}
@@ -687,7 +685,7 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 	/* Fill in the fields of the device structure with ethernet values. */
 	ether_setup(dev);
 
-	/* 
+	/*
 	 * The boot code uses the ethernet controller, so reset it to start fresh.
 	 * au1000_init() expects that the device is in reset state.
 	 */
@@ -709,7 +707,7 @@ free_region:
 }
 
 
-/* 
+/*
  * Initialize the interface.
  *
  * When the device powers up, the clocks are disabled and the
@@ -794,7 +792,7 @@ static void au1000_timer(unsigned long data)
 	}
 
 set_timer:
-	aup->timer.expires = RUN_AT((1*HZ)); 
+	aup->timer.expires = RUN_AT((1*HZ));
 	aup->timer.data = (unsigned long)dev;
 	aup->timer.function = &au1000_timer; /* timer handler */
 	add_timer(&aup->timer);
@@ -825,7 +823,7 @@ static int au1000_open(struct net_device *dev)
 		return retval;
 	}
 
-	aup->timer.expires = RUN_AT((3*HZ)); 
+	aup->timer.expires = RUN_AT((3*HZ));
 	aup->timer.data = (unsigned long)dev;
 	aup->timer.function = &au1000_timer; /* timer handler */
 	add_timer(&aup->timer);
@@ -845,7 +843,7 @@ static int au1000_close(struct net_device *dev)
 		printk("%s: close: dev=%p\n", dev->name, dev);
 
 	spin_lock_irqsave(&aup->lock, flags);
-	
+
 	/* stop the device */
 	if (netif_device_present(dev)) {
 		netif_stop_queue(dev);
@@ -925,7 +923,7 @@ static int au1000_tx(struct sk_buff *skb, struct net_device *dev)
 
 	/* Prevent interrupts from changing the Tx ring */
 	//spin_lock_irqsave(&aup->lock, flags);
-	
+
 	ptxd = aup->tx_dma_ring[aup->tx_head];
 	buff_stat = ptxd->buff_stat;
 	if (buff_stat & TX_DMA_ENABLE) {
@@ -948,7 +946,7 @@ static int au1000_tx(struct sk_buff *skb, struct net_device *dev)
 	pDB = aup->tx_db_inuse[aup->tx_head];
 	memcpy((void *)pDB->vaddr, skb->data, skb->len);
 	if (skb->len < MAC_MIN_PKT_SIZE) {
-		for (i=skb->len; i<MAC_MIN_PKT_SIZE; i++) { 
+		for (i=skb->len; i<MAC_MIN_PKT_SIZE; i++) {
 			((char *)pDB->vaddr)[i] = 0;
 		}
 		ptxd->len = MAC_MIN_PKT_SIZE;
@@ -986,7 +984,7 @@ static inline void update_rx_stats(struct net_device *dev, u32 status)
 		if (status & RX_COLL)
 			ps->collisions++;
 	}
-	else 
+	else
 		ps->rx_bytes += status & RX_FRAME_LEN_MASK;
 
 }
@@ -1024,7 +1022,7 @@ static int au1000_rx(struct net_device *dev)
 			}
 			skb->dev = dev;
 			skb_reserve(skb, 2);	/* 16 byte IP header align */
-			eth_copy_and_sum(skb, (unsigned char *)pDB->vaddr, 
+			eth_copy_and_sum(skb, (unsigned char *)pDB->vaddr,
 					status & RX_FRAME_LEN_MASK, 0);
 			skb_put(skb, status & RX_FRAME_LEN_MASK); /* Make room */
 			skb->protocol = eth_type_trans(skb, dev);
@@ -1032,13 +1030,13 @@ static int au1000_rx(struct net_device *dev)
 		}
 		else {
 			if (au1000_debug > 4) {
-				if (status & RX_MISSED_FRAME) 
+				if (status & RX_MISSED_FRAME)
 					printk("rx miss\n");
-				if (status & RX_WDOG_TIMER) 
+				if (status & RX_WDOG_TIMER)
 					printk("rx wdog\n");
-				if (status & RX_RUNT) 
+				if (status & RX_RUNT)
 					printk("rx runt\n");
-				if (status & RX_OVERLEN) 
+				if (status & RX_OVERLEN)
 					printk("rx overlen\n");
 				if (status & RX_COLL)
 					printk("rx coll\n");
@@ -1115,7 +1113,7 @@ static void set_rx_mode(struct net_device *dev)
 	struct au1000_private *aup = (struct au1000_private *) dev->priv;
 
 	/* fixme */
-	if (au1000_debug > 4) 
+	if (au1000_debug > 4)
 		printk("%s: set_multicast: flags=%x\n", dev->name, dev->flags);
 
 	if (dev->flags & IFF_PROMISC) {			/* Set promiscuous. */
@@ -1149,11 +1147,11 @@ static int au1000_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
 	u16 *data = (u16 *)&rq->ifr_data;
 
 	/* fixme */
-	switch(cmd) { 
+	switch(cmd) {
 		case SIOCDEVPRIVATE:		/* Get the address of the PHY in use. */
 		data[0] = PHY_ADDRESS;
 		case SIOCDEVPRIVATE+1:		/* Read the specified MII register. */
-		//data[3] = mdio_read(ioaddr, data[0], data[1]); 
+		//data[3] = mdio_read(ioaddr, data[0], data[1]);
 		return 0;
 		case SIOCDEVPRIVATE+2:		/* Write the specified MII register */
 		//mdio_write(ioaddr, data[0], data[1], data[2]);
@@ -1170,17 +1168,17 @@ static int au1000_set_config(struct net_device *dev, struct ifmap *map)
 	u16 control;
 
 	if (au1000_debug > 4)  {
-		printk("%s: set_config called: dev->if_port %d map->port %x\n", 
+		printk("%s: set_config called: dev->if_port %d map->port %x\n",
 				dev->name, dev->if_port, map->port);
 	}
 
 	switch(map->port){
-		case IF_PORT_UNKNOWN: /* use auto here */   
+		case IF_PORT_UNKNOWN: /* use auto here */
 			printk("auto\\n");
 			dev->if_port = map->port;
 			/* Link Down: the timer will bring it up */
 			netif_carrier_off(dev);
-	
+
 			/* read current control */
 			control = mdio_read(dev, aup->phy_addr, MII_CONTROL);
 			control &= ~(MII_CNTL_FDX | MII_CNTL_F100);
@@ -1190,11 +1188,11 @@ static int au1000_set_config(struct net_device *dev, struct ifmap *map)
 				   MII_CONTROL, control | MII_CNTL_AUTO | MII_CNTL_RST_AUTO);
 
 			break;
-    
-		case IF_PORT_10BASET: /* 10BaseT */         
+
+		case IF_PORT_10BASET: /* 10BaseT */
 			printk("10baseT\n");
 			dev->if_port = map->port;
-	
+
 			/* Link Down: the timer will bring it up */
 			netif_carrier_off(dev);
 
@@ -1202,19 +1200,19 @@ static int au1000_set_config(struct net_device *dev, struct ifmap *map)
 			control = mdio_read(dev, aup->phy_addr, MII_CONTROL);
 			printk("read control %x\n", control);
 			control &= ~(MII_CNTL_F100 | MII_CNTL_AUTO | MII_CNTL_FDX);
-	
+
 			/* disable auto negotiation and force 10M/HD mode*/
 			mdio_write(dev, aup->phy_addr, MII_CONTROL, control);
 			break;
-    
+
 		case IF_PORT_100BASET: /* 100BaseT */
-		case IF_PORT_100BASETX: /* 100BaseTx */ 
+		case IF_PORT_100BASETX: /* 100BaseTx */
 			printk("100 base T/TX\n");
 			dev->if_port = map->port;
-	
+
 			/* Link Down: the timer will bring it up */
 			netif_carrier_off(dev);
-	
+
 			/* set Speed to 100Mbps, Half Duplex */
 			/* disable auto negotiation and enable 100MBit Mode */
 			control = mdio_read(dev, aup->phy_addr, MII_CONTROL);
@@ -1223,14 +1221,14 @@ static int au1000_set_config(struct net_device *dev, struct ifmap *map)
 			control |= MII_CNTL_F100;
 			mdio_write(dev, aup->phy_addr, MII_CONTROL, control);
 			break;
-    
+
 		case IF_PORT_100BASEFX: /* 100BaseFx */
 			printk("100 Base FX\n");
 			dev->if_port = map->port;
-	
+
 			/* Link Down: the timer will bring it up */
 			netif_carrier_off(dev);
-	
+
 			/* set Speed to 100Mbps, Full Duplex */
 			/* disable auto negotiation and enable 100MBit Mode */
 			control = mdio_read(dev, aup->phy_addr, MII_CONTROL);
@@ -1244,7 +1242,7 @@ static int au1000_set_config(struct net_device *dev, struct ifmap *map)
 			printk(KERN_INFO "Not supported");
 			return -EOPNOTSUPP;
 			break;
-    
+
 		default:
 			printk("Invalid");
 			return -EINVAL;

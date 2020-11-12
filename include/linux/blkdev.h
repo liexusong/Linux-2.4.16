@@ -46,11 +46,11 @@ struct request {
 
 #include <linux/elevator.h>
 
-typedef int (merge_request_fn) (request_queue_t *q, 
+typedef int (merge_request_fn) (request_queue_t *q,
 				struct request  *req,
 				struct buffer_head *bh,
 				int);
-typedef int (merge_requests_fn) (request_queue_t *q, 
+typedef int (merge_requests_fn) (request_queue_t *q,
 				 struct request  *req,
 				 struct request  *req2,
 				 int);
@@ -76,25 +76,25 @@ struct request_queue
 	/*
 	 * the queue request freelist, one for reads and one for writes
 	 */
-	struct request_list	rq[2];
+	struct request_list	rq[2]; // 读/写请求对象空闲队列(0为读, 1为写)
 
 	/*
 	 * Together with queue_head for cacheline sharing
 	 */
-	struct list_head	queue_head;
-	elevator_t		elevator;
+	struct list_head	queue_head; // I/O请求队列
+	elevator_t			elevator;   // 用于请求排序(电梯算法)
 
-	request_fn_proc		* request_fn;
-	merge_request_fn	* back_merge_fn;
-	merge_request_fn	* front_merge_fn;
-	merge_requests_fn	* merge_requests_fn;
-	make_request_fn		* make_request_fn;
-	plug_device_fn		* plug_device_fn;
+	request_fn_proc		*request_fn;
+	merge_request_fn	*back_merge_fn;
+	merge_request_fn	*front_merge_fn;
+	merge_requests_fn	*merge_requests_fn;
+	make_request_fn		*make_request_fn;
+	plug_device_fn		*plug_device_fn;
 	/*
 	 * The queue owner gets to use this for whatever they like.
 	 * ll_rw_blk doesn't touch it.
 	 */
-	void			* queuedata;
+	void				*queuedata;
 
 	/*
 	 * This is used to remove the plug when tq_disk runs.
@@ -104,19 +104,19 @@ struct request_queue
 	/*
 	 * Boolean that indicates whether this queue is plugged or not.
 	 */
-	char			plugged;
+	char				plugged; // 是否被放入到软中断运行队列中
 
 	/*
 	 * Boolean that indicates whether current_request is active or
 	 * not.
 	 */
-	char			head_active;
+	char				head_active;
 
 	/*
 	 * Is meant to protect the queue in the future instead of
 	 * io_request_lock
 	 */
-	spinlock_t		queue_lock;
+	spinlock_t			queue_lock;
 
 	/*
 	 * Tasks wait here for free request

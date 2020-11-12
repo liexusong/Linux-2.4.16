@@ -359,7 +359,7 @@ extern struct page * FASTCALL(_alloc_pages(unsigned int gfp_mask, unsigned int o
 extern struct page * FASTCALL(__alloc_pages(unsigned int gfp_mask, unsigned int order, zonelist_t *zonelist));
 extern struct page * alloc_pages_node(int nid, unsigned int gfp_mask, unsigned int order);
 
-static inline struct page * alloc_pages(unsigned int gfp_mask, unsigned int order)
+static inline struct page *alloc_pages(unsigned int gfp_mask, unsigned int order)
 {
 	/*
 	 * Gets optimized away by the compiler.

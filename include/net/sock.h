@@ -132,7 +132,7 @@ struct ipx_opt {
 	unsigned char           node[IPX_NODE_LEN];
 #endif
 	unsigned short		type;
-/* 
+/*
  * To handle special ncp connection-handling sockets for mars_nwe,
  * the connection number must be stored in the socket.
  */
@@ -277,7 +277,7 @@ struct tcp_opt {
 		unsigned long timeout;	/* Currently scheduled timeout		*/
 		__u32	lrcvtime;	/* timestamp of last received data packet*/
 		__u16	last_seg_size;	/* Size of last incoming segment	*/
-		__u16	rcv_mss;	/* MSS used for delayed ACK decisions	*/ 
+		__u16	rcv_mss;	/* MSS used for delayed ACK decisions	*/
 	} ack;
 
 	/* Data for direct copy to user */
@@ -310,7 +310,7 @@ struct tcp_opt {
 	__u32	mdev_max;	/* maximal mdev for the last rtt period	*/
 	__u32	rttvar;		/* smoothed mdev_max			*/
 	__u32	rtt_seq;	/* sequence number to update rttvar	*/
-	__u32	rto;		/* retransmit timeout			*/
+	__u32	rto;		/* retransmit timeout			*/ // 重传超时时间
 
 	__u32	packets_out;	/* Packets which are "in flight"	*/
 	__u32	left_out;	/* Packets which leaved network		*/
@@ -417,10 +417,10 @@ struct tcp_opt {
 	unsigned int		keepalive_intvl;  /* time interval between keep alive probes */
 	int			linger2;
 
-	unsigned long last_synq_overflow; 
+	unsigned long last_synq_overflow;
 };
 
- 	
+
 /*
  * This structure really needs to be cleaned up.
  * Most of it is for TCP, and not used by any of
@@ -429,16 +429,16 @@ struct tcp_opt {
 
 /*
  * The idea is to start moving to a newer struct gradualy
- * 
+ *
  * IMHO the newer struct should have the following format:
- * 
+ *
  *	struct sock {
  *		sockmem [mem, proto, callbacks]
  *
  *		union or struct {
  *			ax25;
  *		} ll_pinfo;
- *	
+ *
  *		union {
  *			ipv4;
  *			ipv6;
@@ -608,7 +608,7 @@ struct sock {
 #endif /* CONFIG_FILTER */
 
 	/* This is where all the private (optional) areas that don't
-	 * overlap will eventually live. 
+	 * overlap will eventually live.
 	 */
 	union {
 		void *destruct_hook;
@@ -658,7 +658,7 @@ struct sock {
 #if defined(CONFIG_WAN_ROUTER) || defined(CONFIG_WAN_ROUTER_MODULE)
                struct wanpipe_opt      *af_wanpipe;
 #endif
-	} protinfo;  		
+	} protinfo;
 
 
 	/* This part is used for the timeout functions. */
@@ -670,7 +670,7 @@ struct sock {
 
 	/* RPC layer private data */
 	void			*user_data;
-  
+
 	/* Callbacks */
 	void			(*state_change)(struct sock *sk);
 	void			(*data_ready)(struct sock *sk,int bytes);
@@ -678,7 +678,7 @@ struct sock {
 	void			(*error_report)(struct sock *sk);
 
   	int			(*backlog_rcv) (struct sock *sk,
-						struct sk_buff *skb);  
+						struct sk_buff *skb);
 	void                    (*destruct)(struct sock *sk);
 };
 
@@ -699,10 +699,10 @@ do {	if((__sk)->backlog.tail == NULL) {		\
  * transport -> network interface is defined by struct inet_proto
  */
 struct proto {
-	void			(*close)(struct sock *sk, 
+	void			(*close)(struct sock *sk,
 					long timeout);
 	int			(*connect)(struct sock *sk,
-				        struct sockaddr *uaddr, 
+				        struct sockaddr *uaddr,
 					int addr_len);
 	int			(*disconnect)(struct sock *sk, int flags);
 
@@ -713,20 +713,20 @@ struct proto {
 	int			(*init)(struct sock *sk);
 	int			(*destroy)(struct sock *sk);
 	void			(*shutdown)(struct sock *sk, int how);
-	int			(*setsockopt)(struct sock *sk, int level, 
+	int			(*setsockopt)(struct sock *sk, int level,
 					int optname, char *optval, int optlen);
-	int			(*getsockopt)(struct sock *sk, int level, 
-					int optname, char *optval, 
-					int *option);  	 
+	int			(*getsockopt)(struct sock *sk, int level,
+					int optname, char *optval,
+					int *option);
 	int			(*sendmsg)(struct sock *sk, struct msghdr *msg,
 					   int len);
 	int			(*recvmsg)(struct sock *sk, struct msghdr *msg,
-					int len, int noblock, int flags, 
+					int len, int noblock, int flags,
 					int *addr_len);
-	int			(*bind)(struct sock *sk, 
+	int			(*bind)(struct sock *sk,
 					struct sockaddr *uaddr, int addr_len);
 
-	int			(*backlog_rcv) (struct sock *sk, 
+	int			(*backlog_rcv) (struct sock *sk,
 						struct sk_buff *skb);
 
 	/* Keeping track of sk's, looking them up, and port selection methods. */
@@ -822,7 +822,7 @@ extern int			sock_setsockopt(struct socket *sock, int level,
 						int optlen);
 
 extern int			sock_getsockopt(struct socket *sock, int level,
-						int op, char *optval, 
+						int op, char *optval,
 						int *optlen);
 extern struct sk_buff 		*sock_alloc_send_skb(struct sock *sk,
 						     unsigned long size,
@@ -836,7 +836,7 @@ extern void sock_kfree_s(struct sock *sk, void *mem, int size);
  * does not implement a particular function.
  */
 extern int                      sock_no_release(struct socket *);
-extern int                      sock_no_bind(struct socket *, 
+extern int                      sock_no_bind(struct socket *,
 					     struct sockaddr *, int);
 extern int                      sock_no_connect(struct socket *,
 						struct sockaddr *, int, int);
@@ -856,7 +856,7 @@ extern int			sock_no_getsockopt(struct socket *, int , int,
 						   char *, int *);
 extern int			sock_no_setsockopt(struct socket *, int, int,
 						   char *, int);
-extern int 			sock_no_fcntl(struct socket *, 
+extern int 			sock_no_fcntl(struct socket *,
 					      unsigned int, unsigned long);
 extern int                      sock_no_sendmsg(struct socket *,
 						struct msghdr *, int,
@@ -869,13 +869,13 @@ extern int			sock_no_mmap(struct file *file,
 					     struct vm_area_struct *vma);
 extern ssize_t			sock_no_sendpage(struct socket *sock,
 						struct page *page,
-						int offset, size_t size, 
+						int offset, size_t size,
 						int flags);
 
 /*
  *	Default socket callbacks and setup code
  */
- 
+
 extern void sock_def_destruct(struct sock *);
 
 /* Initialise core socket variables */
@@ -898,7 +898,7 @@ extern void sklist_destroy_socket(struct sock **list, struct sock *sk);
  * wrapper to sk_run_filter. It returns 0 if the packet should
  * be accepted or 1 if the packet should be tossed.
  */
- 
+
 static inline int sk_filter(struct sk_buff *skb, struct sk_filter *filter)
 {
 	int pkt_len;
@@ -919,7 +919,7 @@ static inline int sk_filter(struct sk_buff *skb, struct sk_filter *filter)
  *
  *	Remove a filter from a socket and release its resources.
  */
- 
+
 static inline void sk_filter_release(struct sock *sk, struct sk_filter *fp)
 {
 	unsigned int size = sk_filter_len(fp);
@@ -1191,7 +1191,7 @@ static inline int sock_queue_err_skb(struct sock *sk, struct sk_buff *skb)
 /*
  *	Recover an error report and clear atomically
  */
- 
+
 static inline int sock_error(struct sock *sk)
 {
 	int err=xchg(&sk->err,0);
@@ -1204,7 +1204,7 @@ static inline unsigned long sock_wspace(struct sock *sk)
 
 	if (!(sk->shutdown & SEND_SHUTDOWN)) {
 		amt = sk->sndbuf - atomic_read(&sk->wmem_alloc);
-		if (amt < 0) 
+		if (amt < 0)
 			amt = 0;
 	}
 	return amt;
@@ -1225,7 +1225,7 @@ static inline void sk_wake_async(struct sock *sk, int how, int band)
  *	Default write policy as shown to user space via poll/select/SIGIO
  *	Kernel internally doesn't use the MIN_WRITE_SPACE threshold.
  */
-static inline int sock_writeable(struct sock *sk) 
+static inline int sock_writeable(struct sock *sk)
 {
 	return sock_wspace(sk) >= SOCK_MIN_WRITE_SPACE;
 }
@@ -1267,8 +1267,8 @@ sock_recv_timestamp(struct msghdr *msg, struct sock *sk, struct sk_buff *skb)
 		sk->stamp = skb->stamp;
 }
 
-/* 
- *	Enable debug/info messages 
+/*
+ *	Enable debug/info messages
  */
 
 #if 0

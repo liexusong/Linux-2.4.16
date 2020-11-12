@@ -249,7 +249,7 @@ asmlinkage long sys_utime(char * filename, struct utimbuf * times)
 	newattrs.ia_valid = ATTR_CTIME | ATTR_MTIME | ATTR_ATIME;
 	if (times) {
 		error = get_user(newattrs.ia_atime, &times->actime);
-		if (!error) 
+		if (!error)
 			error = get_user(newattrs.ia_mtime, &times->modtime);
 		if (error)
 			goto dput_and_out;
@@ -429,7 +429,7 @@ asmlinkage long sys_chroot(const char * filename)
 
 	path_init(name, LOOKUP_POSITIVE | LOOKUP_FOLLOW |
 		      LOOKUP_DIRECTORY | LOOKUP_NOALT, &nd);
-	error = path_walk(name, &nd);	
+	error = path_walk(name, &nd);
 	putname(name);
 	if (error)
 		goto out;
@@ -565,7 +565,7 @@ static int chown_common(struct dentry * dentry, uid_t user, gid_t group)
 	 *
 	 * Removed the fsuid check (see the comment above) -- 19990830 SD.
 	 */
-	if (((inode->i_mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP)) 
+	if (((inode->i_mode & (S_ISGID | S_IXGRP)) == (S_ISGID | S_IXGRP))
 		&& !S_ISDIR(inode->i_mode))
 	{
 		newattrs.ia_mode &= ~S_ISGID;
@@ -722,8 +722,8 @@ int get_unused_fd(void)
 	write_lock(&files->file_lock);
 
 repeat:
- 	fd = find_next_zero_bit(files->open_fds, 
-				files->max_fdset, 
+ 	fd = find_next_zero_bit(files->open_fds,
+				files->max_fdset,
 				files->next_fd);
 
 	/*
@@ -742,8 +742,8 @@ repeat:
 		}
 		goto out;
 	}
-	
-	/* 
+
+	/*
 	 * Check whether we need to expand the fd array.
 	 */
 	if (fd >= files->max_fds) {
@@ -772,7 +772,7 @@ out:
 	return error;
 }
 
-asmlinkage long sys_open(const char * filename, int flags, int mode)
+asmlinkage long sys_open(const char *filename, int flags, int mode)
 {
 	char * tmp;
 	int fd, error;

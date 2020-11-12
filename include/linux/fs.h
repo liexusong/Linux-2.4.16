@@ -34,8 +34,8 @@ struct poll_table_struct;
  * nr_file rlimit, so it's safe to set up a ridiculously high absolute
  * upper limit on files-per-process.
  *
- * Some programs (notably those using select()) may have to be 
- * recompiled to take full advantage of the new limits..  
+ * Some programs (notably those using select()) may have to be
+ * recompiled to take full advantage of the new limits..
  */
 
 /* Fixed constants first: */
@@ -84,7 +84,7 @@ extern int leases_enable, dir_notify_enable, lease_break_time;
 #define SEL_EX		4
 
 /* public flags for file_system_type */
-#define FS_REQUIRES_DEV 1 
+#define FS_REQUIRES_DEV 1
 #define FS_NO_DCACHE	2 /* Only dcache the necessary things. */
 #define FS_NO_PRELIM	4 /* prevent preloading of dentries, even if
 			   * FS_NO_DCACHE is not set.
@@ -228,25 +228,25 @@ enum bh_state_bits {
  * Try to keep the most commonly used fields in single cache lines (16
  * bytes) to improve performance.  This ordering should be
  * particularly beneficial on 32-bit processors.
- * 
+ *
  * We use the first 16 bytes for the data which is used in searches
  * over the block hash lists (ie. getblk() and friends).
- * 
+ *
  * The second 16 bytes we use for lru buffer scans, as used by
  * sync_buffers() and refill_freelist().  -- sct
  */
 struct buffer_head {
 	/* First cache line: */
-	struct buffer_head *b_next;	/* Hash queue list */
-	unsigned long b_blocknr;	/* block number */
-	unsigned short b_size;		/* block size */
-	unsigned short b_list;		/* List that this buffer appears */
-	kdev_t b_dev;			/* device (B_FREE = free) */
+	struct buffer_head *b_next;		/* Hash queue list */
+	unsigned long b_blocknr;		/* block number */
+	unsigned short b_size;			/* block size */
+	unsigned short b_list;			/* List that this buffer appears */
+	kdev_t b_dev;					/* device (B_FREE = free) */
 
-	atomic_t b_count;		/* users using this block */
-	kdev_t b_rdev;			/* Real device */
-	unsigned long b_state;		/* buffer state bitmap (see above) */
-	unsigned long b_flushtime;	/* Time when (dirty) buffer should be written */
+	atomic_t b_count;				/* users using this block */
+	kdev_t b_rdev;					/* Real device */
+	unsigned long b_state;			/* buffer state bitmap (see above) */
+	unsigned long b_flushtime;		/* Time when (dirty) buffer should be written */
 
 	struct buffer_head *b_next_free;/* lru/free list linkage */
 	struct buffer_head *b_prev_free;/* doubly linked list of buffers */
@@ -254,15 +254,15 @@ struct buffer_head {
 	struct buffer_head *b_reqnext;	/* request queue */
 
 	struct buffer_head **b_pprev;	/* doubly linked list of hash-queue */
-	char * b_data;			/* pointer to data block */
-	struct page *b_page;		/* the page this bh is mapped to */
+	char *b_data;					/* pointer to data block */
+	struct page *b_page;			/* the page this bh is mapped to */
 	void (*b_end_io)(struct buffer_head *bh, int uptodate); /* I/O completion */
- 	void *b_private;		/* reserved for b_end_io */
+ 	void *b_private;				/* reserved for b_end_io */
 
-	unsigned long b_rsector;	/* Real buffer location on disk */
+	unsigned long b_rsector;		/* Real buffer location on disk */
 	wait_queue_head_t b_wait;
 
-	struct inode *	     b_inode;
+	struct inode        *b_inode;
 	struct list_head     b_inode_buffers;	/* doubly linked list of inode dirty buffers */
 };
 
@@ -429,7 +429,7 @@ struct inode {
 	struct list_head	i_hash;
 	struct list_head	i_list;
 	struct list_head	i_dentry;
-	
+
 	struct list_head	i_dirty_buffers;
 	struct list_head	i_dirty_data_buffers;
 
@@ -860,7 +860,7 @@ struct inode_operations {
  */
 struct super_operations {
 	void (*read_inode) (struct inode *);
-  
+
   	/* reiserfs kludge.  reiserfs needs 64 bits of information to
     	** find an inode.  We are using the read_inode2 call to get
    	** that information.  We don't like this, and are waiting on some
@@ -987,7 +987,7 @@ extern int vfs_statfs(struct super_block *, struct statfs *);
 
 /* Return value for VFS lock functions - tells locks.c to lock conventionally
  * REALLY kosha for root NFS and nfs_lock
- */ 
+ */
 #define LOCK_USE_CLNT 1
 
 #define FLOCK_VERIFY_READ  1
@@ -1233,7 +1233,7 @@ extern int open_namei(const char *, int, int, struct nameidata *);
 
 extern int kernel_read(struct file *, unsigned long, char *, unsigned long);
 extern struct file * open_exec(const char *);
- 
+
 /* fs/dcache.c -- generic fs support functions */
 extern int is_subdir(struct dentry *, struct dentry *);
 extern ino_t find_inode_number(struct dentry *, struct qstr *);

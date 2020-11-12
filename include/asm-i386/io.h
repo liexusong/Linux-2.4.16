@@ -80,7 +80,7 @@ static inline void * phys_to_virt(unsigned long address)
 
 extern void * __ioremap(unsigned long offset, unsigned long size, unsigned long flags);
 
-static inline void * ioremap (unsigned long offset, unsigned long size)
+static inline void * ioremap(unsigned long offset, unsigned long size)
 {
 	return __ioremap(offset, size, 0);
 }
@@ -90,9 +90,9 @@ static inline void * ioremap (unsigned long offset, unsigned long size)
  * it's useful if some control registers are in such an area and write combining
  * or read caching is not desirable:
  */
-static inline void * ioremap_nocache (unsigned long offset, unsigned long size)
+static inline void * ioremap_nocache(unsigned long offset, unsigned long size)
 {
-        return __ioremap(offset, size, _PAGE_PCD);
+        return __ioremap(offset, size, _PAGE_PCD); // 禁止缓存
 }
 
 extern void iounmap(void *addr);
@@ -196,7 +196,7 @@ out:
  *	1. Out of order aware processors
  *	2. Accidentally out of order processors (PPro errata #51)
  */
- 
+
 #if defined(CONFIG_X86_OOSTORE) || defined(CONFIG_X86_PPRO_FENCE)
 
 static inline void flush_write_buffers(void)
@@ -252,11 +252,11 @@ __asm__ __volatile__ ("out" #s " %" s1 "0,%" s2 "1"
 __OUT1(s##_local,x) __OUT2(s,s1,"w") : : "a" (value), "Nd" (port)); } \
 __OUT1(s##_p_local,x) __OUT2(s,s1,"w") __FULL_SLOW_DOWN_IO : : "a" (value), "Nd" (port));} \
 __OUTQ0(s,s,x) \
-__OUTQ0(s,s##_p,x) 
+__OUTQ0(s,s##_p,x)
 #else
 #define __OUT(s,s1,x) \
 __OUT1(s,x) __OUT2(s,s1,"w") : : "a" (value), "Nd" (port)); } \
-__OUT1(s##_p,x) __OUT2(s,s1,"w") __FULL_SLOW_DOWN_IO : : "a" (value), "Nd" (port));} 
+__OUT1(s##_p,x) __OUT2(s,s1,"w") __FULL_SLOW_DOWN_IO : : "a" (value), "Nd" (port));}
 #endif /* CONFIG_MULTIQUAD */
 
 #ifdef CONFIG_MULTIQUAD
@@ -266,7 +266,7 @@ static inline void out##ss(unsigned x value, unsigned short port) { \
 		write##s(value, (unsigned long) xquad_portio + port); \
 	else               /* We're still in early boot, running on quad 0 */ \
 		out##ss##_local(value, port); \
-} 
+}
 
 #define __INQ0(s,ss)       /* Do the equivalent of the portio op on quad 0 */ \
 static inline RETURN_TYPE in##ss(unsigned short port) { \
@@ -288,11 +288,11 @@ __asm__ __volatile__ ("in" #s " %" s2 "1,%" s1 "0"
 __IN1(s##_local) __IN2(s,s1,"w") : "=a" (_v) : "Nd" (port) ,##i ); return _v; } \
 __IN1(s##_p_local) __IN2(s,s1,"w") __FULL_SLOW_DOWN_IO : "=a" (_v) : "Nd" (port) ,##i ); return _v; } \
 __INQ0(s,s) \
-__INQ0(s,s##_p) 
+__INQ0(s,s##_p)
 #else
 #define __IN(s,s1,i...) \
 __IN1(s) __IN2(s,s1,"w") : "=a" (_v) : "Nd" (port) ,##i ); return _v; } \
-__IN1(s##_p) __IN2(s,s1,"w") __FULL_SLOW_DOWN_IO : "=a" (_v) : "Nd" (port) ,##i ); return _v; } 
+__IN1(s##_p) __IN2(s,s1,"w") __FULL_SLOW_DOWN_IO : "=a" (_v) : "Nd" (port) ,##i ); return _v; }
 #endif /* CONFIG_MULTIQUAD */
 
 #define __INS(s) \

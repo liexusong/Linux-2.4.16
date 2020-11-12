@@ -28,7 +28,7 @@ static inline void remap_area_pte(pte_t * pte, unsigned long address, unsigned l
 			printk("remap_area_pte: page already exists\n");
 			BUG();
 		}
-		set_pte(pte, mk_pte_phys(phys_addr, __pgprot(_PAGE_PRESENT | _PAGE_RW | 
+		set_pte(pte, mk_pte_phys(phys_addr, __pgprot(_PAGE_PRESENT | _PAGE_RW |
 					_PAGE_DIRTY | _PAGE_ACCESSED | flags)));
 		address += PAGE_SIZE;
 		phys_addr += PAGE_SIZE;
@@ -49,7 +49,7 @@ static inline int remap_area_pmd(pmd_t * pmd, unsigned long address, unsigned lo
 	if (address >= end)
 		BUG();
 	do {
-		pte_t * pte = pte_alloc(&init_mm, pmd, address);
+		pte_t *pte = pte_alloc(&init_mm, pmd, address);
 		if (!pte)
 			return -ENOMEM;
 		remap_area_pte(pte, address, end - address, address + phys_addr, flags);
@@ -129,8 +129,8 @@ void * __ioremap(unsigned long phys_addr, unsigned long size, unsigned long flag
 
 		t_addr = __va(phys_addr);
 		t_end = t_addr + (size - 1);
-	   
-		for(page = virt_to_page(t_addr); page <= virt_to_page(t_end); page++)
+
+		for (page = virt_to_page(t_addr); page <= virt_to_page(t_end); page++)
 			if(!PageReserved(page))
 				return NULL;
 	}

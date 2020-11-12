@@ -9,6 +9,36 @@
  */
 
 /*
+               user space
+              (read,write)
+                   |
+-------------------|------------------------
+                   v
+             +-----------+
+             | VFS layer |
+             +-----------+
+              /    |    \
+             /     |     \
+     +------+  +------+   +-------+
+     | ext2 |  | ext3 |   | btrfs | ...
+     +------+  +------+   +-------+
+         \         |          /
+          *--------+---------*
+                   |
+                   v
+        +---------------------+
+        | Generic Block Layer |
+        +---------------------+
+                   |
+                   v
+        +---------------------+
+        | Block Device Driver |
+        +---------------------+
+            /       |       \
+          HD        CD       ...
+*/
+
+/*
  * This handles all read/write requests to block devices
  */
 #include <linux/sched.h>
@@ -170,7 +200,7 @@ static int __blk_cleanup_queue(struct request_list *list)
  *     when a block device is being de-registered.  Currently, its
  *     primary task it to free all the &struct request structures that
  *     were allocated to the queue.
- * Caveat: 
+ * Caveat:
  *     Hopefully the low level driver will have finished any
  *     outstanding requests first...
  **/
@@ -210,8 +240,8 @@ void blk_cleanup_queue(request_queue_t * q)
  *
  *    When a queue is plugged the head will be assumed to be inactive.
  **/
- 
-void blk_queue_headactive(request_queue_t * q, int active)
+
+void blk_queue_headactive(request_queue_t *q, int active)
 {
 	q->head_active = active;
 }
@@ -239,7 +269,7 @@ void blk_queue_headactive(request_queue_t * q, int active)
  *    buffer in normal memory.
  **/
 
-void blk_queue_make_request(request_queue_t * q, make_request_fn * mfn)
+void blk_queue_make_request(request_queue_t *q, make_request_fn *mfn)
 {
 	q->make_request_fn = mfn;
 }
@@ -253,7 +283,7 @@ static inline int ll_new_segment(request_queue_t *q, struct request *req, int ma
 	return 0;
 }
 
-static int ll_back_merge_fn(request_queue_t *q, struct request *req, 
+static int ll_back_merge_fn(request_queue_t *q, struct request *req,
 			    struct buffer_head *bh, int max_segments)
 {
 	if (req->bhtail->b_data + req->bhtail->b_size == bh->b_data)
@@ -261,7 +291,7 @@ static int ll_back_merge_fn(request_queue_t *q, struct request *req,
 	return ll_new_segment(q, req, max_segments);
 }
 
-static int ll_front_merge_fn(request_queue_t *q, struct request *req, 
+static int ll_front_merge_fn(request_queue_t *q, struct request *req,
 			     struct buffer_head *bh, int max_segments)
 {
 	if (bh->b_data + bh->b_size == req->bh->b_data)
@@ -276,7 +306,7 @@ static int ll_merge_requests_fn(request_queue_t *q, struct request *req,
 
 	if (req->bhtail->b_data + req->bhtail->b_size == next->bh->b_data)
 		total_segments--;
-    
+
 	if (total_segments > max_segments)
 		return 0;
 
@@ -301,7 +331,7 @@ static void generic_plug_device(request_queue_t *q, kdev_t dev)
 		return;
 
 	q->plugged = 1;
-	queue_task(&q->plug_tq, &tq_disk);
+	queue_task(&q->plug_tq, &tq_disk); // 把请求队列添加到 tq_disk 任务队列中进行运行
 }
 
 /*
@@ -339,6 +369,7 @@ static void blk_init_free_list(request_queue_t *q)
 	/*
 	 * Divide requests in half between read and write
 	 */
+	// 初始化空闲的I/O请求对象(用于I/O限流), queue_nr_requests为可接受的IO请求数量, 读写IO各占一半
 	for (i = 0; i < queue_nr_requests; i++) {
 		rq = kmem_cache_alloc(request_cachep, SLAB_KERNEL);
 		if (rq == NULL) {
@@ -391,28 +422,28 @@ static int __make_request(request_queue_t * q, int rw, struct buffer_head * bh);
  *    blk_init_queue() must be paired with a blk_cleanup_queue() call
  *    when the block device is deactivated (such as at module unload).
  **/
-void blk_init_queue(request_queue_t * q, request_fn_proc * rfn)
+void blk_init_queue(request_queue_t *q, request_fn_proc *rfn)
 {
 	INIT_LIST_HEAD(&q->queue_head);
 	elevator_init(&q->elevator, ELEVATOR_LINUS);
 	blk_init_free_list(q);
-	q->request_fn     	= rfn;
-	q->back_merge_fn       	= ll_back_merge_fn;
-	q->front_merge_fn      	= ll_front_merge_fn;
-	q->merge_requests_fn	= ll_merge_requests_fn;
-	q->make_request_fn	= __make_request;
-	q->plug_tq.sync		= 0;
-	q->plug_tq.routine	= &generic_unplug_device;
-	q->plug_tq.data		= q;
-	q->plugged        	= 0;
+	q->request_fn = rfn;
+	q->back_merge_fn = ll_back_merge_fn;
+	q->front_merge_fn = ll_front_merge_fn;
+	q->merge_requests_fn = ll_merge_requests_fn;
+	q->make_request_fn = __make_request;
+	q->plug_tq.sync = 0;
+	q->plug_tq.routine = &generic_unplug_device;
+	q->plug_tq.data = q;
+	q->plugged = 0;
 	/*
 	 * These booleans describe the queue properties.  We set the
 	 * default (and most common) values here.  Other drivers can
 	 * use the appropriate functions to alter the queue properties.
 	 * as appropriate.
 	 */
-	q->plug_device_fn 	= generic_plug_device;
-	q->head_active    	= 1;
+	q->plug_device_fn = generic_plug_device;
+	q->head_active = 1;
 }
 
 #define blkdev_free_rq(list) list_entry((list)->next, struct request, queue);
@@ -526,12 +557,15 @@ inline void drive_stat_acct (kdev_t dev, int rw,
  * By this point, req->cmd is always either READ/WRITE, never READA,
  * which is important for drive_stat_acct() above.
  */
-static inline void add_request(request_queue_t * q, struct request * req,
-			       struct list_head *insert_here)
+static inline void
+add_request(request_queue_t *q, struct request *req, struct list_head *insert_here)
 {
 	drive_stat_acct(req->rq_dev, req->cmd, req->nr_sectors, 1);
 
-	if (!q->plugged && q->head_active && insert_here == &q->queue_head) {
+	if (!q->plugged                       // (plugged == 0)表示IO请求队列不为空
+		&& q->head_active                 // 队列是否可用
+		&& insert_here == &q->queue_head) // IO请求队列是否为空?
+	{
 		spin_unlock_irq(&io_request_lock);
 		BUG();
 	}
@@ -560,7 +594,8 @@ inline void blkdev_release_request(struct request *req)
 	 */
 	if (q) {
 		list_add(&req->queue, &q->rq[rw].free);
-		if (++q->rq[rw].count >= batch_requests && waitqueue_active(&q->wait_for_request))
+		if (++q->rq[rw].count >= batch_requests &&
+			waitqueue_active(&q->wait_for_request))
 			wake_up(&q->wait_for_request);
 	}
 }
@@ -574,7 +609,7 @@ static void attempt_merge(request_queue_t * q,
 			  int max_segments)
 {
 	struct request *next;
-  
+
 	next = blkdev_next_request(req);
 	if (req->sector + req->nr_sectors != next->sector)
 		return;
@@ -624,12 +659,11 @@ static inline void attempt_front_merge(request_queue_t * q,
 	attempt_merge(q, blkdev_entry_to_request(prev), max_sectors, max_segments);
 }
 
-static int __make_request(request_queue_t * q, int rw,
-				  struct buffer_head * bh)
+static int __make_request(request_queue_t *q, int rw, struct buffer_head *bh)
 {
 	unsigned int sector, count;
 	int max_segments = MAX_SEGMENTS;
-	struct request * req, *freereq = NULL;
+	struct request *req, *freereq = NULL;
 	int rw_ahead, max_sectors, el_ret;
 	struct list_head *head, *insert_here;
 	int latency;
@@ -640,16 +674,16 @@ static int __make_request(request_queue_t * q, int rw,
 
 	rw_ahead = 0;	/* normal case; gets changed below for READA */
 	switch (rw) {
-		case READA:
-			rw_ahead = 1;
-			rw = READ;	/* drop into READ */
-		case READ:
-		case WRITE:
-			latency = elevator_request_latency(elevator, rw);
-			break;
-		default:
-			BUG();
-			goto end_io;
+	case READA:
+		rw_ahead = 1;
+		rw = READ;	/* drop into READ */
+	case READ:
+	case WRITE:
+		latency = elevator_request_latency(elevator, rw);
+		break;
+	default:
+		BUG();
+		goto end_io;
 	}
 
 	/* We'd better have a real physical mapping!
@@ -681,18 +715,18 @@ again:
 	 * Now we acquire the request spinlock, we have to be mega careful
 	 * not to schedule or do something nonatomic
 	 */
-	spin_lock_irq(&io_request_lock);
+	spin_lock_irq(&io_request_lock); // 关闭中断并且上自旋锁
 
-	insert_here = head->prev;
-	if (list_empty(head)) {
+	insert_here = head->prev; // 插入到IO请求队列的最后
+	if (list_empty(head)) {   // 没有等待的IO操作, 那么安装磁盘运行队列到软中断处理队列中
 		q->plug_device_fn(q, bh->b_rdev); /* is atomic */
 		goto get_rq;
 	} else if (q->head_active && !q->plugged)
 		head = head->next;
 
 	el_ret = elevator->elevator_merge_fn(q, &req, head, bh, rw,max_sectors);
-	switch (el_ret) {
 
+	switch (el_ret) {
 		case ELEVATOR_BACK_MERGE:
 			if (!q->back_merge_fn(q, req, bh, max_segments))
 				break;
@@ -737,7 +771,7 @@ again:
 			printk("elevator returned crap (%d)\n", el_ret);
 			BUG();
 	}
-		
+
 	/*
 	 * Grab a free request from the freelist - if that is empty, check
 	 * if we are doing read ahead and abort instead of blocking for
@@ -747,12 +781,12 @@ get_rq:
 	if (freereq) {
 		req = freereq;
 		freereq = NULL;
-	} else if ((req = get_request(q, rw)) == NULL) {
+	} else if ((req = get_request(q, rw)) == NULL) { // 如果没有空闲的IO请求对象(说明IO很忙)
 		spin_unlock_irq(&io_request_lock);
 		if (rw_ahead)
 			goto end_io;
 
-		freereq = __get_request_wait(q, rw);
+		freereq = __get_request_wait(q, rw); // 等待某些IO操作完成, 释放IO请求对象
 		goto again;
 	}
 
@@ -816,7 +850,7 @@ end_io:
  * particular, no other flags, are changed by generic_make_request or
  * any lower level drivers.
  * */
-void generic_make_request (int rw, struct buffer_head * bh)
+void generic_make_request(int rw, struct buffer_head * bh)
 {
 	int major = MAJOR(bh->b_rdev);
 	int minorsize = 0;
@@ -887,9 +921,9 @@ void generic_make_request (int rw, struct buffer_head * bh)
  * This is is appropriate for IO requests that come from the buffer
  * cache and page cache which (currently) always use aligned blocks.
  */
-void submit_bh(int rw, struct buffer_head * bh)
+void submit_bh(int rw, struct buffer_head *bh)
 {
-	int count = bh->b_size >> 9;
+	int count = bh->b_size >> 9; // bh->b_size / 512 == 需要的扇区数
 
 	if (!test_bit(BH_Lock, &bh->b_state))
 		BUG();
@@ -906,12 +940,12 @@ void submit_bh(int rw, struct buffer_head * bh)
 	generic_make_request(rw, bh);
 
 	switch (rw) {
-		case WRITE:
-			kstat.pgpgout += count;
-			break;
-		default:
-			kstat.pgpgin += count;
-			break;
+	case WRITE:
+		kstat.pgpgout += count;
+		break;
+	default:
+		kstat.pgpgin += count;
+		break;
 	}
 }
 
@@ -1034,17 +1068,17 @@ extern int stram_device_init (void);
  * Description:
  *     Ends I/O on the first buffer attached to @req, and sets it up
  *     for the next buffer_head (if any) in the cluster.
- *     
+ *
  * Return:
  *     0 - we are done with this request, call end_that_request_last()
  *     1 - still buffers pending for this request
  *
- * Caveat: 
+ * Caveat:
  *     Drivers implementing their own end_request handling must call
  *     blk_finished_io() appropriately.
  **/
 
-int end_that_request_first (struct request *req, int uptodate, char *name)
+int end_that_request_first(struct request *req, int uptodate, char *name)
 {
 	struct buffer_head * bh;
 	int nsect;

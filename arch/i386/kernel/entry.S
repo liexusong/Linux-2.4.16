@@ -24,7 +24,7 @@
  *	 0(%esp) - %ebx
  *	 4(%esp) - %ecx
  *	 8(%esp) - %edx
- *       C(%esp) - %esi
+ *	 C(%esp) - %esi
  *	10(%esp) - %edi
  *	14(%esp) - %ebp
  *	18(%esp) - %eax
@@ -37,6 +37,9 @@
  *	34(%esp) - %oldesp
  *	38(%esp) - %oldss
  *
+ * ***********************************************************************
+ * System call pass parameters order: %ebx, %ecx, %edx, %esi, %edi, %ebp *
+ * ***********************************************************************
  * "current" is in register %ebx during any slow entries.
  */
 
@@ -46,18 +49,18 @@
 #include <asm/segment.h>
 #include <asm/smp.h>
 
-EBX		= 0x00
-ECX		= 0x04
-EDX		= 0x08
-ESI		= 0x0C
-EDI		= 0x10
-EBP		= 0x14
-EAX		= 0x18
-DS		= 0x1C
-ES		= 0x20
+EBX			= 0x00
+ECX			= 0x04
+EDX			= 0x08
+ESI			= 0x0C
+EDI			= 0x10
+EBP			= 0x14
+EAX			= 0x18
+DS			= 0x1C
+ES			= 0x20
 ORIG_EAX	= 0x24
-EIP		= 0x28
-CS		= 0x2C
+EIP			= 0x28
+CS			= 0x2C
 EFLAGS		= 0x30
 OLDESP		= 0x34
 OLDSS		= 0x38
