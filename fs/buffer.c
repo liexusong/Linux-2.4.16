@@ -246,7 +246,7 @@ static void write_unlocked_buffers(kdev_t dev)
  */
 static int wait_for_buffers(kdev_t dev, int index, int refile)
 {
-	struct buffer_head * next;
+	struct buffer_head *next;
 	int nr;
 
 	next = lru_list[index];
@@ -265,7 +265,7 @@ static int wait_for_buffers(kdev_t dev, int index, int refile)
 
 		get_bh(bh);
 		spin_unlock(&lru_list_lock);
-		wait_on_buffer (bh);
+		wait_on_buffer(bh);
 		put_bh(bh);
 		return -EAGAIN;
 	}
@@ -2820,7 +2820,7 @@ int kupdate(void *startup)
 	complete((struct completion *)startup);
 
 	for (;;) {
-		wait_for_some_buffers(NODEV);
+		wait_for_some_buffers(NODEV); // 触发块设备驱动对IO请求队列进行操作
 
 		/* update interval */
 		interval = bdf_prm.b_un.interval;
@@ -2845,10 +2845,10 @@ int kupdate(void *startup)
 			if (stopped)
 				goto stop_kupdate;
 		}
-#ifdef DEBUG
+#if 0
 		printk(KERN_DEBUG "kupdate() activated...\n");
 #endif
-		sync_old_buffers();
+		sync_old_buffers(); // 把一些脏页面提交到IO请求队列中
 	}
 }
 
@@ -2864,4 +2864,3 @@ static int __init bdflush_init(void)
 }
 
 module_init(bdflush_init)
-

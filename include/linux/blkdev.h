@@ -128,7 +128,7 @@ struct blk_dev_struct {
 	/*
 	 * queue_proc has to be atomic
 	 */
-	request_queue_t		request_queue;
+	request_queue_t	request_queue;
 	queue_proc		*queue;
 	void			*data;
 };

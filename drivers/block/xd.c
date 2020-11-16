@@ -278,7 +278,7 @@ static int xd_open (struct inode *inode,struct file *file)
 }
 
 /* do_xd_request: handle an incoming request */
-static void do_xd_request (request_queue_t *q)
+static void do_xd_request(request_queue_t *q)
 {
 	u_int block,count,retry;
 	int code;
