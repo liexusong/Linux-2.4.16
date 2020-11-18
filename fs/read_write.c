@@ -144,7 +144,7 @@ bad:
 }
 #endif
 
-asmlinkage ssize_t sys_read(unsigned int fd, char * buf, size_t count)
+asmlinkage ssize_t sys_read(unsigned int fd, char *buf, size_t count)
 {
 	ssize_t ret;
 	struct file * file;
@@ -164,14 +164,13 @@ asmlinkage ssize_t sys_read(unsigned int fd, char * buf, size_t count)
 			}
 		}
 		if (ret > 0)
-			inode_dir_notify(file->f_dentry->d_parent->d_inode,
-				DN_ACCESS);
+			inode_dir_notify(file->f_dentry->d_parent->d_inode, DN_ACCESS);
 		fput(file);
 	}
 	return ret;
 }
 
-asmlinkage ssize_t sys_write(unsigned int fd, const char * buf, size_t count)
+asmlinkage ssize_t sys_write(unsigned int fd, const char *buf, size_t count)
 {
 	ssize_t ret;
 	struct file * file;
@@ -191,8 +190,7 @@ asmlinkage ssize_t sys_write(unsigned int fd, const char * buf, size_t count)
 			}
 		}
 		if (ret > 0)
-			inode_dir_notify(file->f_dentry->d_parent->d_inode,
-				DN_MODIFY);
+			inode_dir_notify(file->f_dentry->d_parent->d_inode, DN_MODIFY);
 		fput(file);
 	}
 	return ret;

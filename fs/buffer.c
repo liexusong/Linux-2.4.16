@@ -1262,7 +1262,7 @@ struct buffer_head * get_unused_buffer_head(int async)
 }
 EXPORT_SYMBOL(get_unused_buffer_head);
 
-void set_bh_page (struct buffer_head *bh, struct page *page, unsigned long offset)
+void set_bh_page(struct buffer_head *bh, struct page *page, unsigned long offset)
 {
 	bh->b_page = page;
 	if (offset >= PAGE_SIZE)
@@ -2001,10 +2001,11 @@ int generic_block_bmap(struct address_space *mapping, long block, get_block_t *g
 	return tmp.b_blocknr;
 }
 
-int generic_direct_IO(int rw, struct inode * inode, struct kiobuf * iobuf, unsigned long blocknr, int blocksize, get_block_t * get_block)
+int generic_direct_IO(int rw, struct inode *inode, struct kiobuf *iobuf,
+			unsigned long blocknr, int blocksize, get_block_t *get_block)
 {
 	int i, nr_blocks, retval;
-	unsigned long * blocks = iobuf->blocks;
+	unsigned long *blocks = iobuf->blocks;
 
 	nr_blocks = iobuf->length / blocksize;
 	/* build the blocklist */
@@ -2116,9 +2117,9 @@ int brw_kiovec(int rw, int nr, struct kiobuf *iovec[],
 	int		pageind;
 	int		bhind;
 	int		offset;
-	unsigned long	blocknr;
-	struct kiobuf *	iobuf = NULL;
-	struct page *	map;
+	unsigned long blocknr;
+	struct kiobuf *iobuf = NULL;
+	struct page *map;
 	struct buffer_head *tmp, **bhs = NULL;
 
 	if (!nr)

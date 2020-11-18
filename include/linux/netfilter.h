@@ -12,11 +12,11 @@
 #endif
 
 /* Responses from hook functions. */
-#define NF_DROP 0
-#define NF_ACCEPT 1
-#define NF_STOLEN 2
-#define NF_QUEUE 3
-#define NF_REPEAT 4
+#define NF_DROP   0  // 丢弃该数据包
+#define NF_ACCEPT 1  // 保留该数据包
+#define NF_STOLEN 2  // 忘掉该数据包
+#define NF_QUEUE  3  // 将该数据包插入到用户空间
+#define NF_REPEAT 4  // 再次调用该hook函数
 #define NF_MAX_VERDICT NF_REPEAT
 
 /* Generic cache responses from hook functions. */
@@ -78,14 +78,14 @@ struct nf_info
 {
 	/* The ops struct which sent us to userspace. */
 	struct nf_hook_ops *elem;
-	
+
 	/* If we're sent to userspace, this keeps housekeeping info */
 	int pf;
 	unsigned int hook;
 	struct net_device *indev, *outdev;
 	int (*okfn)(struct sk_buff *);
 };
-                                                                                
+
 /* Function to register/unregister hook points. */
 int nf_register_hook(struct nf_hook_ops *reg);
 void nf_unregister_hook(struct nf_hook_ops *reg);
@@ -130,15 +130,15 @@ int nf_hook_slow(int pf, unsigned int hook, struct sk_buff *skb,
 		 int (*okfn)(struct sk_buff *));
 
 /* Call setsockopt() */
-int nf_setsockopt(struct sock *sk, int pf, int optval, char *opt, 
+int nf_setsockopt(struct sock *sk, int pf, int optval, char *opt,
 		  int len);
 int nf_getsockopt(struct sock *sk, int pf, int optval, char *opt,
 		  int *len);
 
 /* Packet queuing */
-typedef int (*nf_queue_outfn_t)(struct sk_buff *skb, 
+typedef int (*nf_queue_outfn_t)(struct sk_buff *skb,
                                 struct nf_info *info, void *data);
-extern int nf_register_queue_handler(int pf, 
+extern int nf_register_queue_handler(int pf,
                                      nf_queue_outfn_t outfn, void *data);
 extern int nf_unregister_queue_handler(int pf);
 extern void nf_reinject(struct sk_buff *skb,

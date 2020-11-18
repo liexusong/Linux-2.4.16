@@ -217,8 +217,8 @@ static inline void copy_from_high_bh (struct buffer_head *to,
 	kunmap_atomic(vfrom, KM_USER0);
 }
 
-static inline void copy_to_high_bh_irq (struct buffer_head *to,
-			 struct buffer_head *from)
+static inline void
+copy_to_high_bh_irq(struct buffer_head *to, struct buffer_head *from)
 {
 	struct page *p_to;
 	char *vto;
@@ -233,7 +233,7 @@ static inline void copy_to_high_bh_irq (struct buffer_head *to,
 	__restore_flags(flags);
 }
 
-static inline void bounce_end_io (struct buffer_head *bh, int uptodate)
+static inline void bounce_end_io(struct buffer_head *bh, int uptodate)
 {
 	struct page *page;
 	struct buffer_head *bh_orig = (struct buffer_head *)(bh->b_private);
@@ -254,7 +254,7 @@ static inline void bounce_end_io (struct buffer_head *bh, int uptodate)
 		list_add(&page->list, &emergency_pages);
 		nr_emergency_pages++;
 	}
-	
+
 	if (nr_emergency_bhs >= POOL_SIZE) {
 #ifdef HIGHMEM_DEBUG
 		/* Don't clobber the constructed slab cache */
@@ -276,7 +276,7 @@ static __init int init_emergency_pool(void)
 	struct sysinfo i;
         si_meminfo(&i);
         si_swapinfo(&i);
-        
+
         if (!i.totalhigh)
         	return 0;
 
@@ -322,7 +322,7 @@ static void bounce_end_io_read (struct buffer_head *bh, int uptodate)
 	bounce_end_io(bh, uptodate);
 }
 
-struct page *alloc_bounce_page (void)
+struct page *alloc_bounce_page(void)
 {
 	struct list_head *tmp;
 	struct page *page;
@@ -360,7 +360,7 @@ repeat_alloc:
 	goto repeat_alloc;
 }
 
-struct buffer_head *alloc_bounce_bh (void)
+struct buffer_head *alloc_bounce_bh(void)
 {
 	struct list_head *tmp;
 	struct buffer_head *bh;
@@ -398,7 +398,7 @@ repeat_alloc:
 	goto repeat_alloc;
 }
 
-struct buffer_head * create_bounce(int rw, struct buffer_head * bh_orig)
+struct buffer_head *create_bounce(int rw, struct buffer_head *bh_orig)
 {
 	struct page *page;
 	struct buffer_head *bh;

@@ -699,6 +699,7 @@ static int __make_request(request_queue_t *q, int rw, struct buffer_head *bh)
 	 * driver. Create a bounce buffer if the buffer data points into
 	 * high memory - keep the original buffer otherwise.
 	 */
+	// 如果使用了高端内存, 那么需要判断是否需要创建反弹页面
 #if CONFIG_HIGHMEM
 	bh = create_bounce(rw, bh);
 #endif
@@ -851,7 +852,7 @@ end_io:
  * particular, no other flags, are changed by generic_make_request or
  * any lower level drivers.
  * */
-void generic_make_request(int rw, struct buffer_head * bh)
+void generic_make_request(int rw, struct buffer_head *bh)
 {
 	int major = MAJOR(bh->b_rdev);
 	int minorsize = 0;

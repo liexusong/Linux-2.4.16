@@ -400,7 +400,7 @@ static int vma_merge(struct mm_struct * mm, struct vm_area_struct * prev,
 
 /* sys_mmap() call this function */
 unsigned long do_mmap_pgoff(
-	struct file * file, unsigned long addr,
+	struct file *file, unsigned long addr,
 	unsigned long len, unsigned long prot,
 	unsigned long flags, unsigned long pgoff)
 {

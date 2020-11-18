@@ -17,3 +17,4 @@ wait_on_buffer();
 wait_on_page();
 __make_request();
 run_task_queue();
+generic_direct_IO();

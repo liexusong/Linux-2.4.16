@@ -3,7 +3,7 @@
  *
  * Keep track of the general-purpose IO-buffer structures used to track
  * abstract kernel-space io buffers.
- * 
+ *
  */
 
 #include <linux/iobuf.h>
@@ -59,7 +59,7 @@ int alloc_kiovec(int nr, struct kiobuf **bufp)
 {
 	int i;
 	struct kiobuf *iobuf;
-	
+
 	for (i = 0; i < nr; i++) {
 		iobuf = vmalloc(sizeof(struct kiobuf));
 		if (!iobuf) {
@@ -74,15 +74,15 @@ int alloc_kiovec(int nr, struct kiobuf **bufp)
  		}
 		bufp[i] = iobuf;
 	}
-	
+
 	return 0;
 }
 
-void free_kiovec(int nr, struct kiobuf **bufp) 
+void free_kiovec(int nr, struct kiobuf **bufp)
 {
 	int i;
 	struct kiobuf *iobuf;
-	
+
 	for (i = 0; i < nr; i++) {
 		iobuf = bufp[i];
 		if (iobuf->locked)
@@ -97,11 +97,11 @@ void free_kiovec(int nr, struct kiobuf **bufp)
 int expand_kiobuf(struct kiobuf *iobuf, int wanted)
 {
 	struct page ** maplist;
-	
+
 	if (iobuf->array_len >= wanted)
 		return 0;
-	
-	maplist = (struct page **) 
+
+	maplist = (struct page **)
 		kmalloc(wanted * sizeof(struct page **), GFP_KERNEL);
 	if (!maplist)
 		return -ENOMEM;
@@ -111,12 +111,12 @@ int expand_kiobuf(struct kiobuf *iobuf, int wanted)
 		kfree(maplist);
 		return 0;
 	}
-	
+
 	memcpy (maplist, iobuf->maplist, iobuf->array_len * sizeof(struct page **));
 
 	if (iobuf->array_len > KIO_STATIC_PAGES)
 		kfree (iobuf->maplist);
-	
+
 	iobuf->maplist   = maplist;
 	iobuf->array_len = wanted;
 	return 0;
@@ -143,6 +143,3 @@ repeat:
 	tsk->state = TASK_RUNNING;
 	remove_wait_queue(&kiobuf->wait_queue, &wait);
 }
-
-
-

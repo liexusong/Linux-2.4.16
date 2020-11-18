@@ -30,7 +30,7 @@ extern int vmalloc_area_pages(unsigned long address, unsigned long size,
  *	Allocate any pages
  */
 
-static inline void * vmalloc(unsigned long size)
+static inline void *vmalloc(unsigned long size)
 {
 	return __vmalloc(size, GFP_KERNEL|__GFP_HIGHMEM, PAGE_KERNEL);
 }

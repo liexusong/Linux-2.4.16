@@ -102,7 +102,7 @@ static int ext2_alloc_block (struct inode * inode, unsigned long goal, int *err)
 	if (inode->u.ext2_i.i_prealloc_count &&
 	    (goal == inode->u.ext2_i.i_prealloc_block ||
 	     goal + 1 == inode->u.ext2_i.i_prealloc_block))
-	{		
+	{
 		result = inode->u.ext2_i.i_prealloc_block++;
 		inode->u.ext2_i.i_prealloc_count--;
 		/* Writer: end */
@@ -113,7 +113,7 @@ static int ext2_alloc_block (struct inode * inode, unsigned long goal, int *err)
 		ext2_debug ("preallocation miss (%lu/%lu).\n",
 			    alloc_hits, ++alloc_attempts);
 		if (S_ISREG(inode->i_mode))
-			result = ext2_new_block (inode, goal, 
+			result = ext2_new_block (inode, goal,
 				 &inode->u.ext2_i.i_prealloc_count,
 				 &inode->u.ext2_i.i_prealloc_block, err);
 		else
@@ -178,15 +178,15 @@ static int ext2_block_to_path(struct inode *inode, long i_block, int offsets[4])
 	int ptrs = EXT2_ADDR_PER_BLOCK(inode->i_sb);
 	int ptrs_bits = EXT2_ADDR_PER_BLOCK_BITS(inode->i_sb);
 	const long direct_blocks = EXT2_NDIR_BLOCKS,
-		indirect_blocks = ptrs,
-		double_blocks = (1 << (ptrs_bits * 2));
+			   indirect_blocks = ptrs,
+			   double_blocks = (1 << (ptrs_bits * 2));
 	int n = 0;
 
 	if (i_block < 0) {
-		ext2_warning (inode->i_sb, "ext2_block_to_path", "block < 0");
+		ext2_warning(inode->i_sb, "ext2_block_to_path", "block < 0");
 	} else if (i_block < direct_blocks) {
 		offsets[n++] = i_block;
-	} else if ( (i_block -= direct_blocks) < indirect_blocks) {
+	} else if ((i_block -= direct_blocks) < indirect_blocks) {
 		offsets[n++] = EXT2_IND_BLOCK;
 		offsets[n++] = i_block;
 	} else if ((i_block -= indirect_blocks) < double_blocks) {
@@ -199,8 +199,9 @@ static int ext2_block_to_path(struct inode *inode, long i_block, int offsets[4])
 		offsets[n++] = (i_block >> ptrs_bits) & (ptrs - 1);
 		offsets[n++] = i_block & (ptrs - 1);
 	} else {
-		ext2_warning (inode->i_sb, "ext2_block_to_path", "block > big");
+		ext2_warning(inode->i_sb, "ext2_block_to_path", "block > big");
 	}
+
 	return n;
 }
 
@@ -304,7 +305,7 @@ static inline unsigned long ext2_find_near(struct inode *inode, Indirect *ind)
 	 * It is going to be refered from inode itself? OK, just put it into
 	 * the same cylinder group then.
 	 */
-	return (inode->u.ext2_i.i_block_group * 
+	return (inode->u.ext2_i.i_block_group *
 		EXT2_BLOCKS_PER_GROUP(inode->i_sb)) +
 	       le32_to_cpu(inode->i_sb->u.ext2_sb.s_es->s_first_data_block);
 }
@@ -332,7 +333,7 @@ static inline int ext2_find_goal(struct inode *inode,
 	if (block == inode->u.ext2_i.i_next_alloc_block + 1) {
 		inode->u.ext2_i.i_next_alloc_block++;
 		inode->u.ext2_i.i_next_alloc_goal++;
-	} 
+	}
 	/* Writer: end */
 	/* Reader: pointers, ->i_next_alloc* */
 	if (verify_chain(chain, partial)) {
@@ -396,7 +397,7 @@ static int ext2_alloc_branch(struct inode *inode,
 			break;
 		branch[n].key = cpu_to_le32(nr);
 		/*
-		 * Get buffer_head for parent block, zero it out and set 
+		 * Get buffer_head for parent block, zero it out and set
 		 * the pointer to new one, then send parent to disk.
 		 */
 		bh = getblk(inode->i_dev, parent, blocksize);
@@ -767,7 +768,7 @@ static void ext2_free_branches(struct inode *inode, u32 *p, u32 *q, int depth)
 			/*
 			 * A read failure? Report error and clear slot
 			 * (should be rare).
-			 */ 
+			 */
 			if (!bh) {
 				ext2_error(inode->i_sb, "ext2_free_branches",
 					"Read failure, inode=%ld, block=%ld",
@@ -994,7 +995,7 @@ void ext2_read_inode (struct inode * inode)
 			inode->i_op = &page_symlink_inode_operations;
 			inode->i_mapping->a_ops = &ext2_aops;
 		}
-	} else 
+	} else
 		init_special_inode(inode, inode->i_mode,
 				   le32_to_cpu(raw_inode->i_block[0]));
 	brelse (bh);
@@ -1016,7 +1017,7 @@ void ext2_read_inode (struct inode * inode)
 		inode->i_flags |= S_NOATIME;
 	}
 	return;
-	
+
 bad_inode:
 	make_bad_inode(inode);
 	return;
@@ -1127,7 +1128,7 @@ static int ext2_update_inode(struct inode * inode, int do_sync)
 			}
 		}
 	}
-	
+
 	raw_inode->i_generation = cpu_to_le32(inode->i_generation);
 	if (S_ISCHR(inode->i_mode) || S_ISBLK(inode->i_mode))
 		raw_inode->i_block[0] = cpu_to_le32(kdev_t_to_nr(inode->i_rdev));

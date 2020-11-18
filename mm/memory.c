@@ -401,7 +401,7 @@ void zap_page_range(struct mm_struct *mm, unsigned long address, unsigned long s
 /*
  * Do a quick page-table lookup for a single page.
  */
-static struct page * follow_page(unsigned long address, int write)
+static struct page *follow_page(unsigned long address, int write)
 {
 	pgd_t *pgd;
 	pmd_t *pmd;
@@ -422,7 +422,7 @@ static struct page * follow_page(unsigned long address, int write)
 	pte = *ptep;
 	if (pte_present(pte)) {
 		if (!write ||
-		    (pte_write(pte) && pte_dirty(pte)))
+			(pte_write(pte) && pte_dirty(pte)))
 			return pte_page(pte);
 	}
 
@@ -451,13 +451,13 @@ static inline struct page * get_page_map(struct page *page)
 #define dprintk(x...)
 int map_user_kiobuf(int rw, struct kiobuf *iobuf, unsigned long va, size_t len)
 {
-	unsigned long		ptr, end;
-	int			err;
-	struct mm_struct *	mm;
-	struct vm_area_struct *	vma = 0;
-	struct page *		map;
-	int			i;
-	int			datain = (rw == READ);
+	unsigned long ptr, end;
+	int err;
+	struct mm_struct *mm;
+	struct vm_area_struct *vma = 0;
+	struct page *map;
+	int i;
+	int datain = (rw == READ);
 
 	/* Make sure the iobuf is not already mapped somewhere. */
 	if (iobuf->nr_pages)
@@ -1146,7 +1146,7 @@ static int do_swap_page(struct mm_struct * mm,
  * spinlock held to protect against concurrent faults in
  * multithreaded programs.
  */
-static int do_anonymous_page(struct mm_struct * mm, struct vm_area_struct * vma, pte_t *page_table, int write_access, unsigned long addr)
+static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct * vma, pte_t *page_table, int write_access, unsigned long addr)
 {
 	pte_t entry;
 
@@ -1288,8 +1288,8 @@ static int do_no_page(struct mm_struct * mm, struct vm_area_struct * vma,
  * release it when done.
  */
 static inline int handle_pte_fault(struct mm_struct *mm,
-	struct vm_area_struct * vma, unsigned long address,
-	int write_access, pte_t * pte)
+	struct vm_area_struct *vma, unsigned long address,
+	int write_access, pte_t *pte)
 {
 	pte_t entry;
 

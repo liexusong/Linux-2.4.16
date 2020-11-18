@@ -588,7 +588,7 @@ void filemap_fdatasync(struct address_space * mapping)
 
 	spin_lock(&pagecache_lock);
 
-        while (!list_empty(&mapping->dirty_pages)) {
+	while (!list_empty(&mapping->dirty_pages)) {
 		struct page *page = list_entry(mapping->dirty_pages.next, struct page, list);
 
 		list_del(&page->list);
@@ -625,7 +625,7 @@ void filemap_fdatawait(struct address_space * mapping)
 {
 	spin_lock(&pagecache_lock);
 
-        while (!list_empty(&mapping->locked_pages)) {
+	while (!list_empty(&mapping->locked_pages)) {
 		struct page *page = list_entry(mapping->locked_pages.next, struct page, list);
 
 		list_del(&page->list);
@@ -1487,13 +1487,19 @@ no_cached_page:
 	UPDATE_ATIME(inode);
 }
 
-static ssize_t generic_file_direct_IO(int rw, struct file * filp, char * buf, size_t count, loff_t offset)
+static ssize_t generic_file_direct_IO(int rw, struct file *filp, char *buf, size_t count, loff_t offset)
 {
 	ssize_t retval;
-	int new_iobuf, chunk_size, blocksize_mask, blocksize, blocksize_bits, iosize, progress;
-	struct kiobuf * iobuf;
-	struct inode * inode = filp->f_dentry->d_inode;
-	struct address_space * mapping = inode->i_mapping;
+	int new_iobuf,
+		chunk_size,
+		blocksize_mask,
+		blocksize,
+		blocksize_bits,
+		iosize,
+		progress;
+	struct kiobuf *iobuf;
+	struct inode *inode = filp->f_dentry->d_inode;
+	struct address_space *mapping = inode->i_mapping;
 
 	new_iobuf = 0;
 	iobuf = filp->f_iobuf;
@@ -1508,7 +1514,7 @@ static ssize_t generic_file_direct_IO(int rw, struct file * filp, char * buf, si
 		new_iobuf = 1;
 	}
 
-	blocksize = 1 << inode->i_blkbits;
+	blocksize = 1 << inode->i_blkbits; // 块大小
 	blocksize_bits = inode->i_blkbits;
 	blocksize_mask = blocksize - 1;
 	chunk_size = KIO_MAX_ATOMIC_IO << 10;
@@ -1523,9 +1529,9 @@ static ssize_t generic_file_direct_IO(int rw, struct file * filp, char * buf, si
 	 * Flush to disk exlusively the _data_, metadata must remains
 	 * completly asynchronous or performance will go to /dev/null.
 	 */
-	filemap_fdatasync(mapping);
+	filemap_fdatasync(mapping); // 把脏页写入到磁盘
 	retval = fsync_inode_data_buffers(inode);
-	filemap_fdatawait(mapping);
+	filemap_fdatawait(mapping); // 等待脏页写入完成
 	if (retval < 0)
 		goto out_free;
 
@@ -1535,12 +1541,12 @@ static ssize_t generic_file_direct_IO(int rw, struct file * filp, char * buf, si
 		if (iosize > chunk_size)
 			iosize = chunk_size;
 
-		retval = map_user_kiobuf(rw, iobuf, (unsigned long) buf, iosize);
+		retval = map_user_kiobuf(rw, iobuf, (unsigned long)buf, iosize);
 		if (retval)
 			break;
 
+		// ext2 filesystem is function ext2_direct_IO() -> generic_direct_IO()
 		retval = mapping->a_ops->direct_IO(rw, inode, iobuf, (offset+progress) >> blocksize_bits, blocksize);
-
 		if (rw == READ && retval > 0)
 			mark_dirty_kiobuf(iobuf, retval);
 
@@ -1594,14 +1600,14 @@ int file_read_actor(read_descriptor_t * desc, struct page *page, unsigned long o
  * This is the "read()" routine for all filesystems
  * that can use the page cache directly.
  */
-ssize_t generic_file_read(struct file * filp, char * buf, size_t count, loff_t *ppos)
+ssize_t generic_file_read(struct file *filp, char * buf, size_t count, loff_t *ppos)
 {
 	ssize_t retval;
 
 	if ((ssize_t) count < 0)
 		return -EINVAL;
 
-	if (filp->f_flags & O_DIRECT)
+	if (filp->f_flags & O_DIRECT) // 如果使用直接IO
 		goto o_direct;
 
 	retval = -EFAULT;
