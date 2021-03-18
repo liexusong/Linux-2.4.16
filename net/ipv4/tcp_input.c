@@ -50,9 +50,9 @@
  *		Andi Kleen:		Make sure we never ack data there is not
  *					enough room for. Also make this condition
  *					a fatal error if it might still happen.
- *		Andi Kleen:		Add tcp_measure_rcv_mss to make 
+ *		Andi Kleen:		Add tcp_measure_rcv_mss to make
  *					connections with MSS<min(MTU,ann. MSS)
- *					work without delayed acks. 
+ *					work without delayed acks.
  *		Andi Kleen:		Process packets with PSH set in the
  *					fast path.
  *		J Hadi Salim:		ECN support
@@ -108,15 +108,15 @@ int sysctl_tcp_max_orphans = NR_FILE;
 
 #define TCP_REMNANT (TCP_FLAG_FIN|TCP_FLAG_URG|TCP_FLAG_SYN|TCP_FLAG_PSH)
 
-/* Adapt the MSS value used to make delayed ack decision to the 
+/* Adapt the MSS value used to make delayed ack decision to the
  * real world.
- */ 
+ */
 static __inline__ void tcp_measure_rcv_mss(struct tcp_opt *tp, struct sk_buff *skb)
 {
 	unsigned int len, lss;
 
-	lss = tp->ack.last_seg_size; 
-	tp->ack.last_seg_size = 0; 
+	lss = tp->ack.last_seg_size;
+	tp->ack.last_seg_size = 0;
 
 	/* skb->len may jitter because of SACKs, even if peer
 	 * sends good full-sized frames.
@@ -418,7 +418,7 @@ static __inline__ void tcp_rtt_estimator(struct tcp_opt *tp, __u32 mrtt)
 	/*	The following amusing code comes from Jacobson's
 	 *	article in SIGCOMM '88.  Note that rtt and mdev
 	 *	are scaled versions of rtt and mean deviation.
-	 *	This is designed to be as fast as possible 
+	 *	This is designed to be as fast as possible
 	 *	m stands for "measurement".
 	 *
 	 *	On a 1990 paper the rto value is changed to:
@@ -1696,7 +1696,7 @@ tcp_ack_update_rtt(struct tcp_opt *tp, int flag, s32 seq_rtt)
 		tcp_ack_no_tstamp(tp, seq_rtt, flag);
 }
 
-/* This is Jacobson's slow start and congestion avoidance. 
+/* This is Jacobson's slow start and congestion avoidance.
  * SIGCOMM '88, p. 328.
  */
 static __inline__ void tcp_cong_avoid(struct tcp_opt *tp)
@@ -1742,7 +1742,7 @@ static int tcp_clean_rtx_queue(struct sock *sk)
 	__s32 seq_rtt = -1;
 
 	while((skb=skb_peek(&sk->write_queue)) && (skb != tp->send_head)) {
-		struct tcp_skb_cb *scb = TCP_SKB_CB(skb); 
+		struct tcp_skb_cb *scb = TCP_SKB_CB(skb);
 		__u8 sacked = scb->sacked;
 
 		/* If our packet is before the ack sequence we can
@@ -2634,7 +2634,7 @@ drop:
 			   TCP_SKB_CB(skb)->end_seq);
 
 		tcp_dsack_set(tp, TCP_SKB_CB(skb)->seq, tp->rcv_nxt);
-		
+
 		/* If window is closed, drop tail of packet. But after
 		 * remembering D-SACK for its head made in previous line.
 		 */
@@ -2710,7 +2710,7 @@ drop:
 			}
 		}
 		__skb_insert(skb, skb1, skb1->next, &tp->out_of_order_queue);
-		
+
 		/* And clean segments covered by new one as whole. */
 		while ((skb1 = skb->next) != (struct sk_buff*)&tp->out_of_order_queue &&
 		       after(end_seq, TCP_SKB_CB(skb1)->seq)) {
@@ -2736,7 +2736,7 @@ add_sack:
  */
 static void
 tcp_collapse(struct sock *sk, struct sk_buff *head,
-	     struct sk_buff *tail, u32 start, u32 end)
+			 struct sk_buff *tail, u32 start, u32 end)
 {
 	struct sk_buff *skb;
 
@@ -2873,7 +2873,7 @@ static void tcp_collapse_ofo_queue(struct sock *sk)
  */
 static int tcp_prune_queue(struct sock *sk)
 {
-	struct tcp_opt *tp = &sk->tp_pinfo.af_tcp; 
+	struct tcp_opt *tp = &sk->tp_pinfo.af_tcp;
 
 	SOCK_DEBUG(sk, "prune_queue: c=%x\n", tp->copied_seq);
 
@@ -3048,7 +3048,7 @@ static __inline__ void tcp_ack_snd_check(struct sock *sk)
  *	For 1003.1g we should support a new option TCP_STDURG to permit
  *	either form (or just set the sysctl tcp_stdurg).
  */
- 
+
 static void tcp_check_urg(struct sock * sk, struct tcphdr * th)
 {
 	struct tcp_opt *tp = &(sk->tp_pinfo.af_tcp);
@@ -3134,7 +3134,7 @@ static inline void tcp_urg(struct sock *sk, struct sk_buff *skb, struct tcphdr *
 	if (tp->urg_data == TCP_URG_NOTYET) {
 		u32 ptr = tp->urg_seq - ntohl(th->seq) + (th->doff*4) - th->syn;
 
-		/* Is the urgent pointer pointing into this packet? */	 
+		/* Is the urgent pointer pointing into this packet? */
 		if (ptr < skb->len) {
 			u8 tmp;
 			if (skb_copy_bits(skb, ptr, &tmp, 1))
@@ -3198,26 +3198,26 @@ tcp_checksum_complete_user(struct sock *sk, struct sk_buff *skb)
 }
 
 /*
- *	TCP receive function for the ESTABLISHED state. 
+ *	TCP receive function for the ESTABLISHED state.
  *
- *	It is split into a fast path and a slow path. The fast path is 
+ *	It is split into a fast path and a slow path. The fast path is
  * 	disabled when:
  *	- A zero window was announced from us - zero window probing
- *        is only handled properly in the slow path. 
+ *        is only handled properly in the slow path.
  *	- Out of order segments arrived.
  *	- Urgent data is expected.
  *	- There is no buffer space left
  *	- Unexpected TCP flags/window values/header lengths are received
- *	  (detected by checking the TCP header against pred_flags) 
+ *	  (detected by checking the TCP header against pred_flags)
  *	- Data is sent in both directions. Fast path only supports pure senders
  *	  or pure receivers (this means either the sequence number or the ack
  *	  value must stay constant)
  *	- Unexpected TCP option.
  *
- *	When these conditions are not satisfied it drops into a standard 
+ *	When these conditions are not satisfied it drops into a standard
  *	receive procedure patterned after RFC793 to handle all cases.
  *	The first three cases are guaranteed by proper pred_flags setting,
- *	the rest is checked inline. Fast processing is turned on in 
+ *	the rest is checked inline. Fast processing is turned on in
  *	tcp_data_queue when everything is OK.
  */
 int tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
@@ -3227,15 +3227,15 @@ int tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
 
 	/*
 	 *	Header prediction.
-	 *	The code losely follows the one in the famous 
+	 *	The code losely follows the one in the famous
 	 *	"30 instruction TCP receive" Van Jacobson mail.
-	 *	
-	 *	Van's trick is to deposit buffers into socket queue 
+	 *
+	 *	Van's trick is to deposit buffers into socket queue
 	 *	on a device interrupt, to call tcp_recv function
 	 *	on the receive process context and checksum and copy
 	 *	the buffer to user space. smart...
 	 *
-	 *	Our current scheme is not silly either but we take the 
+	 *	Our current scheme is not silly either but we take the
 	 *	extra cost of the net_bh soft interrupt processing...
 	 *	We do checksum and copy also but from device to kernel.
 	 */
@@ -3246,7 +3246,7 @@ int tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
 	 *	if header_predition is to be made
 	 *	'S' will always be tp->tcp_header_len >> 2
 	 *	'?' will be 0 for the fast path, otherwise pred_flags is 0 to
-	 *  turn it off	(when there are holes in the receive 
+	 *  turn it off	(when there are holes in the receive
 	 *	 space for instance)
 	 *	PSH flag is ignored.
 	 */
@@ -3270,7 +3270,7 @@ int tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
 				goto slow_path;
 
 			tp->saw_tstamp = 1;
-			++ptr; 
+			++ptr;
 			tp->rcv_tsval = ntohl(*ptr);
 			++ptr;
 			tp->rcv_tsecr = ntohl(*ptr);
@@ -3294,7 +3294,7 @@ int tcp_rcv_established(struct sock *sk, struct sk_buff *skb,
 				 * on entry.
 				 */
 				tcp_ack(sk, skb, 0);
-				__kfree_skb(skb); 
+				__kfree_skb(skb);
 				tcp_data_snd_check(sk);
 				return 0;
 			} else { /* Header too small */
@@ -3662,11 +3662,11 @@ reset_and_undo:
 
 /*
  *	This function implements the receiving procedure of RFC 793 for
- *	all states except ESTABLISHED and TIME_WAIT. 
+ *	all states except ESTABLISHED and TIME_WAIT.
  *	It's called from both tcp_v4_rcv and tcp_v6_rcv and should be
  *	address independent.
  */
-	
+
 int tcp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 			  struct tcphdr *th, unsigned len)
 {
@@ -3687,16 +3687,16 @@ int tcp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 			if(tp->af_specific->conn_request(sk, skb) < 0)
 				return 1;
 
-			/* Now we have several options: In theory there is 
-			 * nothing else in the frame. KA9Q has an option to 
+			/* Now we have several options: In theory there is
+			 * nothing else in the frame. KA9Q has an option to
 			 * send data with the syn, BSD accepts data with the
-			 * syn up to the [to be] advertised window and 
-			 * Solaris 2.1 gives you a protocol error. For now 
-			 * we just ignore it, that fits the spec precisely 
+			 * syn up to the [to be] advertised window and
+			 * Solaris 2.1 gives you a protocol error. For now
+			 * we just ignore it, that fits the spec precisely
 			 * and avoids incompatibilities. It would be nice in
 			 * future to drop through and process the data.
 			 *
-			 * Now that TTCP is starting to be used we ought to 
+			 * Now that TTCP is starting to be used we ought to
 			 * queue this data.
 			 * But, this leaves one open to an easy denial of
 		 	 * service attack, and SYN cookies can't defend
@@ -3869,7 +3869,7 @@ int tcp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 	case TCP_FIN_WAIT1:
 	case TCP_FIN_WAIT2:
 		/* RFC 793 says to queue data in these states,
-		 * RFC 1122 says we MUST send a reset. 
+		 * RFC 1122 says we MUST send a reset.
 		 * BSD 4.4 also does reset.
 		 */
 		if (sk->shutdown & RCV_SHUTDOWN) {
@@ -3881,7 +3881,7 @@ int tcp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 			}
 		}
 		/* Fall through */
-	case TCP_ESTABLISHED: 
+	case TCP_ESTABLISHED:
 		tcp_data_queue(sk, skb);
 		queued = 1;
 		break;
@@ -3893,7 +3893,7 @@ int tcp_rcv_state_process(struct sock *sk, struct sk_buff *skb,
 		tcp_ack_snd_check(sk);
 	}
 
-	if (!queued) { 
+	if (!queued) {
 discard:
 		__kfree_skb(skb);
 	}

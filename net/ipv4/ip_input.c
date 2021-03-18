@@ -15,7 +15,7 @@
  *		Stefan Becker, <stefanb@yello.ping.de>
  *		Jorge Cwik, <jorge@laser.satlink.net>
  *		Arnt Gulbrandsen, <agulbra@nvg.unit.no>
- *		
+ *
  *
  * Fixes:
  *		Alan Cox	:	Commented a couple of minor bits of surplus code
@@ -98,13 +98,13 @@
  *		Jos Vos		:	Do accounting *before* call_in_firewall
  *	Willy Konynenberg	:	Transparent proxying support
  *
- *  
+ *
  *
  * To Fix:
  *		IP fragmentation wants rewriting cleanly. The RFC815 algorithm is much more efficient
  *		and could be made very efficient with the addition of some virtual memory hacks to permit
  *		the allocation of a buffer that can then be 'grown' by twiddling page tables.
- *		Output fragmentation wants updating along with the buffer management to use a single 
+ *		Output fragmentation wants updating along with the buffer management to use a single
  *		interleaved copy algorithm so that fragmenting has a one copy overhead. Actual packet
  *		output should probably do its own fragmentation at the UDP/RAW layer. TCP shouldn't cause
  *		fragmentation anyway.
@@ -152,7 +152,7 @@ struct ip_mib ip_statistics[NR_CPUS*2];
 
 /*
  *	Process Router Attention IP option
- */ 
+ */
 int ip_call_ra_chain(struct sk_buff *skb)
 {
 	struct ip_ra_chain *ra;
@@ -166,8 +166,8 @@ int ip_call_ra_chain(struct sk_buff *skb)
 		/* If socket is bound to an interface, only report
 		 * the packet if it came  from that interface.
 		 */
-		if (sk && sk->num == protocol 
-		    && ((sk->bound_dev_if == 0) 
+		if (sk && sk->num == protocol
+		    && ((sk->bound_dev_if == 0)
 			|| (sk->bound_dev_if == skb->dev->ifindex))) {
 			if (skb->nh.iph->frag_off & htons(IP_MF|IP_OFFSET)) {
 				skb = ip_defrag(skb);
@@ -279,7 +279,7 @@ static inline int ip_local_deliver_finish(struct sk_buff *skb)
 			raw_rcv(raw_sk, skb);
 			sock_put(raw_sk);
 		} else if (!flag) {		/* Free and report errors */
-			icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PROT_UNREACH, 0);	
+			icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PROT_UNREACH, 0);
 out:
 			kfree_skb(skb);
 		}
@@ -290,7 +290,7 @@ out:
 
 /*
  * 	Deliver IP Packets to the higher protocol layers.
- */ 
+ */
 int ip_local_deliver(struct sk_buff *skb)
 {
 	/*
@@ -315,10 +315,10 @@ static inline int ip_rcv_finish(struct sk_buff *skb)
 	/*
 	 *	Initialise the virtual path cache for the packet. It describes
 	 *	how the packet travels inside Linux networking.
-	 */ 
+	 */
 	if (skb->dst == NULL) {
 		if (ip_route_input(skb, iph->daddr, iph->saddr, iph->tos, dev))
-			goto drop; 
+			goto drop;
 	}
 
 #ifdef CONFIG_NET_CLS_ROUTE
@@ -380,7 +380,7 @@ drop:
 
 /*
  * 	Main IP Receive routine.
- */ 
+ */
 int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt)
 {
 	struct iphdr *iph;
@@ -413,7 +413,7 @@ int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt)
 	 */
 
 	if (iph->ihl < 5 || iph->version != 4)
-		goto inhdr_error; 
+		goto inhdr_error;
 
 	if (!pskb_may_pull(skb, iph->ihl*4))
 		goto inhdr_error;
@@ -421,10 +421,10 @@ int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt)
 	iph = skb->nh.iph;
 
 	if (ip_fast_csum((u8 *)iph, iph->ihl) != 0)
-		goto inhdr_error; 
+		goto inhdr_error;
 
 	{
-		__u32 len = ntohs(iph->tot_len); 
+		__u32 len = ntohs(iph->tot_len);
 		if (skb->len < len || len < (iph->ihl<<2))
 			goto inhdr_error;
 
@@ -439,14 +439,12 @@ int ip_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *pt)
 		}
 	}
 
-	return NF_HOOK(PF_INET, NF_IP_PRE_ROUTING, skb, dev, NULL,
-		       ip_rcv_finish);
+	return NF_HOOK(PF_INET, NF_IP_PRE_ROUTING, skb, dev, NULL, ip_rcv_finish);
 
 inhdr_error:
 	IP_INC_STATS_BH(IpInHdrErrors);
 drop:
-        kfree_skb(skb);
+	kfree_skb(skb);
 out:
-        return NET_RX_DROP;
+	return NET_RX_DROP;
 }
-

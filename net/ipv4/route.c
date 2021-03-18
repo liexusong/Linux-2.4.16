@@ -20,7 +20,7 @@
  *		(rco@di.uminho.pt)	Routing table insertion and update
  *		Linus Torvalds	:	Rewrote bits to be sensible
  *		Alan Cox	:	Added BSD route gw semantics
- *		Alan Cox	:	Super /proc >4K 
+ *		Alan Cox	:	Super /proc >4K
  *		Alan Cox	:	MTU in route table
  *		Alan Cox	: 	MSS actually. Also added the window
  *					clamper.
@@ -38,7 +38,7 @@
  *		Alan Cox	:	Faster /proc handling
  *	Alexey Kuznetsov	:	Massive rework to support tree based routing,
  *					routing caches and better behaviour.
- *		
+ *
  *		Olaf Erb	:	irtt wasn't being copied right.
  *		Bjorn Ekwall	:	Kerneld route support.
  *		Alan Cox	:	Multicast fixed (I hope)
@@ -225,7 +225,7 @@ static int rt_cache_get_info(char *buffer, char **start, off_t offset,
 			"HHUptod\tSpecDst");
 		len = 128;
   	}
-	
+
 	for (i = rt_hash_mask; i >= 0; i--) {
 		read_lock_bh(&rt_hash_table[i].lock);
 		for (r = rt_hash_table[i].chain; r; r = r->u.rt_next) {
@@ -287,7 +287,7 @@ static int rt_cache_stat_get_info(char *buffer, char **start, off_t offset, int 
                 i = cpu_logical_map(lcpu);
 
 		len += sprintf(buffer+len, "%08x  %08x %08x %08x %08x %08x %08x %08x  %08x %08x %08x\n",
-			       dst_entries,		       
+			       dst_entries,
 			       rt_cache_stat[i].in_hit,
 			       rt_cache_stat[i].in_slow_tot,
 			       rt_cache_stat[i].in_slow_mc,
@@ -311,7 +311,7 @@ static int rt_cache_stat_get_info(char *buffer, char **start, off_t offset, int 
 	*start = buffer + offset;
   	return len;
 }
-  
+
 static __inline__ void rt_free(struct rtable *rt)
 {
 	dst_free(&rt->u.dst);
@@ -429,7 +429,7 @@ static void SMP_TIMER_NAME(rt_run_flush)(unsigned long dummy)
 }
 
 SMP_TIMER_DEFINE(rt_run_flush, rt_cache_flush_task);
-  
+
 static spinlock_t rt_flush_lock = SPIN_LOCK_UNLOCKED;
 
 void rt_cache_flush(int delay)
@@ -454,7 +454,7 @@ void rt_cache_flush(int delay)
 
 		if (user_mode && tmo < ip_rt_max_delay-ip_rt_min_delay)
 			tmo = 0;
-		
+
 		if (delay > tmo)
 			delay = tmo;
 	}
@@ -1001,7 +1001,7 @@ static int ip_error(struct sk_buff *skb)
 
 out:	kfree_skb(skb);
 	return 0;
-} 
+}
 
 /*
  *	The last two values are not from the RFC but
@@ -1014,7 +1014,7 @@ static unsigned short mtu_plateau[] =
 static __inline__ unsigned short guess_mtu(unsigned short old_mtu)
 {
 	int i;
-	
+
 	for (i = 0; i < sizeof(mtu_plateau) / sizeof(mtu_plateau[0]); i++)
 		if (old_mtu > mtu_plateau[i])
 			return mtu_plateau[i];
@@ -1060,7 +1060,7 @@ unsigned short ip_rt_frag_needed(struct iphdr *iph, unsigned short new_mtu)
 					mtu = guess_mtu(old_mtu);
 				}
 				if (mtu <= rth->u.dst.pmtu) {
-					if (mtu < rth->u.dst.pmtu) { 
+					if (mtu < rth->u.dst.pmtu) {
 						dst_confirm(&rth->u.dst);
 						if (mtu < ip_rt_min_pmtu) {
 							mtu = ip_rt_min_pmtu;
@@ -1312,17 +1312,17 @@ e_inval:
 int ip_route_input_slow(struct sk_buff *skb, u32 daddr, u32 saddr,
 			u8 tos, struct net_device *dev)
 {
-	struct rt_key	key;
+	struct rt_key key;
 	struct fib_result res;
 	struct in_device *in_dev = in_dev_get(dev);
 	struct in_device *out_dev = NULL;
-	unsigned	flags = 0;
-	u32		itag = 0;
-	struct rtable * rth;
-	unsigned	hash;
-	u32		spec_dst;
-	int		err = -EINVAL;
-	int		free_res = 0;
+	unsigned flags = 0;
+	u32 itag = 0;
+	struct rtable *rth;
+	unsigned hash;
+	u32 spec_dst;
+	int err = -EINVAL;
+	int free_res = 0;
 
 	/* IP on this device is disabled. */
 
@@ -1619,11 +1619,14 @@ martian_source:
 	goto e_inval;
 }
 
-int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
-		   u8 tos, struct net_device *dev)
+int ip_route_input(struct sk_buff *skb,
+				   u32 daddr, // 目标地址
+				   u32 saddr, // 源地址
+				   u8 tos,
+				   struct net_device *dev)
 {
-	struct rtable * rth;
-	unsigned	hash;
+	struct rtable *rth;
+	unsigned hash;
 	int iif = dev->ifindex;
 
 	tos &= IPTOS_RT_MASK;
@@ -1638,7 +1641,8 @@ int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
 #ifdef CONFIG_IP_ROUTE_FWMARK
 		    rth->key.fwmark == skb->nfmark &&
 #endif
-		    rth->key.tos == tos) {
+		    rth->key.tos == tos)
+		{
 			rth->u.dst.lastuse = jiffies;
 			dst_hold(&rth->u.dst);
 			rth->u.dst.__use++;
@@ -1673,8 +1677,7 @@ int ip_route_input(struct sk_buff *skb, u32 daddr, u32 saddr,
 #endif
 			    ) {
 				read_unlock(&inetdev_lock);
-				return ip_route_input_mc(skb, daddr, saddr,
-							 tos, dev, our);
+				return ip_route_input_mc(skb, daddr, saddr, tos, dev, our);
 			}
 		}
 		read_unlock(&inetdev_lock);
@@ -2011,7 +2014,7 @@ int ip_route_output_key(struct rtable **rp, const struct rt_key *key)
 	read_unlock_bh(&rt_hash_table[hash].lock);
 
 	return ip_route_output_slow(rp, key);
-}	
+}
 
 #ifdef CONFIG_RTNETLINK
 static int rt_fill_info(struct sk_buff *skb, u32 pid, u32 seq, int event,
@@ -2237,7 +2240,7 @@ static int ipv4_sysctl_rtcache_flush(ctl_table *ctl, int write,
 		proc_dointvec(ctl, write, filp, buffer, lenp);
 		rt_cache_flush(flush_delay);
 		return 0;
-	} 
+	}
 
 	return -EINVAL;
 }
@@ -2251,8 +2254,8 @@ static int ipv4_sysctl_rtcache_flush_strategy(ctl_table *table, int *name,
 	if (newlen != sizeof(int))
 		return -EINVAL;
 	if (get_user(delay, (int *)newval))
-		return -EFAULT; 
-	rt_cache_flush(delay); 
+		return -EFAULT;
+	rt_cache_flush(delay);
 	return 0;
 }
 

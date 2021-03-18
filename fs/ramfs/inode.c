@@ -53,7 +53,7 @@ static int ramfs_statfs(struct super_block *sb, struct statfs *buf)
  * Lookup the data. This is trivial - if the dentry didn't already
  * exist, we know it is negative.
  */
-static struct dentry * ramfs_lookup(struct inode *dir, struct dentry *dentry)
+static struct dentry *ramfs_lookup(struct inode *dir, struct dentry *dentry)
 {
 	d_add(dentry, NULL);
 	return NULL;
@@ -63,7 +63,7 @@ static struct dentry * ramfs_lookup(struct inode *dir, struct dentry *dentry)
  * Read a page. Again trivial. If it didn't already exist
  * in the page cache, it is zero-filled.
  */
-static int ramfs_readpage(struct file *file, struct page * page)
+static int ramfs_readpage(struct file *file, struct page *page)
 {
 	if (!Page_Uptodate(page)) {
 		memset(kmap(page), 0, PAGE_CACHE_SIZE);
@@ -71,7 +71,9 @@ static int ramfs_readpage(struct file *file, struct page * page)
 		flush_dcache_page(page);
 		SetPageUptodate(page);
 	}
+
 	UnlockPage(page);
+
 	return 0;
 }
 
@@ -83,7 +85,9 @@ static int ramfs_prepare_write(struct file *file, struct page *page, unsigned of
 		flush_dcache_page(page);
 		SetPageUptodate(page);
 	}
+
 	SetPageDirty(page);
+
 	return 0;
 }
 
@@ -100,7 +104,7 @@ static int ramfs_commit_write(struct file *file, struct page *page, unsigned off
 
 struct inode *ramfs_get_inode(struct super_block *sb, int mode, int dev)
 {
-	struct inode * inode = new_inode(sb);
+	struct inode *inode = new_inode(sb); // 获取一个新的inode对象
 
 	if (inode) {
 		inode->i_mode = mode;
@@ -135,7 +139,7 @@ struct inode *ramfs_get_inode(struct super_block *sb, int mode, int dev)
  */
 static int ramfs_mknod(struct inode *dir, struct dentry *dentry, int mode, int dev)
 {
-	struct inode * inode = ramfs_get_inode(dir->i_sb, mode, dev);
+	struct inode *inode = ramfs_get_inode(dir->i_sb, mode, dev);
 	int error = -ENOSPC;
 
 	if (inode) {
@@ -143,17 +147,18 @@ static int ramfs_mknod(struct inode *dir, struct dentry *dentry, int mode, int d
 		dget(dentry);		/* Extra count - pin the dentry in core */
 		error = 0;
 	}
+
 	return error;
 }
 
-static int ramfs_mkdir(struct inode * dir, struct dentry * dentry, int mode)
+static int ramfs_mkdir(struct inode *dir, struct dentry *dentry, int mode)
 {
-	return ramfs_mknod(dir, dentry, mode | S_IFDIR, 0);
+	return ramfs_mknod(dir, dentry, mode|S_IFDIR, 0);
 }
 
 static int ramfs_create(struct inode *dir, struct dentry *dentry, int mode)
 {
-	return ramfs_mknod(dir, dentry, mode | S_IFREG, 0);
+	return ramfs_mknod(dir, dentry, mode|S_IFREG, 0);
 }
 
 /*
@@ -232,7 +237,9 @@ static int ramfs_unlink(struct inode * dir, struct dentry *dentry)
  * it exists so that the VFS layer correctly free's it when it
  * gets overwritten.
  */
-static int ramfs_rename(struct inode * old_dir, struct dentry *old_dentry, struct inode * new_dir,struct dentry *new_dentry)
+static int ramfs_rename(
+	struct inode * old_dir, struct dentry *old_dentry,
+	struct inode * new_dir,struct dentry *new_dentry)
 {
 	int error = -ENOTEMPTY;
 
@@ -244,10 +251,12 @@ static int ramfs_rename(struct inode * old_dir, struct dentry *old_dentry, struc
 		}
 		error = 0;
 	}
+
 	return error;
 }
 
-static int ramfs_symlink(struct inode * dir, struct dentry *dentry, const char * symname)
+static int ramfs_symlink(struct inode * dir,
+	struct dentry *dentry, const char * symname)
 {
 	int error;
 
@@ -257,6 +266,7 @@ static int ramfs_symlink(struct inode * dir, struct dentry *dentry, const char *
 		struct inode *inode = dentry->d_inode;
 		error = block_symlink(inode, symname, l);
 	}
+
 	return error;
 }
 
@@ -266,8 +276,8 @@ static int ramfs_sync_file(struct file * file, struct dentry *dentry, int datasy
 }
 
 static struct address_space_operations ramfs_aops = {
-	readpage:	ramfs_readpage,
-	writepage:	fail_writepage,
+	readpage:		ramfs_readpage,
+	writepage:		fail_writepage,
 	prepare_write:	ramfs_prepare_write,
 	commit_write:	ramfs_commit_write
 };
@@ -302,16 +312,17 @@ static struct super_operations ramfs_ops = {
 	put_inode:	force_delete,
 };
 
-static struct super_block *ramfs_read_super(struct super_block * sb, void * data, int silent)
+static struct super_block *ramfs_read_super(struct super_block *sb, void *data, int silent)
 {
-	struct inode * inode;
-	struct dentry * root;
+	struct inode *inode;
+	struct dentry *root;
 
 	sb->s_blocksize = PAGE_CACHE_SIZE;
 	sb->s_blocksize_bits = PAGE_CACHE_SHIFT;
 	sb->s_magic = RAMFS_MAGIC;
 	sb->s_op = &ramfs_ops;
-	inode = ramfs_get_inode(sb, S_IFDIR | 0755, 0);
+
+	inode = ramfs_get_inode(sb, S_IFDIR|0755, 0);
 	if (!inode)
 		return NULL;
 
@@ -320,7 +331,9 @@ static struct super_block *ramfs_read_super(struct super_block * sb, void * data
 		iput(inode);
 		return NULL;
 	}
+
 	sb->s_root = root;
+
 	return sb;
 }
 

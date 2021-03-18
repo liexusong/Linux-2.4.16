@@ -2173,10 +2173,10 @@ int brw_kiovec(int rw, int nr, struct kiobuf *iovec[],
 				tmp = bhs[bhind++];
 
 				tmp->b_size = size;
-				set_bh_page(tmp, map, offset);
+				set_bh_page(tmp, map, offset); // 设置保存I/O操作后的数据的内存地址 (用户空间的内存)
 				tmp->b_this_page = tmp;
 
-				init_buffer(tmp, end_buffer_io_kiobuf, iobuf);
+				init_buffer(tmp, end_buffer_io_kiobuf, iobuf); // 设置完成I/O后的收尾工作回调函数为: end_buffer_io_kiobuf()
 				tmp->b_dev = dev;
 				tmp->b_blocknr = blocknr;
 				tmp->b_state = (1 << BH_Mapped) | (1 << BH_Lock) | (1 << BH_Req);
@@ -2188,7 +2188,7 @@ int brw_kiovec(int rw, int nr, struct kiobuf *iovec[],
 					set_bit(BH_Uptodate, &tmp->b_state);
 
 				atomic_inc(&iobuf->io_count);
-				submit_bh(rw, tmp);
+				submit_bh(rw, tmp); // 提交I/O操作 (通用块I/O层)
 				/*
 				 * Wait for IO if we have got too much
 				 */

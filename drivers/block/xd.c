@@ -170,7 +170,7 @@ int __init xd_init (void)
 		printk("xd: Unable to get major number %d\n",MAJOR_NR);
 		return -1;
 	}
-	devfs_handle = devfs_mk_dir (NULL, xd_gendisk.major_name, NULL);
+	devfs_handle = devfs_mk_dir(NULL, xd_gendisk.major_name, NULL);
 	blk_init_queue(BLK_DEFAULT_QUEUE(MAJOR_NR), DEVICE_REQUEST);
 	read_ahead[MAJOR_NR] = 8;	/* 8 sector (4kB) read ahead */
 	add_gendisk(&xd_gendisk);
@@ -1144,7 +1144,7 @@ void cleanup_module(void)
 {
 	devfs_unregister_blkdev(MAJOR_NR, "xd");
 	xd_done();
-	devfs_unregister (devfs_handle);
+	devfs_unregister(devfs_handle);
 	if (xd_drives) {
 		free_irq(xd_irq, NULL);
 		free_dma(xd_dma);

@@ -70,7 +70,7 @@ struct divert_blk;
  *	Compute the worst case header length according to the protocols
  *	used.
  */
- 
+
 #if !defined(CONFIG_AX25) && !defined(CONFIG_AX25_MODULE) && !defined(CONFIG_TR)
 #define LL_MAX_HEADER	32
 #else
@@ -92,7 +92,7 @@ struct divert_blk;
  *	Network device statistics. Akin to the 2.0 ether stats but
  *	with byte counters.
  */
- 
+
 struct net_device_stats
 {
 	unsigned long	rx_packets;		/* total packets received	*/
@@ -120,7 +120,7 @@ struct net_device_stats
 	unsigned long	tx_fifo_errors;
 	unsigned long	tx_heartbeat_errors;
 	unsigned long	tx_window_errors;
-	
+
 	/* for cslip etc */
 	unsigned long	rx_compressed;
 	unsigned long	tx_compressed;
@@ -169,9 +169,9 @@ extern struct netif_rx_stats netdev_rx_stat[];
 /*
  *	We tag multicasts with these structures.
  */
- 
+
 struct dev_mc_list
-{	
+{
 	struct dev_mc_list	*next;
 	__u8			dmi_addr[MAX_ADDR_LEN];
 	unsigned char		dmi_addrlen;
@@ -211,7 +211,7 @@ enum netdev_state_t
 
 /*
  * This structure holds at boot time configured netdevice settings. They
- * are then used in the device probing. 
+ * are then used in the device probing.
  */
 struct netdev_boot_setup {
 	char name[IFNAMSIZ];
@@ -262,7 +262,7 @@ struct net_device
 	unsigned long		state;
 
 	struct net_device	*next;
-	
+
 	/* The device initialization function. Called only once. */
 	int			(*init)(struct net_device *dev);
 
@@ -318,9 +318,9 @@ struct net_device
 	struct timer_list	watchdog_timer;
 
 	/* Protocol specific pointers */
-	
+
 	void 			*atalk_ptr;	/* AppleTalk link 	*/
-	void			*ip_ptr;	/* IPv4 specific data	*/  
+	void			*ip_ptr;	/* IPv4 specific data	*/
 	void                    *dn_ptr;        /* DECnet specific data */
 	void                    *ip6_ptr;       /* IPv6 specific data */
 	void			*ec_ptr;	/* Econet specific data	*/
@@ -371,9 +371,9 @@ struct net_device
 						void *saddr,
 						unsigned len);
 	int			(*rebuild_header)(struct sk_buff *skb);
-#define HAVE_MULTICAST			 
+#define HAVE_MULTICAST
 	void			(*set_multicast_list)(struct net_device *dev);
-#define HAVE_SET_MAC_ADDR  		 
+#define HAVE_SET_MAC_ADDR
 	int			(*set_mac_address)(struct net_device *dev,
 						   void *addr);
 #define HAVE_PRIVATE_IOCTL
@@ -418,13 +418,13 @@ struct net_device
 };
 
 
-struct packet_type 
+struct packet_type
 {
 	unsigned short		type;	/* This is really htons(ether_type).	*/
-	struct net_device		*dev;	/* NULL is wildcarded here		*/
-	int			(*func) (struct sk_buff *, struct net_device *,
-					 struct packet_type *);
-	void			*data;	/* Private to the packet type		*/
+	struct net_device	*dev;	/* NULL is wildcarded here		*/
+	int					(*func) (struct sk_buff *, struct net_device *,
+								 struct packet_type *);
+	void				*data;	/* Private to the packet type		*/
 	struct packet_type	*next;
 };
 

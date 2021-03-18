@@ -11,7 +11,7 @@
 #define NETLINK_DNRTMSG		14	/* DECnet routing messages */
 #define NETLINK_TAPBASE		16	/* 16 to 31 are ethertap */
 
-#define MAX_LINKS 32		
+#define MAX_LINKS 32
 
 struct sockaddr_nl
 {
@@ -33,21 +33,21 @@ struct nlmsghdr
 /* Flags values */
 
 #define NLM_F_REQUEST		1	/* It is request message. 	*/
-#define NLM_F_MULTI		2	/* Multipart message, terminated by NLMSG_DONE */
-#define NLM_F_ACK		4	/* Reply with ack, with zero or error code */
-#define NLM_F_ECHO		8	/* Echo this request 		*/
+#define NLM_F_MULTI			2	/* Multipart message, terminated by NLMSG_DONE */
+#define NLM_F_ACK			4	/* Reply with ack, with zero or error code */
+#define NLM_F_ECHO			8	/* Echo this request 		*/
 
 /* Modifiers to GET request */
-#define NLM_F_ROOT	0x100	/* specify tree	root	*/
-#define NLM_F_MATCH	0x200	/* return all matching	*/
-#define NLM_F_ATOMIC	0x400	/* atomic GET		*/
+#define NLM_F_ROOT			0x100	/* specify tree	root	*/
+#define NLM_F_MATCH			0x200	/* return all matching	*/
+#define NLM_F_ATOMIC		0x400	/* atomic GET		*/
 #define NLM_F_DUMP	(NLM_F_ROOT|NLM_F_MATCH)
 
 /* Modifiers to NEW request */
-#define NLM_F_REPLACE	0x100	/* Override existing		*/
-#define NLM_F_EXCL	0x200	/* Do not touch, if it exists	*/
-#define NLM_F_CREATE	0x400	/* Create, if it does not exist	*/
-#define NLM_F_APPEND	0x800	/* Add to end of list		*/
+#define NLM_F_REPLACE		0x100	/* Override existing		*/
+#define NLM_F_EXCL			0x200	/* Do not touch, if it exists	*/
+#define NLM_F_CREATE		0x400	/* Create, if it does not exist	*/
+#define NLM_F_APPEND		0x800	/* Add to end of list		*/
 
 /*
    4.4BSD ADD		NLM_F_CREATE|NLM_F_EXCL

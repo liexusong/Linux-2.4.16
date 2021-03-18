@@ -1276,7 +1276,7 @@ void mark_page_accessed(struct page *page)
  * This is really ugly. But the goto's actually try to clarify some
  * of the logic when it comes to error handling etc.
  */
-void do_generic_file_read(struct file * filp, loff_t *ppos, read_descriptor_t * desc, read_actor_t actor)
+void do_generic_file_read(struct file *filp, loff_t *ppos, read_descriptor_t * desc, read_actor_t actor)
 {
 	struct address_space *mapping = filp->f_dentry->d_inode->i_mapping;
 	struct inode *inode = mapping->host;
@@ -1541,6 +1541,7 @@ static ssize_t generic_file_direct_IO(int rw, struct file *filp, char *buf, size
 		if (iosize > chunk_size)
 			iosize = chunk_size;
 
+		// 为用户虚拟内存空间申请物理内存页
 		retval = map_user_kiobuf(rw, iobuf, (unsigned long)buf, iosize);
 		if (retval)
 			break;
@@ -1600,7 +1601,7 @@ int file_read_actor(read_descriptor_t * desc, struct page *page, unsigned long o
  * This is the "read()" routine for all filesystems
  * that can use the page cache directly.
  */
-ssize_t generic_file_read(struct file *filp, char * buf, size_t count, loff_t *ppos)
+ssize_t generic_file_read(struct file *filp, char *buf, size_t count, loff_t *ppos)
 {
 	ssize_t retval;
 
@@ -2853,17 +2854,17 @@ inline void remove_suid(struct inode *inode)
  *							okir@monad.swb.de
  */
 ssize_t
-generic_file_write(struct file *file,const char *buf,size_t count, loff_t *ppos)
+generic_file_write(struct file *file,const char *buf, size_t count, loff_t *ppos)
 {
 	struct address_space *mapping = file->f_dentry->d_inode->i_mapping;
-	struct inode	*inode = mapping->host;
-	unsigned long	limit = current->rlim[RLIMIT_FSIZE].rlim_cur;
-	loff_t		pos;
+	struct inode *inode = mapping->host;
+	unsigned long limit = current->rlim[RLIMIT_FSIZE].rlim_cur;
+	loff_t pos;
 	struct page	*page, *cached_page;
-	unsigned long	written;
-	long		status = 0;
-	int		err;
-	unsigned	bytes;
+	unsigned long written;
+	long status = 0;
+	int err;
+	unsigned bytes;
 
 	if ((ssize_t) count < 0)
 		return -EINVAL;
@@ -2993,7 +2994,8 @@ generic_file_write(struct file *file,const char *buf,size_t count, loff_t *ppos)
 		 * same page as we're writing to, without it being marked
 		 * up-to-date.
 		 */
-		{ volatile unsigned char dummy;
+		{
+			volatile unsigned char dummy;
 			__get_user(dummy, buf);
 			__get_user(dummy, buf+bytes-1);
 		}
@@ -3012,7 +3014,7 @@ generic_file_write(struct file *file,const char *buf,size_t count, loff_t *ppos)
 		status = mapping->a_ops->prepare_write(file, page, offset, offset+bytes);
 		if (status)
 			goto unlock;
-		page_fault = __copy_from_user(kaddr+offset, buf, bytes);
+		page_fault = __copy_from_user(kaddr+offset, buf, bytes); // Write data into page buffer
 		flush_dcache_page(page);
 		status = mapping->a_ops->commit_write(file, page, offset, offset+bytes);
 		if (page_fault)
@@ -3036,6 +3038,7 @@ unlock:
 		if (status < 0)
 			break;
 	} while (count);
+
 	*ppos = pos;
 
 	if (cached_page)

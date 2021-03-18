@@ -14,13 +14,13 @@
 
 #define RTM_BASE	0x10
 
-#define	RTM_NEWLINK	(RTM_BASE+0)
-#define	RTM_DELLINK	(RTM_BASE+1)
-#define	RTM_GETLINK	(RTM_BASE+2)
+#define	RTM_NEWLINK	    (RTM_BASE+0)
+#define	RTM_DELLINK	    (RTM_BASE+1)
+#define	RTM_GETLINK	    (RTM_BASE+2)
 
-#define	RTM_NEWADDR	(RTM_BASE+4)
-#define	RTM_DELADDR	(RTM_BASE+5)
-#define	RTM_GETADDR	(RTM_BASE+6)
+#define	RTM_NEWADDR	    (RTM_BASE+4)
+#define	RTM_DELADDR	    (RTM_BASE+5)
+#define	RTM_GETADDR	    (RTM_BASE+6)
 
 #define	RTM_NEWROUTE	(RTM_BASE+8)
 #define	RTM_DELROUTE	(RTM_BASE+9)
@@ -30,9 +30,9 @@
 #define	RTM_DELNEIGH	(RTM_BASE+13)
 #define	RTM_GETNEIGH	(RTM_BASE+14)
 
-#define	RTM_NEWRULE	(RTM_BASE+16)
-#define	RTM_DELRULE	(RTM_BASE+17)
-#define	RTM_GETRULE	(RTM_BASE+18)
+#define	RTM_NEWRULE	    (RTM_BASE+16)
+#define	RTM_DELRULE	    (RTM_BASE+17)
+#define	RTM_GETRULE	    (RTM_BASE+18)
 
 #define	RTM_NEWQDISC	(RTM_BASE+20)
 #define	RTM_DELQDISC	(RTM_BASE+21)
@@ -46,9 +46,9 @@
 #define	RTM_DELTFILTER	(RTM_BASE+29)
 #define	RTM_GETTFILTER	(RTM_BASE+30)
 
-#define	RTM_MAX		(RTM_BASE+31)
+#define	RTM_MAX		   (RTM_BASE+31)
 
-/* 
+/*
    Generic structure for encapsulation optional route information.
    It is reminiscent of sockaddr, but with sa_family replaced
    with attribute type.
@@ -89,7 +89,7 @@ struct rtmsg
 
 	unsigned char		rtm_table;	/* Routing table id */
 	unsigned char		rtm_protocol;	/* Routing protocol; see below	*/
-	unsigned char		rtm_scope;	/* See below */	
+	unsigned char		rtm_scope;	/* See below */
 	unsigned char		rtm_type;	/* See below	*/
 
 	unsigned		rtm_flags;

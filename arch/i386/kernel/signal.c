@@ -119,7 +119,7 @@ sys_rt_sigsuspend(sigset_t *unewset, size_t sigsetsize)
 	}
 }
 
-asmlinkage int 
+asmlinkage int
 sys_sigaction(int sig, const struct old_sigaction *act,
 	      struct old_sigaction *oact)
 {
@@ -192,18 +192,18 @@ restore_sigcontext(struct pt_regs *regs, struct sigcontext *sc, int *peax)
 
 #define COPY(x)		err |= __get_user(regs->x, &sc->x)
 
-#define COPY_SEG(seg)							\
-	{ unsigned short tmp;						\
+#define COPY_SEG(seg)								\
+	{ unsigned short tmp;							\
 	  err |= __get_user(tmp, &sc->seg);				\
 	  regs->x##seg = tmp; }
 
 #define COPY_SEG_STRICT(seg)						\
-	{ unsigned short tmp;						\
+	{ unsigned short tmp;							\
 	  err |= __get_user(tmp, &sc->seg);				\
 	  regs->x##seg = tmp|3; }
 
-#define GET_SEG(seg)							\
-	{ unsigned short tmp;						\
+#define GET_SEG(seg)								\
+	{ unsigned short tmp;							\
 	  err |= __get_user(tmp, &sc->seg);				\
 	  loadsegment(seg,tmp); }
 
@@ -221,7 +221,7 @@ restore_sigcontext(struct pt_regs *regs, struct sigcontext *sc, int *peax)
 	COPY(eip);
 	COPY_SEG_STRICT(cs);
 	COPY_SEG_STRICT(ss);
-	
+
 	{
 		unsigned int tmpflags;
 		err |= __get_user(tmpflags, &sc->eflags);
@@ -266,7 +266,7 @@ asmlinkage int sys_sigreturn(unsigned long __unused)
 	current->blocked = set;
 	recalc_sigpending(current);
 	spin_unlock_irq(&current->sigmask_lock);
-	
+
 	if (restore_sigcontext(regs, &frame->sc, &eax))
 		goto badframe;
 	return eax;
@@ -274,7 +274,7 @@ asmlinkage int sys_sigreturn(unsigned long __unused)
 badframe:
 	force_sig(SIGSEGV, current);
 	return 0;
-}	
+}
 
 asmlinkage int sys_rt_sigreturn(unsigned long __unused)
 {
@@ -294,7 +294,7 @@ asmlinkage int sys_rt_sigreturn(unsigned long __unused)
 	current->blocked = set;
 	recalc_sigpending(current);
 	spin_unlock_irq(&current->sigmask_lock);
-	
+
 	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, &eax))
 		goto badframe;
 
@@ -309,7 +309,7 @@ asmlinkage int sys_rt_sigreturn(unsigned long __unused)
 badframe:
 	force_sig(SIGSEGV, current);
 	return 0;
-}	
+}
 
 /*
  * Set up a signal frame.
@@ -532,7 +532,7 @@ give_sigsegv:
 
 /*
  * OK, we're invoking a handler
- */	
+ */
 
 static void
 handle_signal(unsigned long sig, struct k_sigaction *ka,

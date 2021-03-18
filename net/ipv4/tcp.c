@@ -204,7 +204,7 @@
  *		Andi Kleen 	:	Make poll agree with SIGIO
  *	Salvatore Sanfilippo	:	Support SO_LINGER with linger == 1 and
  *					lingertime == 0 (RFC 793 ABORT Call)
- *					
+ *
  *		This program is free software; you can redistribute it and/or
  *		modify it under the terms of the GNU General Public License
  *		as published by the Free Software Foundation; either version
@@ -599,7 +599,7 @@ static void tcp_listen_stop (struct sock *sk)
 
 		/* Following specs, it would be better either to send FIN
 		 * (and enter FIN-WAIT-1, it is normal close)
-		 * or to send active reset (abort). 
+		 * or to send active reset (abort).
 		 * Certainly, it is pretty dangerous while synflood, but it is
 		 * bad justification for our negligence 8)
 		 * To be honest, we are not able to make either
@@ -936,7 +936,7 @@ ssize_t tcp_sendpage(struct socket *sock, struct page *page, int offset, size_t 
 
 #define TCP_ZC_CSUM_FLAGS (NETIF_F_IP_CSUM|NETIF_F_NO_CSUM|NETIF_F_HW_CSUM)
 
-	if (!(sk->route_caps & NETIF_F_SG) || 
+	if (!(sk->route_caps & NETIF_F_SG) ||
 	    !(sk->route_caps & TCP_ZC_CSUM_FLAGS))
 		return sock_no_sendpage(sock, page, offset, size, flags);
 
@@ -1050,7 +1050,7 @@ int tcp_sendmsg(struct sock *sk, struct msghdr *msg, int size)
 
 		while (seglen > 0) {
 			int copy;
-			
+
 			skb = sk->write_queue.prev;
 
 			if (tp->send_head == NULL ||
@@ -1213,7 +1213,7 @@ out_err:
  */
 
 static int tcp_recv_urg(struct sock * sk, long timeo,
-			struct msghdr *msg, int len, int flags, 
+			struct msghdr *msg, int len, int flags,
 			int *addr_len)
 {
 	struct tcp_opt *tp = &(sk->tp_pinfo.af_tcp);
@@ -1226,7 +1226,7 @@ static int tcp_recv_urg(struct sock * sk, long timeo,
 		return -ENOTCONN;
 
 	if (tp->urg_data & TCP_URG_VALID) {
-		int err = 0; 
+		int err = 0;
 		char c = tp->urg_data;
 
 		if (!(flags & MSG_PEEK))
@@ -1377,13 +1377,13 @@ static void tcp_prequeue_process(struct sock *sk)
 }
 
 /*
- *	This routine copies from a sock struct into the user buffer. 
+ *	This routine copies from a sock struct into the user buffer.
  *
  *	Technical note: in 2.3 we work on _locked_ socket, so that
  *	tricks with *seq access order and skb->users are not required.
  *	Probably, code can be easily improved even more.
  */
- 
+
 int tcp_recvmsg(struct sock *sk, struct msghdr *msg,
 		int len, int nonblock, int flags, int *addr_len)
 {
@@ -1445,7 +1445,7 @@ int tcp_recvmsg(struct sock *sk, struct msghdr *msg,
 			if (!skb)
 				break;
 
-			/* Now that we have two receive queues this 
+			/* Now that we have two receive queues this
 			 * shouldn't happen.
 			 */
 			if (before(*seq, TCP_SKB_CB(skb)->seq)) {
@@ -1692,18 +1692,18 @@ recv_urg:
 
 static unsigned char new_state[16] = {
   /* current state:        new state:      action:	*/
-  /* (Invalid)		*/ TCP_CLOSE,
-  /* TCP_ESTABLISHED	*/ TCP_FIN_WAIT1 | TCP_ACTION_FIN,
-  /* TCP_SYN_SENT	*/ TCP_CLOSE,
-  /* TCP_SYN_RECV	*/ TCP_FIN_WAIT1 | TCP_ACTION_FIN,
-  /* TCP_FIN_WAIT1	*/ TCP_FIN_WAIT1,
-  /* TCP_FIN_WAIT2	*/ TCP_FIN_WAIT2,
-  /* TCP_TIME_WAIT	*/ TCP_CLOSE,
-  /* TCP_CLOSE		*/ TCP_CLOSE,
-  /* TCP_CLOSE_WAIT	*/ TCP_LAST_ACK  | TCP_ACTION_FIN,
-  /* TCP_LAST_ACK	*/ TCP_LAST_ACK,
-  /* TCP_LISTEN		*/ TCP_CLOSE,
-  /* TCP_CLOSING	*/ TCP_CLOSING,
+  /* (Invalid)		*/  TCP_CLOSE,
+  /* TCP_ESTABLISHED */ TCP_FIN_WAIT1 | TCP_ACTION_FIN,
+  /* TCP_SYN_SENT	*/  TCP_CLOSE,
+  /* TCP_SYN_RECV	*/  TCP_FIN_WAIT1 | TCP_ACTION_FIN,
+  /* TCP_FIN_WAIT1	*/  TCP_FIN_WAIT1,
+  /* TCP_FIN_WAIT2	*/  TCP_FIN_WAIT2,
+  /* TCP_TIME_WAIT	*/  TCP_CLOSE,
+  /* TCP_CLOSE		*/  TCP_CLOSE,
+  /* TCP_CLOSE_WAIT	*/  TCP_LAST_ACK  | TCP_ACTION_FIN,
+  /* TCP_LAST_ACK	*/  TCP_LAST_ACK,
+  /* TCP_LISTEN		*/  TCP_CLOSE,
+  /* TCP_CLOSING	*/  TCP_CLOSING,
 };
 
 static int tcp_close_state(struct sock *sk)
@@ -2110,7 +2110,7 @@ struct sock *tcp_accept(struct sock *sk, int flags, int *err)
 	struct sock *newsk;
 	int error;
 
-	lock_sock(sk); 
+	lock_sock(sk);
 
 	/* We need to make sure that this socket is listening,
 	 * and that it has something pending.
@@ -2146,15 +2146,15 @@ struct sock *tcp_accept(struct sock *sk, int flags, int *err)
 
 out:
 	release_sock(sk);
-	*err = error; 
+	*err = error;
 	return NULL;
 }
 
 /*
- *	Socket option code for TCP. 
+ *	Socket option code for TCP.
  */
-  
-int tcp_setsockopt(struct sock *sk, int level, int optname, char *optval, 
+
+int tcp_setsockopt(struct sock *sk, int level, int optname, char *optval,
 		   int optlen)
 {
 	struct tcp_opt *tp = &(sk->tp_pinfo.af_tcp);
@@ -2162,7 +2162,7 @@ int tcp_setsockopt(struct sock *sk, int level, int optname, char *optval,
 	int err = 0;
 
 	if (level != SOL_TCP)
-		return tp->af_specific->setsockopt(sk, level, optname, 
+		return tp->af_specific->setsockopt(sk, level, optname,
 						   optval, optlen);
 
 	if(optlen<sizeof(int))
@@ -2223,7 +2223,7 @@ int tcp_setsockopt(struct sock *sk, int level, int optname, char *optval,
 			tcp_push_pending_frames(sk, tp);
 		}
 		break;
-		
+
 	case TCP_KEEPIDLE:
 		if (val < 1 || val > MAX_TCP_KEEPIDLE)
 			err = -EINVAL;
@@ -2327,7 +2327,7 @@ int tcp_getsockopt(struct sock *sk, int level, int optname, char *optval,
 		return -EFAULT;
 
 	len = min_t(unsigned int, len, sizeof(int));
-	
+
 	if(len < 0)
 		return -EINVAL;
 

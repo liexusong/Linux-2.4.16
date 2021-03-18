@@ -57,7 +57,7 @@ void rtnl_lock(void)
 	rtnl_shlock();
 	rtnl_exlock();
 }
- 
+
 void rtnl_unlock(void)
 {
 	rtnl_exunlock();
@@ -395,7 +395,7 @@ err_inval:
 	return -1;
 }
 
-/* 
+/*
  * Process one packet of messages.
  * Malformed skbs with wrong lengths of messages are discarded silently.
  */
@@ -463,30 +463,30 @@ static void rtnetlink_rcv(struct sock *sk, int len)
 
 static struct rtnetlink_link link_rtnetlink_table[RTM_MAX-RTM_BASE+1] =
 {
-	{ NULL,			NULL,			},
-	{ NULL,			NULL,			},
-	{ NULL,			rtnetlink_dump_ifinfo,	},
-	{ NULL,			NULL,			},
+	{ NULL,				NULL,					}, /* 0 RTM_NEWLINK */
+	{ NULL,				NULL,					}, /* 1 RTM_DELLINK */
+	{ NULL,				rtnetlink_dump_ifinfo,	}, /* 2 RTM_GETLINK */
+	{ NULL,				NULL,					}, /* 3 */
 
-	{ NULL,			NULL,			},
-	{ NULL,			NULL,			},
-	{ NULL,			rtnetlink_dump_all,	},
-	{ NULL,			NULL,			},
+	{ NULL,				NULL,					}, /* 4 */
+	{ NULL,				NULL,					}, /* 5 */
+	{ NULL,				rtnetlink_dump_all,		}, /* 6 */
+	{ NULL,				NULL,					}, /* 7 */
 
-	{ NULL,			NULL,			},
-	{ NULL,			NULL,			},
-	{ NULL,			rtnetlink_dump_all,	},
-	{ NULL,			NULL,			},
+	{ NULL,				NULL,					}, /* 8 */
+	{ NULL,				NULL,					}, /* 9 */
+	{ NULL,				rtnetlink_dump_all,		}, /* 10 */
+	{ NULL,				NULL,					}, /* 11 */
 
-	{ neigh_add,		NULL,			},
-	{ neigh_delete,		NULL,			},
-	{ NULL,			neigh_dump_info,	},
-	{ NULL,			NULL,			},
+	{ neigh_add,		NULL,					}, /* 12 */
+	{ neigh_delete,		NULL,					}, /* 13 */
+	{ NULL,				neigh_dump_info,		}, /* 14 */
+	{ NULL,				NULL,					}, /* 15 */
 
-	{ NULL,			NULL,			},
-	{ NULL,			NULL,			},
-	{ NULL,			NULL,			},
-	{ NULL,			NULL,			},
+	{ NULL,				NULL,					}, /* 16 */
+	{ NULL,				NULL,					}, /* 17 */
+	{ NULL,				NULL,					}, /* 18 */
+	{ NULL,				NULL,					}, /* 19 */
 };
 
 

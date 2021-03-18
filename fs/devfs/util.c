@@ -47,7 +47,7 @@
                Fixed bug in <devfs_alloc_unique_number>: limited to 128 numbers
     20010818   Richard Gooch <rgooch@atnf.csiro.au>
                Updated major masks up to Linus' "no new majors" proclamation.
-	       Block: were 126 now 122 free, char: were 26 now 19 free.
+               Block: were 126 now 122 free, char: were 26 now 19 free.
 */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -61,10 +61,10 @@
 /*  Private functions follow  */
 
 /**
- *	_devfs_convert_name - Convert from an old style location-based name to new style.
- *	@new: The new name will be written here.
- *	@old: The old name.
- *	@disc: If true, disc partitioning information should be processed.
+ *        _devfs_convert_name - Convert from an old style location-based name to new style.
+ *        @new: The new name will be written here.
+ *        @old: The old name.
+ *        @disc: If true, disc partitioning information should be processed.
  */
 
 static void __init _devfs_convert_name (char *new, const char *old, int disc)
@@ -84,21 +84,21 @@ static void __init _devfs_convert_name (char *new, const char *old, int disc)
     lun = simple_strtol (ptr + 1, &ptr, 10);
     if (disc)
     {
-	/*  Decode "p#"  */
-	if (ptr[0] == 'p') sprintf (part, "part%s", ptr + 1);
-	else strcpy (part, "disc");
+        /*  Decode "p#"  */
+        if (ptr[0] == 'p') sprintf (part, "part%s", ptr + 1);
+        else strcpy (part, "disc");
     }
     else part[0] = '\0';
     sprintf (new, "/host%d/bus%d/target%d/lun%d/%s",
-	     host, bus, target, lun, part);
+             host, bus, target, lun, part);
 }   /*  End Function _devfs_convert_name  */
 
 
 /*  Public functions follow  */
 
 /**
- *	devfs_make_root - Create the root FS device entry if required.
- *	@name: The name of the root FS device, as passed by "root=".
+ *        devfs_make_root - Create the root FS device entry if required.
+ *        @name: The name of the root FS device, as passed by "root=".
  */
 
 void __init devfs_make_root (const char *name)
@@ -107,14 +107,14 @@ void __init devfs_make_root (const char *name)
 
     if ( (strncmp (name, "sd/", 3) == 0) || (strncmp (name, "sr/", 3) == 0) )
     {
-	strcpy (dest, "../scsi");
-	_devfs_convert_name (dest + 7, name + 3, (name[1] == 'd') ? 1 : 0);
+        strcpy (dest, "../scsi");
+        _devfs_convert_name (dest + 7, name + 3, (name[1] == 'd') ? 1 : 0);
     }
     else if ( (strncmp (name, "ide/hd/", 7) == 0) ||
-	      (strncmp (name, "ide/cd/", 7) == 0) )
+              (strncmp (name, "ide/cd/", 7) == 0) )
     {
-	strcpy (dest, "..");
-	_devfs_convert_name (dest + 2, name + 7, (name[4] == 'h') ? 1 : 0);
+        strcpy (dest, "..");
+        _devfs_convert_name (dest + 2, name + 7, (name[4] == 'h') ? 1 : 0);
     }
     else return;
     devfs_mk_symlink (NULL, name, DEVFS_FL_DEFAULT, dest, NULL, NULL);
@@ -122,8 +122,8 @@ void __init devfs_make_root (const char *name)
 
 
 /**
- *	devfs_register_tape - Register a tape device in the "/dev/tapes" hierarchy.
- *	@de: Any tape device entry in the device directory.
+ *        devfs_register_tape - Register a tape device in the "/dev/tapes" hierarchy.
+ *        @de: Any tape device entry in the device directory.
  */
 
 void devfs_register_tape (devfs_handle_t de)
@@ -141,43 +141,42 @@ void devfs_register_tape (devfs_handle_t de)
     strncpy (dest + pos, "../", 3);
     sprintf (name, "tape%u", tape_counter++);
     devfs_mk_symlink (tape_dir, name, DEVFS_FL_DEFAULT, dest + pos,
-		      &slave, NULL);
+                      &slave, NULL);
     devfs_auto_unregister (de, slave);
 }   /*  End Function devfs_register_tape  */
 EXPORT_SYMBOL(devfs_register_tape);
 
 
 /**
- *	devfs_register_series - Register a sequence of device entries.
- *	@dir: The handle to the parent devfs directory entry. If this is %NULL
- *		the new names are relative to the root of the devfs.
- *	@format: The printf-style format string. A single "\%u" is allowed.
- *	@num_entries: The number of entries to register.
- *	@flags: A set of bitwise-ORed flags (DEVFS_FL_*).
- *	@major: The major number. Not needed for regular files.
- *	@minor_start: The starting minor number. Not needed for regular files.
- *	@mode: The default file mode.
- *	@ops: The &file_operations or &block_device_operations structure.
- *		This must not be externally deallocated.
- *	@info: An arbitrary pointer which will be written to the private_data
- *		field of the &file structure passed to the device driver. You
- *		can set this to whatever you like, and change it once the file
- *		is opened (the next file opened will not see this change).
+ *        devfs_register_series - Register a sequence of device entries.
+ *        @dir: The handle to the parent devfs directory entry. If this is %NULL
+ *                the new names are relative to the root of the devfs.
+ *        @format: The printf-style format string. A single "\%u" is allowed.
+ *        @num_entries: The number of entries to register.
+ *        @flags: A set of bitwise-ORed flags (DEVFS_FL_*).
+ *        @major: The major number. Not needed for regular files.
+ *        @minor_start: The starting minor number. Not needed for regular files.
+ *        @mode: The default file mode.
+ *        @ops: The &file_operations or &block_device_operations structure.
+ *                This must not be externally deallocated.
+ *        @info: An arbitrary pointer which will be written to the private_data
+ *                field of the &file structure passed to the device driver. You
+ *                can set this to whatever you like, and change it once the file
+ *                is opened (the next file opened will not see this change).
  */
 
 void devfs_register_series (devfs_handle_t dir, const char *format,
-			    unsigned int num_entries, unsigned int flags,
-			    unsigned int major, unsigned int minor_start,
-			    umode_t mode, void *ops, void *info)
+                            unsigned int num_entries, unsigned int flags,
+                            unsigned int major, unsigned int minor_start,
+                            umode_t mode, void *ops, void *info)
 {
     unsigned int count;
     char devname[128];
 
     for (count = 0; count < num_entries; ++count)
     {
-	sprintf (devname, format, count);
-	devfs_register (dir, devname, flags, major, minor_start + count,
-			mode, ops, info);
+        sprintf(devname, format, count);
+        devfs_register(dir, devname, flags, major, minor_start+count, mode, ops, info);
     }
 }   /*  End Function devfs_register_series  */
 EXPORT_SYMBOL(devfs_register_series);
@@ -223,49 +222,56 @@ static struct major_list char_major_list =
 
 
 /**
- *	devfs_alloc_major - Allocate a major number.
- *	@type: The type of the major (DEVFS_SPECIAL_CHR or DEVFS_SPECIAL_BLK)
+ *        devfs_alloc_major - Allocate a major number.
+ *        @type: The type of the major (DEVFS_SPECIAL_CHR or DEVFS_SPECIAL_BLK)
 
- *	Returns the allocated major, else -1 if none are available.
- *	This routine is thread safe and does not block.
+ *        Returns the allocated major, else -1 if none are available.
+ *        This routine is thread safe and does not block.
  */
 
-int devfs_alloc_major (char type)
+int devfs_alloc_major(char type)
 {
     int major;
     struct major_list *list;
 
     list = (type == DEVFS_SPECIAL_CHR) ? &char_major_list : &block_major_list;
+
     spin_lock (&list->lock);
-    major = find_first_zero_bit (list->bits, 256);
-    if (major < 256) __set_bit (major, list->bits);
+
+    major = find_first_zero_bit(list->bits, 256);
+
+    if (major < 256) __set_bit(major, list->bits);
     else major = -1;
+
     spin_unlock (&list->lock);
+
     return major;
 }   /*  End Function devfs_alloc_major  */
 EXPORT_SYMBOL(devfs_alloc_major);
 
 
 /**
- *	devfs_dealloc_major - Deallocate a major number.
- *	@type: The type of the major (DEVFS_SPECIAL_CHR or DEVFS_SPECIAL_BLK)
- *	@major: The major number.
- *	This routine is thread safe and does not block.
+ *        devfs_dealloc_major - Deallocate a major number.
+ *        @type: The type of the major (DEVFS_SPECIAL_CHR or DEVFS_SPECIAL_BLK)
+ *        @major: The major number.
+ *        This routine is thread safe and does not block.
  */
 
-void devfs_dealloc_major (char type, int major)
+void devfs_dealloc_major(char type, int major)
 {
     int was_set;
     struct major_list *list;
 
     if (major < 0) return;
+
     list = (type == DEVFS_SPECIAL_CHR) ? &char_major_list : &block_major_list;
-    spin_lock (&list->lock);
-    was_set = __test_and_clear_bit (major, list->bits);
-    spin_unlock (&list->lock);
+
+    spin_lock(&list->lock);
+    was_set = __test_and_clear_bit(major, list->bits);
+    spin_unlock(&list->lock);
+
     if (!was_set)
-	printk (KERN_ERR __FUNCTION__ "(): major %d was already free\n",
-		major);
+        printk(KERN_ERR __FUNCTION__ "(): major %d was already free\n", major);
 }   /*  End Function devfs_dealloc_major  */
 EXPORT_SYMBOL(devfs_dealloc_major);
 
@@ -291,14 +297,14 @@ static struct device_list char_list;
 
 
 /**
- *	devfs_alloc_devnum - Allocate a device number.
- *	@type: The type (DEVFS_SPECIAL_CHR or DEVFS_SPECIAL_BLK).
+ *  devfs_alloc_devnum - Allocate a device number.
+ *  @type: The type (DEVFS_SPECIAL_CHR or DEVFS_SPECIAL_BLK).
  *
- *	Returns the allocated device number, else NODEV if none are available.
- *	This routine is thread safe and may block.
+ *  Returns the allocated device number, else NODEV if none are available.
+ *  This routine is thread safe and may block.
  */
 
-kdev_t devfs_alloc_devnum (char type)
+kdev_t devfs_alloc_devnum(char type)
 {
     int minor;
     struct semaphore *semaphore;
@@ -307,60 +313,76 @@ kdev_t devfs_alloc_devnum (char type)
 
     if (type == DEVFS_SPECIAL_CHR)
     {
-	semaphore = &char_semaphore;
-	list = &char_list;
+        semaphore = &char_semaphore;
+        list = &char_list;
     }
     else
     {
-	semaphore = &block_semaphore;
-	list = &block_list;
+        semaphore = &block_semaphore;
+        list = &block_list;
     }
+
     if (list->none_free) return NODEV;  /*  Fast test  */
-    down (semaphore);
+
+    down(semaphore);
+
     if (list->none_free)
     {
-	up (semaphore);
-	return NODEV;
+        up(semaphore);
+        return NODEV;
     }
+
     for (entry = list->first; entry != NULL; entry = entry->next)
     {
-	minor = find_first_zero_bit (entry->bits, 256);
-	if (minor >= 256) continue;
-	__set_bit (minor, entry->bits);
-	up (semaphore);
-	return MKDEV (entry->major, minor);
+        minor = find_first_zero_bit(entry->bits, 256);
+
+        if (minor >= 256) continue;
+
+        __set_bit(minor, entry->bits);
+
+        up(semaphore);
+
+        return MKDEV(entry->major, minor);
     }
+
     /*  Need to allocate a new major  */
-    if ( ( entry = kmalloc (sizeof *entry, GFP_KERNEL) ) == NULL )
+    if ((entry = kmalloc(sizeof *entry, GFP_KERNEL)) == NULL)
     {
-	list->none_free = 1;
-	up (semaphore);
-	return NODEV;
+        list->none_free = 1;
+        up(semaphore);
+        return NODEV;
     }
-    memset (entry, 0, sizeof *entry);
-    if ( ( entry->major = devfs_alloc_major (type) ) < 0 )
+
+    memset(entry, 0, sizeof *entry);
+
+    if ((entry->major = devfs_alloc_major(type)) < 0)
     {
-	list->none_free = 1;
-	up (semaphore);
-	kfree (entry);
-	return NODEV;
+        list->none_free = 1;
+        up(semaphore);
+        kfree(entry);
+        return NODEV;
     }
-    __set_bit (0, entry->bits);
+
+    __set_bit(0, entry->bits);
+
     if (list->first == NULL) list->first = entry;
     else list->last->next = entry;
+
     list->last = entry;
-    up (semaphore);
+
+    up(semaphore);
+
     return MKDEV (entry->major, 0);
 }   /*  End Function devfs_alloc_devnum  */
 EXPORT_SYMBOL(devfs_alloc_devnum);
 
 
 /**
- *	devfs_dealloc_devnum - Dellocate a device number.
- *	@type: The type (DEVFS_SPECIAL_CHR or DEVFS_SPECIAL_BLK).
- *	@devnum: The device number.
+ *        devfs_dealloc_devnum - Dellocate a device number.
+ *        @type: The type (DEVFS_SPECIAL_CHR or DEVFS_SPECIAL_BLK).
+ *        @devnum: The device number.
  *
- *	This routine is thread safe and does not block.
+ *        This routine is thread safe and does not block.
  */
 
 void devfs_dealloc_devnum (char type, kdev_t devnum)
@@ -373,43 +395,43 @@ void devfs_dealloc_devnum (char type, kdev_t devnum)
     if (devnum == NODEV) return;
     if (type == DEVFS_SPECIAL_CHR)
     {
-	semaphore = &char_semaphore;
-	list = &char_list;
+        semaphore = &char_semaphore;
+        list = &char_list;
     }
     else
     {
-	semaphore = &block_semaphore;
-	list = &block_list;
+        semaphore = &block_semaphore;
+        list = &block_list;
     }
     major = MAJOR (devnum);
     minor = MINOR (devnum);
     down (semaphore);
     for (entry = list->first; entry != NULL; entry = entry->next)
     {
-	int was_set;
+        int was_set;
 
-	if (entry->major != major) continue;
-	was_set = __test_and_clear_bit (minor, entry->bits);
-	if (was_set) list->none_free = 0;
-	up (semaphore);
-	if (!was_set)
-	    printk ( KERN_ERR __FUNCTION__ "(): device %s was already free\n",
-		     kdevname (devnum) );
-	return;
+        if (entry->major != major) continue;
+        was_set = __test_and_clear_bit (minor, entry->bits);
+        if (was_set) list->none_free = 0;
+        up (semaphore);
+        if (!was_set)
+            printk ( KERN_ERR __FUNCTION__ "(): device %s was already free\n",
+                     kdevname (devnum) );
+        return;
     }
     up (semaphore);
     printk ( KERN_ERR __FUNCTION__ "(): major for %s not previously allocated\n",
-	     kdevname (devnum) );
+             kdevname (devnum) );
 }   /*  End Function devfs_dealloc_devnum  */
 EXPORT_SYMBOL(devfs_dealloc_devnum);
 
 
 /**
- *	devfs_alloc_unique_number - Allocate a unique (positive) number.
- *	@space: The number space to allocate from.
+ *        devfs_alloc_unique_number - Allocate a unique (positive) number.
+ *        @space: The number space to allocate from.
  *
- *	Returns the allocated unique number, else a negative error code.
- *	This routine is thread safe and may block.
+ *        Returns the allocated unique number, else a negative error code.
+ *        This routine is thread safe and may block.
  */
 
 int devfs_alloc_unique_number (struct unique_numspace *space)
@@ -422,29 +444,29 @@ int devfs_alloc_unique_number (struct unique_numspace *space)
     spin_lock (&space->init_lock);
     if (!space->sem_initialised)
     {
-	sema_init (&space->semaphore, 1);
-	space->sem_initialised = 1;
+        sema_init (&space->semaphore, 1);
+        space->sem_initialised = 1;
     }
     spin_unlock (&space->init_lock);
     down (&space->semaphore);
     if (space->num_free < 1)
     {
-	if (space->length < 16) length = 16;
-	else length = space->length << 1;
-	if ( ( bits = vmalloc (length) ) == NULL )
-	{
-	    up (&space->semaphore);
-	    return -ENOMEM;
-	}
-	if (space->bits != NULL)
-	{
-	    memcpy (bits, space->bits, space->length);
-	    vfree (space->bits);
-	}
-	space->num_free = (length - space->length) << 3;
-	space->bits = bits;
-	memset (bits + space->length, 0, length - space->length);
-	space->length = length;
+        if (space->length < 16) length = 16;
+        else length = space->length << 1;
+        if ( ( bits = vmalloc (length) ) == NULL )
+        {
+            up (&space->semaphore);
+            return -ENOMEM;
+        }
+        if (space->bits != NULL)
+        {
+            memcpy (bits, space->bits, space->length);
+            vfree (space->bits);
+        }
+        space->num_free = (length - space->length) << 3;
+        space->bits = bits;
+        memset (bits + space->length, 0, length - space->length);
+        space->length = length;
     }
     number = find_first_zero_bit (space->bits, space->length << 3);
     --space->num_free;
@@ -456,11 +478,11 @@ EXPORT_SYMBOL(devfs_alloc_unique_number);
 
 
 /**
- *	devfs_dealloc_unique_number - Deallocate a unique (positive) number.
- *	@space: The number space to deallocate from.
- *	@number: The number to deallocate.
+ *        devfs_dealloc_unique_number - Deallocate a unique (positive) number.
+ *        @space: The number space to deallocate from.
+ *        @number: The number to deallocate.
  *
- *	This routine is thread safe and may block.
+ *        This routine is thread safe and may block.
  */
 
 void devfs_dealloc_unique_number (struct unique_numspace *space, int number)
@@ -468,12 +490,14 @@ void devfs_dealloc_unique_number (struct unique_numspace *space, int number)
     int was_set;
 
     if (number < 0) return;
-    down (&space->semaphore);
-    was_set = __test_and_clear_bit (number, space->bits);
-    if (was_set) ++space->num_free;
-    up (&space->semaphore);
+
+    down(&space->semaphore);
+    was_set = __test_and_clear_bit(number, space->bits);
+    if (was_set)
+        ++space->num_free;
+    up(&space->semaphore);
+
     if (!was_set)
-	printk (KERN_ERR __FUNCTION__ "(): number %d was already free\n",
-		number);
+        printk(KERN_ERR __FUNCTION__ "(): number %d was already free\n", number);
 }   /*  End Function devfs_dealloc_unique_number  */
 EXPORT_SYMBOL(devfs_dealloc_unique_number);
