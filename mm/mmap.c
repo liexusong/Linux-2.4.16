@@ -461,20 +461,25 @@ do_mmap_pgoff(struct file *file, unsigned long addr,
 	if (file) { // 如果与文件进行映射
 		switch (flags & MAP_TYPE) {
 		case MAP_SHARED:
-			if ((prot & PROT_WRITE) && !(file->f_mode & FMODE_WRITE)) // 如果虚拟内存区需要写权限, 但文件没有写权限 - (出错)
+			// 如果虚拟内存区需要写权限, 但文件没有写权限 - (出错)
+			if ((prot & PROT_WRITE) && !(file->f_mode & FMODE_WRITE))
 				return -EACCES;
 
 			/* Make sure we don't allow writing to an append-only file.. */
-			if (IS_APPEND(file->f_dentry->d_inode) && (file->f_mode & FMODE_WRITE)) // 追加模式的文件不能设置为写模式
+			// 追加模式的文件不能设置为写模式
+			if (IS_APPEND(file->f_dentry->d_inode)
+				&& (file->f_mode & FMODE_WRITE))
 				return -EACCES;
 
 			/* make sure there are no mandatory locks on the file. */
 			if (locks_verify_locked(file->f_dentry->d_inode))
 				return -EAGAIN;
 
-			vm_flags |= VM_SHARED | VM_MAYSHARE;
-			if (!(file->f_mode & FMODE_WRITE)) // 如果文件不能写, 那么去掉VM_MAYWRITE和VM_SHARED标志
-				vm_flags &= ~(VM_MAYWRITE | VM_SHARED);
+			vm_flags |= VM_SHARED|VM_MAYSHARE;
+
+			// 如果文件不能写, 那么去掉VM_MAYWRITE和VM_SHARED标志
+			if (!(file->f_mode & FMODE_WRITE))
+				vm_flags &= ~(VM_MAYWRITE|VM_SHARED);
 
 			/* fall through */
 		case MAP_PRIVATE:
@@ -487,12 +492,14 @@ do_mmap_pgoff(struct file *file, unsigned long addr,
 		}
 
 	} else {
-		vm_flags |= VM_SHARED | VM_MAYSHARE;
+		vm_flags |= VM_SHARED|VM_MAYSHARE;
+
 		switch (flags & MAP_TYPE) {
 		default:
 			return -EINVAL;
+
 		case MAP_PRIVATE:
-			vm_flags &= ~(VM_SHARED | VM_MAYSHARE);
+			vm_flags &= ~(VM_SHARED|VM_MAYSHARE);
 			/* fall through */
 		case MAP_SHARED:
 			break;
@@ -504,9 +511,10 @@ do_mmap_pgoff(struct file *file, unsigned long addr,
 munmap_back:
 	vma = find_vma_prepare(mm, addr, &prev, &rb_link, &rb_parent);
 
-	// 如果vma不为空, 那么 vma->vm_end 一定大于addr (vma->vm_end > addr)
-	if (vma && vma->vm_start < addr + len) { // 如果新的内存区与旧的内存区有重合的地址
-		if (do_munmap(mm, addr, len))        // 解除映射
+	// 如果 vma 不为空, 那么 vma->vm_end 一定大于 addr (vma->vm_end > addr)
+	// 如果新的内存区与旧的内存区有重合的地址
+	if (vma && vma->vm_start < addr + len) {
+		if (do_munmap(mm, addr, len)) // 解除映射
 			return -ENOMEM;
 		goto munmap_back;
 	}
@@ -533,7 +541,7 @@ munmap_back:
 	 * specific mapper. the address has already been validated, but
 	 * not unmapped, but the maps are removed from the list.
 	 */
-	vma = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL); // 申请一个vm_struct对象
+	vma = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL); // 申请一个 vm_area_struct 对象
 	if (!vma)
 		return -ENOMEM;
 
@@ -582,12 +590,15 @@ munmap_back:
 	 */
 	addr = vma->vm_start;
 
-	vma_link(mm, vma, prev, rb_link, rb_parent); // 把虚拟内存区插入到内存管理红黑树中
+	// 把虚拟内存区插入到内存管理红黑树中
+	vma_link(mm, vma, prev, rb_link, rb_parent);
+
 	if (correct_wcount)
 		atomic_inc(&file->f_dentry->d_inode->i_writecount);
 
 out:
 	mm->total_vm += len >> PAGE_SHIFT;
+
 	if (vm_flags & VM_LOCKED) { // 如果设置了锁定内存标志
 		mm->locked_vm += len >> PAGE_SHIFT;
 		make_pages_present(addr, addr + len); // 立刻申请物理内存并且映射
