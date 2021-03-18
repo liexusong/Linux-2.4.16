@@ -1,2 +1,2 @@
-tcp_v4_do_rcv();
-ip_rcv();
+sys_mmap2();
+generic_file_mmap();

@@ -1874,7 +1874,8 @@ static void nopage_sequential_readahead(struct vm_area_struct * vma,
  * it in the page cache, and handles the special cases reasonably without
  * having a lot of duplicated code.
  */
-struct page * filemap_nopage(struct vm_area_struct * area, unsigned long address, int unused)
+struct page *
+filemap_nopage(struct vm_area_struct * area, unsigned long address, int unused)
 {
 	int error;
 	struct file *file = area->vm_file;
@@ -1883,8 +1884,8 @@ struct page * filemap_nopage(struct vm_area_struct * area, unsigned long address
 	struct page *page, **hash;
 	unsigned long size, pgoff, endoff;
 
-	pgoff = ((address - area->vm_start) >> PAGE_CACHE_SHIFT) + area->vm_pgoff;
-	endoff = ((area->vm_end - area->vm_start) >> PAGE_CACHE_SHIFT) + area->vm_pgoff;
+	pgoff = ((address - area->vm_start)>>PAGE_CACHE_SHIFT) + area->vm_pgoff;
+	endoff = ((area->vm_end - area->vm_start)>>PAGE_CACHE_SHIFT) + area->vm_pgoff;
 
 retry_all:
 	/*
@@ -1928,6 +1929,7 @@ success:
 	 */
 	mark_page_accessed(page);
 	flush_page_to_ram(page);
+
 	return page;
 
 no_cached_page:
@@ -2138,10 +2140,13 @@ int generic_file_mmap(struct file * file, struct vm_area_struct * vma)
 		if (!mapping->a_ops->writepage)
 			return -EINVAL;
 	}
+
 	if (!mapping->a_ops->readpage)
 		return -ENOEXEC;
+
 	UPDATE_ATIME(inode);
 	vma->vm_ops = &generic_file_vm_ops;
+
 	return 0;
 }
 

@@ -26,7 +26,7 @@
  * sys_pipe() is the normal C calling standard for creating
  * a pipe. It's not the way Unix traditionally does this, though.
  */
-asmlinkage int sys_pipe(unsigned long * fildes)
+asmlinkage int sys_pipe(unsigned long *fildes)
 {
 	int fd[2];
 	int error;
@@ -36,14 +36,15 @@ asmlinkage int sys_pipe(unsigned long * fildes)
 		if (copy_to_user(fildes, fd, 2*sizeof(int)))
 			error = -EFAULT;
 	}
+
 	return error;
 }
 
 /* common code for old and new mmaps */
-static inline long do_mmap2(
-	unsigned long addr, unsigned long len,
-	unsigned long prot, unsigned long flags,
-	unsigned long fd, unsigned long pgoff)
+static inline long
+do_mmap2(unsigned long addr, unsigned long len,
+		 unsigned long prot, unsigned long flags,
+		 unsigned long fd, unsigned long pgoff)
 {
 	int error = -EBADF;
 	struct file * file = NULL;
@@ -65,9 +66,10 @@ out:
 	return error;
 }
 
-asmlinkage long sys_mmap2(unsigned long addr, unsigned long len,
-	unsigned long prot, unsigned long flags,
-	unsigned long fd, unsigned long pgoff)
+asmlinkage long
+sys_mmap2(unsigned long addr, unsigned long len,
+		  unsigned long prot, unsigned long flags,
+		  unsigned long fd, unsigned long pgoff)
 {
 	return do_mmap2(addr, len, prot, flags, fd, pgoff);
 }
@@ -100,13 +102,14 @@ asmlinkage int old_mmap(struct mmap_arg_struct *arg)
 	if (a.offset & ~PAGE_MASK)
 		goto out;
 
-	err = do_mmap2(a.addr, a.len, a.prot, a.flags, a.fd, a.offset >> PAGE_SHIFT);
+	err = do_mmap2(a.addr, a.len, a.prot, a.flags, a.fd, a.offset>>PAGE_SHIFT);
 out:
 	return err;
 }
 
 
-extern asmlinkage int sys_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+extern asmlinkage int sys_select(int, fd_set *, fd_set *, fd_set *,
+								 struct timeval *);
 
 struct sel_arg_struct {
 	unsigned long n;
@@ -129,8 +132,8 @@ asmlinkage int old_select(struct sel_arg_struct *arg)
  *
  * This is really horribly ugly.
  */
-asmlinkage int sys_ipc (uint call, int first, int second,
-			int third, void *ptr, long fifth)
+asmlinkage int
+sys_ipc(uint call, int first, int second, int third, void *ptr, long fifth)
 {
 	int version, ret;
 

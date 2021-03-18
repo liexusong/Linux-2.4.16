@@ -399,10 +399,10 @@ static int vma_merge(struct mm_struct * mm, struct vm_area_struct * prev,
 }
 
 /* sys_mmap() call this function */
-unsigned long do_mmap_pgoff(
-	struct file *file, unsigned long addr,
-	unsigned long len, unsigned long prot,
-	unsigned long flags, unsigned long pgoff)
+unsigned long
+do_mmap_pgoff(struct file *file, unsigned long addr,
+			  unsigned long len, unsigned long prot,
+			  unsigned long flags, unsigned long pgoff)
 {
 	struct mm_struct *mm = current->mm; // 当前进程的内存管理结构
 	struct vm_area_struct *vma, *prev;
@@ -442,7 +442,11 @@ unsigned long do_mmap_pgoff(
 	 * of the memory object, so we don't do any here.
 	 */
 	// 计算虚拟内存的权限信息
-	vm_flags = calc_vm_flags(prot,flags) | mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
+	vm_flags = calc_vm_flags(prot,flags)
+					| mm->def_flags
+					| VM_MAYREAD
+					| VM_MAYWRITE
+					| VM_MAYEXEC;
 
 	/* mlock MCL_FUTURE? */
 	if (vm_flags & VM_LOCKED) { // 是否需要锁定内存不让swap出去
@@ -481,6 +485,7 @@ unsigned long do_mmap_pgoff(
 		default:
 			return -EINVAL;
 		}
+
 	} else {
 		vm_flags |= VM_SHARED | VM_MAYSHARE;
 		switch (flags & MAP_TYPE) {
@@ -498,6 +503,7 @@ unsigned long do_mmap_pgoff(
 	error = -ENOMEM;
 munmap_back:
 	vma = find_vma_prepare(mm, addr, &prev, &rb_link, &rb_parent);
+
 	// 如果vma不为空, 那么 vma->vm_end 一定大于addr (vma->vm_end > addr)
 	if (vma && vma->vm_start < addr + len) { // 如果新的内存区与旧的内存区有重合的地址
 		if (do_munmap(mm, addr, len))        // 解除映射
@@ -512,9 +518,9 @@ munmap_back:
 
 	/* Private writable mapping? Check memory availability.. */
 	// 是否有足够内存?
-	if ((vm_flags & (VM_SHARED | VM_WRITE)) == VM_WRITE &&
-	    !(flags & MAP_NORESERVE) &&
-	    !vm_enough_memory(len >> PAGE_SHIFT))
+	if ((vm_flags & (VM_SHARED | VM_WRITE)) == VM_WRITE
+	    && !(flags & MAP_NORESERVE)
+	    && !vm_enough_memory(len >> PAGE_SHIFT))
 		return -ENOMEM;
 
 	/* Can we just expand an old anonymous mapping? */
@@ -544,22 +550,27 @@ munmap_back:
 
 	if (file) {
 		error = -EINVAL;
+
 		if (vm_flags & (VM_GROWSDOWN|VM_GROWSUP))
 			goto free_vma;
+
 		if (vm_flags & VM_DENYWRITE) {
 			error = deny_write_access(file);
 			if (error)
 				goto free_vma;
 			correct_wcount = 1;
 		}
+
 		vma->vm_file = file;
 		get_file(file);
+
 		// 调用文件操作的 mmap() 函数, 一般是 generic_file_mmap() 函数
 		error = file->f_op->mmap(file, vma);
 		if (error)
 			goto unmap_and_free_vma;
+
 	} else if (flags & MAP_SHARED) {
-		error = shmem_zero_setup(vma); // 打开/dev/zero文件映射, 并与虚拟内存区关联
+		error = shmem_zero_setup(vma); // 打开 /dev/zero 文件映射, 并与虚拟内存区关联
 		if (error)
 			goto free_vma;
 	}
@@ -581,6 +592,7 @@ out:
 		mm->locked_vm += len >> PAGE_SHIFT;
 		make_pages_present(addr, addr + len); // 立刻申请物理内存并且映射
 	}
+
 	return addr;
 
 unmap_and_free_vma:

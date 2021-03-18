@@ -1202,20 +1202,23 @@ no_mem:
  * This is called with the MM semaphore held and the page table
  * spinlock held. Exit with the spinlock released.
  */
-static int do_no_page(struct mm_struct * mm, struct vm_area_struct * vma,
-	unsigned long address, int write_access, pte_t *page_table)
+static int
+do_no_page(struct mm_struct *mm, struct vm_area_struct *vma,
+		   unsigned long address, int write_access, pte_t *page_table)
 {
 	struct page * new_page;
 	pte_t entry;
 
 	if (!vma->vm_ops || !vma->vm_ops->nopage)
 		return do_anonymous_page(mm, vma, page_table, write_access, address);
+
 	spin_unlock(&mm->page_table_lock);
 
+	// 一般调用 filemap_nopage() 函数
 	new_page = vma->vm_ops->nopage(vma, address & PAGE_MASK, 0);
-
 	if (new_page == NULL)	/* no page was available -- SIGBUS */
 		return 0;
+
 	if (new_page == NOPAGE_OOM)
 		return -1;
 
@@ -1245,14 +1248,17 @@ static int do_no_page(struct mm_struct * mm, struct vm_area_struct * vma,
 	 * handle that later.
 	 */
 	/* Only go through if we didn't race with anybody else... */
-	if (pte_none(*page_table)) {
+	if (pte_none(*page_table)) { // 对内存页进行映射操作...
 		++mm->rss;
 		flush_page_to_ram(new_page);
 		flush_icache_page(vma, new_page);
+
 		entry = mk_pte(new_page, vma->vm_page_prot);
 		if (write_access)
 			entry = pte_mkwrite(pte_mkdirty(entry));
+
 		set_pte(page_table, entry);
+
 	} else {
 		/* One of our sibling threads was faster, back out. */
 		page_cache_release(new_page);
@@ -1263,6 +1269,7 @@ static int do_no_page(struct mm_struct * mm, struct vm_area_struct * vma,
 	/* no need to invalidate: a not-present page shouldn't be cached */
 	update_mmu_cache(vma, address, entry);
 	spin_unlock(&mm->page_table_lock);
+
 	return 2;	/* Major fault */
 }
 
@@ -1287,9 +1294,9 @@ static int do_no_page(struct mm_struct * mm, struct vm_area_struct * vma,
  * We enter with the pagetable spinlock held, we are supposed to
  * release it when done.
  */
-static inline int handle_pte_fault(struct mm_struct *mm,
-	struct vm_area_struct *vma, unsigned long address,
-	int write_access, pte_t *pte)
+static inline int
+handle_pte_fault(struct mm_struct *mm, struct vm_area_struct *vma,
+				 unsigned long address, int write_access, pte_t *pte)
 {
 	pte_t entry;
 
@@ -1311,9 +1318,11 @@ static inline int handle_pte_fault(struct mm_struct *mm,
 
 		entry = pte_mkdirty(entry);
 	}
+
 	entry = pte_mkyoung(entry); // 添加被访问标志
 	establish_pte(vma, address, pte, entry);
 	spin_unlock(&mm->page_table_lock);
+
 	return 1;
 }
 
@@ -1321,7 +1330,7 @@ static inline int handle_pte_fault(struct mm_struct *mm,
  * By the time we get here, we already hold the mm semaphore
  */
 int handle_mm_fault(struct mm_struct *mm, struct vm_area_struct * vma,
-	unsigned long address, int write_access)
+					unsigned long address, int write_access)
 {
 	pgd_t *pgd;  // page global dirctory
 	pmd_t *pmd;  // page middel dirctory
@@ -1334,14 +1343,16 @@ int handle_mm_fault(struct mm_struct *mm, struct vm_area_struct * vma,
 	 * and the SMP-safe atomic PTE updates.
 	 */
 	spin_lock(&mm->page_table_lock);
-	pmd = pmd_alloc(mm, pgd, address); // pmd equls pgd
 
+	pmd = pmd_alloc(mm, pgd, address);
 	if (pmd) {
 		pte_t * pte = pte_alloc(mm, pmd, address);
 		if (pte)
 			return handle_pte_fault(mm, vma, address, write_access, pte);
 	}
+
 	spin_unlock(&mm->page_table_lock);
+
 	return -1;
 }
 
