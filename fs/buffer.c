@@ -1262,15 +1262,18 @@ struct buffer_head * get_unused_buffer_head(int async)
 }
 EXPORT_SYMBOL(get_unused_buffer_head);
 
-void set_bh_page(struct buffer_head *bh, struct page *page, unsigned long offset)
+void
+set_bh_page(struct buffer_head *bh, struct page *page, unsigned long offset)
 {
 	bh->b_page = page;
+
 	if (offset >= PAGE_SIZE)
 		BUG();
+
+	/*
+	 * This catches illegal uses and preserves the offset:
+	 */
 	if (PageHighMem(page))
-		/*
-		 * This catches illegal uses and preserves the offset:
-		 */
 		bh->b_data = (char *)(0 + offset);
 	else
 		bh->b_data = page_address(page) + offset;
@@ -1286,7 +1289,8 @@ EXPORT_SYMBOL(set_bh_page);
  * from ordinary buffer allocations, and only async requests are allowed
  * to sleep waiting for buffer heads.
  */
-static struct buffer_head *create_buffers(struct page * page, unsigned long size, int async)
+static struct buffer_head *
+create_buffers(struct page *page, unsigned long size, int async)
 {
 	struct buffer_head *bh, *head;
 	long offset;
@@ -1294,6 +1298,7 @@ static struct buffer_head *create_buffers(struct page * page, unsigned long size
 try_again:
 	head = NULL;
 	offset = PAGE_SIZE;
+
 	while ((offset -= size) >= 0) {
 		bh = get_unused_buffer_head(async);
 		if (!bh)
@@ -1314,6 +1319,7 @@ try_again:
 		bh->b_list = BUF_CLEAN;
 		bh->b_end_io = NULL;
 	}
+
 	return head;
 /*
  * In case anything failed, we just free everything we got.
@@ -1348,8 +1354,8 @@ no_grow:
 	 * async buffer heads in use.
 	 */
 	run_task_queue(&tq_disk);
-
 	free_more_memory();
+
 	goto try_again;
 }
 
@@ -1451,6 +1457,7 @@ void create_empty_buffers(struct page *page, kdev_t dev, unsigned long blocksize
 
 	/* FIXME: create_buffers should fail if there's no enough memory */
 	head = create_buffers(page, blocksize, 1);
+
 	if (page->buffers)
 		BUG();
 
@@ -1462,8 +1469,10 @@ void create_empty_buffers(struct page *page, kdev_t dev, unsigned long blocksize
 		tail = bh;
 		bh = bh->b_this_page;
 	} while (bh);
+
 	tail->b_this_page = head;
 	page->buffers = head;
+
 	page_cache_get(page);
 }
 EXPORT_SYMBOL(create_empty_buffers);
