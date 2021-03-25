@@ -495,8 +495,10 @@ int nf_hook_slow(int pf, unsigned int hook,
 #endif
 
 	elem = &nf_hooks[pf][hook];
-	verdict = nf_iterate(&nf_hooks[pf][hook], &skb, hook, indev,
-				 outdev, &elem, okfn);
+
+	verdict = nf_iterate(&nf_hooks[pf][hook], &skb, hook, indev, outdev, &elem,
+						 okfn);
+
 	if (verdict == NF_QUEUE) {
 		NFDEBUG("nf_hook: Verdict = QUEUE.\n");
 		nf_queue(skb, elem, pf, hook, indev, outdev, okfn);
@@ -544,9 +546,8 @@ nf_reinject(struct sk_buff *skb, struct nf_info *info, unsigned int verdict)
 
 	if (verdict == NF_ACCEPT) {
 		verdict = nf_iterate(&nf_hooks[info->pf][info->hook],
-					 &skb, info->hook,
-					 info->indev, info->outdev, &elem,
-					 info->okfn);
+							 &skb, info->hook, info->indev,
+							 info->outdev, &elem, info->okfn);
 	}
 
 	switch (verdict) {
