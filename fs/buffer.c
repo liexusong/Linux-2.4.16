@@ -1662,7 +1662,7 @@ out:
 }
 
 static int __block_commit_write(struct inode *inode, struct page *page,
-		unsigned from, unsigned to)
+								unsigned from, unsigned to)
 {
 	unsigned block_start, block_end;
 	int partial = 0, need_balance_dirty = 0;
@@ -1721,8 +1721,9 @@ int block_read_full_page(struct page *page, get_block_t *get_block)
 
 	blocksize = 1 << inode->i_blkbits;
 
+	// 申请页面对应的块缓冲区
 	if (!page->buffers)
-		create_empty_buffers(page, inode->i_dev, blocksize); // 申请页面对应的块缓冲区
+		create_empty_buffers(page, inode->i_dev, blocksize);
 
 	head = page->buffers;
 
@@ -1790,7 +1791,8 @@ int block_read_full_page(struct page *page, get_block_t *get_block)
  * We may have to extend the file.
  */
 
-int cont_prepare_write(struct page *page, unsigned offset, unsigned to, get_block_t *get_block, unsigned long *bytes)
+int cont_prepare_write(struct page *page, unsigned offset, unsigned to,
+					   get_block_t *get_block, unsigned long *bytes)
 {
 	struct address_space *mapping = page->mapping;
 	struct inode *inode = mapping->host;
@@ -1872,7 +1874,7 @@ out:
 }
 
 int block_prepare_write(struct page *page, unsigned from, unsigned to,
-			get_block_t *get_block)
+						get_block_t *get_block)
 {
 	struct inode *inode = page->mapping->host;
 	int err = __block_prepare_write(inode, page, from, to, get_block);
@@ -1892,7 +1894,7 @@ int block_commit_write(struct page *page, unsigned from, unsigned to)
 }
 
 int generic_commit_write(struct file *file, struct page *page,
-		unsigned from, unsigned to)
+						 unsigned from, unsigned to)
 {
 	struct inode *inode = page->mapping->host;
 	loff_t pos = ((loff_t)page->index << PAGE_CACHE_SHIFT) + to;
@@ -1905,7 +1907,8 @@ int generic_commit_write(struct file *file, struct page *page,
 	return 0;
 }
 
-int block_truncate_page(struct address_space *mapping, loff_t from, get_block_t *get_block)
+int block_truncate_page(struct address_space *mapping, loff_t from,
+						get_block_t *get_block)
 {
 	unsigned long index = from >> PAGE_CACHE_SHIFT;
 	unsigned offset = from & (PAGE_CACHE_SIZE-1);
@@ -2014,7 +2017,8 @@ done:
 	goto done;
 }
 
-int generic_block_bmap(struct address_space *mapping, long block, get_block_t *get_block)
+int generic_block_bmap(struct address_space *mapping, long block,
+					   get_block_t *get_block)
 {
 	struct buffer_head tmp;
 	struct inode *inode = mapping->host;
@@ -2024,8 +2028,9 @@ int generic_block_bmap(struct address_space *mapping, long block, get_block_t *g
 	return tmp.b_blocknr;
 }
 
-int generic_direct_IO(int rw, struct inode *inode, struct kiobuf *iobuf,
-			unsigned long blocknr, int blocksize, get_block_t *get_block)
+int generic_direct_IO(int rw, struct inode *inode,
+					  struct kiobuf *iobuf, unsigned long blocknr,
+					  int blocksize, get_block_t *get_block)
 {
 	int i, nr_blocks, retval;
 	unsigned long *blocks = iobuf->blocks;
@@ -2130,7 +2135,7 @@ static int wait_kio(int rw, int nr, struct buffer_head *bh[], int size)
  */
 
 int brw_kiovec(int rw, int nr, struct kiobuf *iovec[],
-	       kdev_t dev, unsigned long b[], int size)
+			   kdev_t dev, unsigned long b[], int size)
 {
 	int		err;
 	int		length;
@@ -2330,7 +2335,8 @@ fail:
 	return err;
 }
 
-static inline void link_dev_buffers(struct page * page, struct buffer_head *head)
+static inline void
+link_dev_buffers(struct page * page, struct buffer_head *head)
 {
 	struct buffer_head *bh, *tail;
 
@@ -2347,7 +2353,8 @@ static inline void link_dev_buffers(struct page * page, struct buffer_head *head
 /*
  * Create the page-cache page that contains the requested block
  */
-static struct page * grow_dev_page(struct block_device *bdev, unsigned long index, int size)
+static struct page *
+grow_dev_page(struct block_device *bdev, unsigned long index, int size)
 {
 	struct page * page;
 	struct buffer_head *bh;
@@ -2379,7 +2386,8 @@ failed:
 	return NULL;
 }
 
-static void hash_page_buffers(struct page *page, kdev_t dev, int block, int size)
+static void
+hash_page_buffers(struct page *page, kdev_t dev, int block, int size)
 {
 	struct buffer_head *head = page->buffers;
 	struct buffer_head *bh = head;
