@@ -1408,7 +1408,8 @@ try_to_free:
  * we have truncated the file and are going to free the
  * blocks on-disk..
  */
-int discard_bh_page(struct page *page, unsigned long offset, int drop_pagecache)
+int
+discard_bh_page(struct page *page, unsigned long offset, int drop_pagecache)
 {
 	struct buffer_head *head, *bh, *next;
 	unsigned int curr_off = 0;
@@ -1451,7 +1452,8 @@ int discard_bh_page(struct page *page, unsigned long offset, int drop_pagecache)
 	return 1;
 }
 
-void create_empty_buffers(struct page *page, kdev_t dev, unsigned long blocksize)
+void
+create_empty_buffers(struct page *page, kdev_t dev, unsigned long blocksize)
 {
 	struct buffer_head *bh, *head, *tail;
 
@@ -1518,7 +1520,9 @@ static void unmap_underlying_metadata(struct buffer_head * bh)
 /*
  * block_write_full_page() is SMP threaded - the kernel lock is not held.
  */
-static int __block_write_full_page(struct inode *inode, struct page *page, get_block_t *get_block)
+static int
+__block_write_full_page(struct inode *inode, struct page *page,
+						get_block_t *get_block)
 {
 	int err, i;
 	unsigned long block;
@@ -1583,8 +1587,9 @@ out:
 	return err;
 }
 
-static int __block_prepare_write(struct inode *inode, struct page *page,
-		unsigned from, unsigned to, get_block_t *get_block)
+static int
+__block_prepare_write(struct inode *inode, struct page *page, unsigned from,
+					  unsigned to, get_block_t *get_block)
 {
 	unsigned block_start, block_end;
 	unsigned long block;
@@ -1601,7 +1606,7 @@ static int __block_prepare_write(struct inode *inode, struct page *page,
 	bbits = inode->i_blkbits;
 	block = page->index << (PAGE_CACHE_SHIFT - bbits);
 
-	for(bh = head, block_start = 0; bh != head || !block_start;
+	for (bh = head, block_start = 0; bh != head || !block_start;
 	    block++, block_start=block_end, bh = bh->b_this_page) {
 		if (!bh)
 			BUG();
@@ -1629,16 +1634,19 @@ static int __block_prepare_write(struct inode *inode, struct page *page,
 				continue;
 			}
 		}
+
 		if (Page_Uptodate(page)) {
 			set_bit(BH_Uptodate, &bh->b_state);
 			continue;
 		}
+
 		if (!buffer_uptodate(bh) &&
 		     (block_start < from || block_end > to)) {
 			ll_rw_block(READ, 1, &bh);
 			*wait_bh++=bh;
 		}
 	}
+
 	/*
 	 * If we issued read requests - let them complete.
 	 */
