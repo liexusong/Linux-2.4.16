@@ -150,23 +150,28 @@ asmlinkage ssize_t sys_read(unsigned int fd, char *buf, size_t count)
 	struct file * file;
 
 	ret = -EBADF;
+
 	file = fget(fd);
 	if (file) {
 		if (file->f_mode & FMODE_READ) {
 			ret = locks_verify_area(FLOCK_VERIFY_READ, file->f_dentry->d_inode,
-						file, file->f_pos, count);
+									file, file->f_pos, count);
 			if (!ret) {
 				ssize_t (*read)(struct file *, char *, size_t, loff_t *);
+
 				ret = -EINVAL;
-				// minix filesystem file->f_op->read is: generic_file_read()
+				// 如Ext2文件系统: generic_file_read()
 				if (file->f_op && (read = file->f_op->read) != NULL)
 					ret = read(file, buf, count, &file->f_pos);
 			}
 		}
+
 		if (ret > 0)
 			inode_dir_notify(file->f_dentry->d_parent->d_inode, DN_ACCESS);
+
 		fput(file);
 	}
+
 	return ret;
 }
 

@@ -427,18 +427,18 @@ void ReleaseDB(struct au1000_private *aup, db_dest_t *pDB)
   However, the Au1000 data cache is coherent (when programmed
   so), therefore we return KSEG0 address, not KSEG1.
 */
-static void *dma_alloc(size_t size, dma_addr_t * dma_handle)
+static void *dma_alloc(size_t size, dma_addr_t *dma_handle)
 {
 	void *ret;
-	int gfp = GFP_ATOMIC | GFP_DMA; // 从DMA内存区申请
+	int gfp = GFP_ATOMIC|GFP_DMA; // 从DMA内存区申请
 
-	ret = (void *) __get_free_pages(gfp, get_order(size));
-
+	ret = (void *)__get_free_pages(gfp, get_order(size));
 	if (ret != NULL) {
 		memset(ret, 0, size);
 		*dma_handle = virt_to_bus(ret);
 		ret = KSEG0ADDR(ret);
 	}
+
 	return ret;
 }
 
@@ -597,7 +597,8 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 
 
 	/* Allocate the data buffers */
-	aup->vaddr = (u32)dma_alloc(MAX_BUF_SIZE * (NUM_TX_BUFFS+NUM_RX_BUFFS), &aup->dma_addr);
+	aup->vaddr = (u32)dma_alloc(MAX_BUF_SIZE * (NUM_TX_BUFFS + NUM_RX_BUFFS),
+								&aup->dma_addr);
 	if (!aup->vaddr) {
 		retval = -ENOMEM;
 		goto free_region;
@@ -645,13 +646,14 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 	pDBfree = NULL;
 	/* setup the data buffer descriptors and attach a buffer to each one */
 	pDB = aup->db;
-	for (i=0; i<(NUM_TX_BUFFS+NUM_RX_BUFFS); i++) {
+	for (i = 0; i < (NUM_TX_BUFFS + NUM_RX_BUFFS); i++) {
 		pDB->pnext = pDBfree;
 		pDBfree = pDB;
-		pDB->vaddr = (u32 *)((unsigned)aup->vaddr + MAX_BUF_SIZE*i);
+		pDB->vaddr = (u32 *)((unsigned)aup->vaddr + MAX_BUF_SIZE * i);
 		pDB->dma_addr = (dma_addr_t)virt_to_bus(pDB->vaddr);
 		pDB++;
 	}
+
 	aup->pDBfree = pDBfree;
 
 	for (i=0; i<NUM_RX_DMA; i++) {
@@ -660,6 +662,7 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 		aup->rx_dma_ring[i]->buff_stat = (unsigned)pDB->dma_addr;
 		aup->rx_db_inuse[i] = pDB;
 	}
+
 	for (i=0; i<NUM_TX_DMA; i++) {
 		pDB = GetFreeDB(aup);
 		if (!pDB) goto free_region;

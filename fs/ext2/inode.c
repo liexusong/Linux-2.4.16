@@ -1052,8 +1052,7 @@ static int ext2_update_inode(struct inode * inode, int do_sync)
 	desc = block_group & (EXT2_DESC_PER_BLOCK(inode->i_sb) - 1);
 	bh = inode->i_sb->u.ext2_sb.s_group_desc[group_desc];
 	if (!bh) {
-		ext2_error (inode->i_sb, "ext2_write_inode",
-			    "Descriptor not loaded");
+		ext2_error(inode->i_sb, "ext2_write_inode", "Descriptor not loaded");
 		return -EIO;
 	}
 	gdp = (struct ext2_group_desc *) bh->b_data;

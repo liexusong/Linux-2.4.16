@@ -435,7 +435,9 @@ void invalidate_inode_pages2(struct address_space * mapping)
 	spin_unlock(&pagecache_lock);
 }
 
-static inline struct page * __find_page_nolock(struct address_space *mapping, unsigned long offset, struct page *page)
+static inline struct page *
+__find_page_nolock(struct address_space *mapping, unsigned long offset,
+				   struct page *page)
 {
 	goto inside;
 
@@ -1276,7 +1278,9 @@ void mark_page_accessed(struct page *page)
  * This is really ugly. But the goto's actually try to clarify some
  * of the logic when it comes to error handling etc.
  */
-void do_generic_file_read(struct file *filp, loff_t *ppos, read_descriptor_t * desc, read_actor_t actor)
+void
+do_generic_file_read(struct file *filp, loff_t *ppos, read_descriptor_t * desc,
+					 read_actor_t actor)
 {
 	struct address_space *mapping = filp->f_dentry->d_inode->i_mapping;
 	struct inode *inode = mapping->host;
@@ -1324,7 +1328,8 @@ void do_generic_file_read(struct file *filp, loff_t *ppos, read_descriptor_t * d
 			filp->f_ramax = needed;
 
 		if (reada_ok && filp->f_ramax < vm_min_readahead)
-				filp->f_ramax = vm_min_readahead;
+			filp->f_ramax = vm_min_readahead;
+
 		if (filp->f_ramax > max_readahead)
 			filp->f_ramax = max_readahead;
 	}
@@ -1352,15 +1357,17 @@ void do_generic_file_read(struct file *filp, loff_t *ppos, read_descriptor_t * d
 		hash = page_hash(mapping, index);
 
 		spin_lock(&pagecache_lock);
-		page = __find_page_nolock(mapping, index, *hash);
+		page = __find_page_nolock(mapping, index, *hash); // 查找 page cache 是否已经存在
 		if (!page)
 			goto no_cached_page;
+
 found_page:
 		page_cache_get(page);
 		spin_unlock(&pagecache_lock);
 
 		if (!Page_Uptodate(page))
 			goto page_not_up_to_date;
+
 		generic_file_readahead(reada_ok, filp, inode, page);
 page_ok:
 		/* If users can be writing to this page using arbitrary
@@ -1424,7 +1431,7 @@ page_not_up_to_date:
 
 readpage:
 		/* ... and start the actual read. The read will unlock the page. */
-		error = mapping->a_ops->readpage(filp, page); // minix filesystem is minix_readpage()
+		error = mapping->a_ops->readpage(filp, page); // 如minix文件系统: minix_readpage()
 
 		if (!error) {
 			if (Page_Uptodate(page))
@@ -1601,7 +1608,8 @@ int file_read_actor(read_descriptor_t * desc, struct page *page, unsigned long o
  * This is the "read()" routine for all filesystems
  * that can use the page cache directly.
  */
-ssize_t generic_file_read(struct file *filp, char *buf, size_t count, loff_t *ppos)
+ssize_t
+generic_file_read(struct file *filp, char *buf, size_t count, loff_t *ppos)
 {
 	ssize_t retval;
 

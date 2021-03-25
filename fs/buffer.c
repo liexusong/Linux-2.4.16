@@ -1701,9 +1701,12 @@ int block_read_full_page(struct page *page, get_block_t *get_block)
 
 	if (!PageLocked(page))
 		PAGE_BUG(page);
+
 	blocksize = 1 << inode->i_blkbits;
+
 	if (!page->buffers)
 		create_empty_buffers(page, inode->i_dev, blocksize); // 申请页面对应的块缓冲区
+
 	head = page->buffers;
 
 	blocks = PAGE_CACHE_SIZE >> inode->i_blkbits;
@@ -1722,6 +1725,7 @@ int block_read_full_page(struct page *page, get_block_t *get_block)
 				if (get_block(inode, iblock, bh, 0))
 					continue;
 			}
+
 			if (!buffer_mapped(bh)) {
 				memset(kmap(page) + i*blocksize, 0, blocksize);
 				flush_dcache_page(page);
@@ -1729,6 +1733,7 @@ int block_read_full_page(struct page *page, get_block_t *get_block)
 				set_bit(BH_Uptodate, &bh->b_state);
 				continue;
 			}
+
 			/* get_block() might have updated the buffer synchronously */
 			if (buffer_uptodate(bh))
 				continue;
@@ -1736,6 +1741,7 @@ int block_read_full_page(struct page *page, get_block_t *get_block)
 
 		arr[nr] = bh;
 		nr++;
+
 	} while (i++, iblock++, (bh = bh->b_this_page) != head);
 
 	if (!nr) {

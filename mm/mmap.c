@@ -154,6 +154,7 @@ asmlinkage unsigned long sys_brk(unsigned long brk)
 
 	if (brk < mm->end_code)
 		goto out;
+
 	newbrk = PAGE_ALIGN(brk);
 	oldbrk = PAGE_ALIGN(mm->brk);
 	if (oldbrk == newbrk)
@@ -182,6 +183,7 @@ asmlinkage unsigned long sys_brk(unsigned long brk)
 	/* Ok, looks good - let it rip. */
 	if (do_brk(oldbrk, newbrk-oldbrk) != oldbrk)
 		goto out;
+
 set_brk:
 	mm->brk = brk;
 out:
@@ -1128,7 +1130,8 @@ unsigned long do_brk(unsigned long addr, unsigned long len)
 	flags |= VM_MAYREAD|VM_MAYWRITE|VM_MAYEXEC;
 
 	/* Can we just expand an old anonymous mapping? */
-	if (rb_parent && vma_merge(mm, prev, rb_parent, addr, addr + len, flags))
+	if (rb_parent
+		&& vma_merge(mm, prev, rb_parent, addr, addr + len, flags))
 		goto out;
 
 	/*
