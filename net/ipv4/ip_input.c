@@ -71,7 +71,7 @@
  *		Alan Cox	:	Use notifiers.
  *		Bjorn Ekwall	:	Removed ip_csum (from slhc.c too)
  *		Bjorn Ekwall	:	Moved ip_fast_csum to ip.h (inline!)
- *		Stefan Becker   :       Send out ICMP HOST REDIRECT
+ *		Stefan Becker   :	   Send out ICMP HOST REDIRECT
  *	Arnt Gulbrandsen	:	ip_build_xmit
  *		Alan Cox	:	Per socket routing cache
  *		Alan Cox	:	Fixed routing cache, added header cache.
@@ -81,7 +81,7 @@
  *		Alan Cox	:	Set saddr on raw output frames as per BSD.
  *		Alan Cox	:	Stopped broadcast source route explosions.
  *		Alan Cox	:	Can disable source routing
- *		Takeshi Sone    :	Masquerading didn't work.
+ *		Takeshi Sone	:	Masquerading didn't work.
  *	Dave Bonn,Alan Cox	:	Faster IP forwarding whenever possible.
  *		Alan Cox	:	Memory leaks, tramples, misc debugging.
  *		Alan Cox	:	Fixed multicast (by popular demand 8))
@@ -167,8 +167,9 @@ int ip_call_ra_chain(struct sk_buff *skb)
 		 * the packet if it came  from that interface.
 		 */
 		if (sk && sk->num == protocol
-		    && ((sk->bound_dev_if == 0)
-			|| (sk->bound_dev_if == skb->dev->ifindex))) {
+			&& ((sk->bound_dev_if == 0)
+			|| (sk->bound_dev_if == skb->dev->ifindex)))
+		{
 			if (skb->nh.iph->frag_off & htons(IP_MF|IP_OFFSET)) {
 				skb = ip_defrag(skb);
 				if (skb == NULL) {
@@ -176,11 +177,13 @@ int ip_call_ra_chain(struct sk_buff *skb)
 					return 1;
 				}
 			}
+
 			if (last) {
 				struct sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
 				if (skb2)
 					raw_rcv(last, skb2);
 			}
+
 			last = sk;
 		}
 	}
@@ -195,8 +198,9 @@ int ip_call_ra_chain(struct sk_buff *skb)
 }
 
 /* Handle this out of line, it is rare. */
-static int ip_run_ipprot(struct sk_buff *skb, struct iphdr *iph,
-			 struct inet_protocol *ipprot, int force_copy)
+static int
+ip_run_ipprot(struct sk_buff *skb, struct iphdr *iph,
+			  struct inet_protocol *ipprot, int force_copy)
 {
 	int ret = 0;
 
@@ -210,7 +214,9 @@ static int ip_run_ipprot(struct sk_buff *skb, struct iphdr *iph,
 				ipprot->handler(skb2);
 			}
 		}
-		ipprot = (struct inet_protocol *) ipprot->next;
+
+		ipprot = (struct inet_protocol *)ipprot->next;
+
 	} while(ipprot != NULL);
 
 	return ret;
@@ -227,17 +233,18 @@ static inline int ip_local_deliver_finish(struct sk_buff *skb)
 	/* Pull out additionl 8 bytes to save some space in protocols. */
 	if (!pskb_may_pull(skb, ihl+8))
 		goto out;
+
 	__skb_pull(skb, ihl);
 
 #ifdef CONFIG_NETFILTER
 	/* Free reference early: we don't need it any more, and it may
-           hold ip_conntrack module loaded indefinitely. */
+		   hold ip_conntrack module loaded indefinitely. */
 	nf_conntrack_put(skb->nfct);
 	skb->nfct = NULL;
 #endif /*CONFIG_NETFILTER*/
 
-        /* Point into the IP datagram, just past the header. */
-        skb->h.raw = skb->data;
+	/* Point into the IP datagram, just past the header. */
+	skb->h.raw = skb->data;
 
 	{
 		/* Note: See raw.c and net/raw.h, RAWV4_HTABLE_SIZE==MAX_INET_PROTOS */
@@ -250,15 +257,17 @@ static inline int ip_local_deliver_finish(struct sk_buff *skb)
 		/* If there maybe a raw socket we must check - if not we
 		 * don't care less
 		 */
-		if(raw_sk != NULL)
+		if (raw_sk != NULL)
 			raw_sk = raw_v4_input(skb, skb->nh.iph, hash);
 
 		ipprot = (struct inet_protocol *) inet_protos[hash];
 		flag = 0;
+
 		if(ipprot != NULL) {
-			if(raw_sk == NULL &&
-			   ipprot->next == NULL &&
-			   ipprot->protocol == protocol) {
+			if (raw_sk == NULL
+				&& ipprot->next == NULL
+				&& ipprot->protocol == protocol)
+			{
 				int ret;
 
 				/* Fast path... */
@@ -266,7 +275,7 @@ static inline int ip_local_deliver_finish(struct sk_buff *skb)
 
 				return ret;
 			} else {
-				flag = ip_run_ipprot(skb, skb->nh.iph, ipprot, (raw_sk != NULL));
+				flag = ip_run_ipprot(skb, skb->nh.iph, ipprot, (raw_sk!=NULL));
 			}
 		}
 
@@ -275,7 +284,7 @@ static inline int ip_local_deliver_finish(struct sk_buff *skb)
 		 * causes (proven, grin) ARP storms and a leakage of memory (i.e. all
 		 * ICMP reply messages get queued up for transmission...)
 		 */
-		if(raw_sk != NULL) {	/* Shift to last raw user */
+		if (raw_sk != NULL) {	/* Shift to last raw user */
 			raw_rcv(raw_sk, skb);
 			sock_put(raw_sk);
 		} else if (!flag) {		/* Free and report errors */
@@ -304,7 +313,7 @@ int ip_local_deliver(struct sk_buff *skb)
 	}
 
 	return NF_HOOK(PF_INET, NF_IP_LOCAL_IN, skb, skb->dev, NULL,
-		       ip_local_deliver_finish);
+				   ip_local_deliver_finish);
 }
 
 static inline int ip_rcv_finish(struct sk_buff *skb)
@@ -340,7 +349,7 @@ static inline int ip_rcv_finish(struct sk_buff *skb)
 		   But it is the easiest for now, especially taking
 		   into account that combination of IP options
 		   and running sniffer is extremely rare condition.
-		                                      --ANK (980813)
+											  --ANK (980813)
 		*/
 
 		if (skb_cow(skb, skb_headroom(skb)))
@@ -357,8 +366,9 @@ static inline int ip_rcv_finish(struct sk_buff *skb)
 			if (in_dev) {
 				if (!IN_DEV_SOURCE_ROUTE(in_dev)) {
 					if (IN_DEV_LOG_MARTIANS(in_dev) && net_ratelimit())
-						printk(KERN_INFO "source route option %u.%u.%u.%u -> %u.%u.%u.%u\n",
-						       NIPQUAD(iph->saddr), NIPQUAD(iph->daddr));
+						printk(KERN_INFO
+							   "source route option %u.%u.%u.%u -> %u.%u.%u.%u\n",
+							   NIPQUAD(iph->saddr), NIPQUAD(iph->daddr));
 					in_dev_put(in_dev);
 					goto drop;
 				}
@@ -374,8 +384,8 @@ static inline int ip_rcv_finish(struct sk_buff *skb)
 inhdr_error:
 	IP_INC_STATS_BH(IpInHdrErrors);
 drop:
-        kfree_skb(skb);
-        return NET_RX_DROP;
+		kfree_skb(skb);
+		return NET_RX_DROP;
 }
 
 /*
