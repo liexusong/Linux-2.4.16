@@ -207,9 +207,11 @@ ip_run_ipprot(struct sk_buff *skb, struct iphdr *iph,
 	do {
 		if (ipprot->protocol == iph->protocol) {
 			struct sk_buff *skb2 = skb;
+
 			if (ipprot->copy || force_copy)
 				skb2 = skb_clone(skb, GFP_ATOMIC);
-			if(skb2 != NULL) {
+
+			if (skb2 != NULL) {
 				ret = 1;
 				ipprot->handler(skb2);
 			}
