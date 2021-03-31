@@ -221,7 +221,7 @@ int mmlist_nr;
 #define allocate_mm()	(kmem_cache_alloc(mm_cachep, SLAB_KERNEL))
 #define free_mm(mm)		(kmem_cache_free(mm_cachep, (mm)))
 
-static struct mm_struct * mm_init(struct mm_struct * mm)
+static struct mm_struct *mm_init(struct mm_struct * mm)
 {
 	atomic_set(&mm->mm_users, 1);
 	atomic_set(&mm->mm_count, 1);
@@ -238,7 +238,7 @@ static struct mm_struct * mm_init(struct mm_struct * mm)
 /*
  * Allocate and initialize an mm_struct.
  */
-struct mm_struct * mm_alloc(void)
+struct mm_struct *mm_alloc(void)
 {
 	struct mm_struct * mm;
 

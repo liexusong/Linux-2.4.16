@@ -253,7 +253,7 @@ skip_copy_pte_range:
 
 				/* If it's a COW mapping, write protect it both in the parent and the child */
 				if (cow) {
-					ptep_set_wrprotect(src_pte);
+					ptep_set_wrprotect(src_pte); // 清除写权限(设置为只读)
 					pte = *src_pte;
 				}
 
