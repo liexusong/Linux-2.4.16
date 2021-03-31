@@ -1287,16 +1287,19 @@ sock_recv_timestamp(struct msghdr *msg, struct sock *sk, struct sk_buff *skb)
  *
  */
 
-#define SOCK_SLEEP_PRE(sk) 	{ struct task_struct *tsk = current; \
-				DECLARE_WAITQUEUE(wait, tsk); \
-				tsk->state = TASK_INTERRUPTIBLE; \
-				add_wait_queue((sk)->sleep, &wait); \
-				release_sock(sk);
+#define SOCK_SLEEP_PRE(sk)						\
+	{											\
+		struct task_struct *tsk = current;		\
+		DECLARE_WAITQUEUE(wait, tsk);			\
+		tsk->state = TASK_INTERRUPTIBLE;		\
+		add_wait_queue((sk)->sleep, &wait);		\
+		release_sock(sk);
 
-#define SOCK_SLEEP_POST(sk)	tsk->state = TASK_RUNNING; \
-				remove_wait_queue((sk)->sleep, &wait); \
-				lock_sock(sk); \
-				}
+#define SOCK_SLEEP_POST(sk)						\
+		tsk->state = TASK_RUNNING;				\
+		remove_wait_queue((sk)->sleep, &wait);	\
+		lock_sock(sk);							\
+	}
 
 extern __u32 sysctl_wmem_max;
 extern __u32 sysctl_rmem_max;

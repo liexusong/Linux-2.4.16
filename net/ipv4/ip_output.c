@@ -716,22 +716,26 @@ ip_build_xmit(struct sock *sk,
 
 	skb->nh.iph = iph = (struct iphdr *)skb_put(skb, length);
 
-	if(!sk->protinfo.af_inet.hdrincl) {
-		iph->version=4;
-		iph->ihl=5;
-		iph->tos=sk->protinfo.af_inet.tos;
+	if (!sk->protinfo.af_inet.hdrincl) {
+		iph->version = 4;
+		iph->ihl = 5;
+		iph->tos = sk->protinfo.af_inet.tos;
 		iph->tot_len = htons(length);
 		iph->frag_off = df;
-		iph->ttl=sk->protinfo.af_inet.mc_ttl;
+		iph->ttl = sk->protinfo.af_inet.mc_ttl;
 		ip_select_ident(iph, &rt->u.dst, sk);
+
 		if (rt->rt_type != RTN_MULTICAST)
-			iph->ttl=sk->protinfo.af_inet.ttl;
-		iph->protocol=sk->protocol;
-		iph->saddr=rt->rt_src;
-		iph->daddr=rt->rt_dst;
-		iph->check=0;
+			iph->ttl = sk->protinfo.af_inet.ttl;
+
+		iph->protocol = sk->protocol;
+		iph->saddr = rt->rt_src;
+		iph->daddr = rt->rt_dst;
+		iph->check = 0;
 		iph->check = ip_fast_csum((unsigned char *)iph, iph->ihl);
-		err = getfrag(frag, ((char *)iph)+iph->ihl*4,0, length-iph->ihl*4);
+
+		err = getfrag(frag, ((char *)iph) + iph->ihl * 4, 0,
+					  length - iph->ihl * 4);
 	}
 	else
 		err = getfrag(frag, (void *)iph, 0, length);
@@ -741,10 +745,13 @@ ip_build_xmit(struct sock *sk,
 
 	err = NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, skb, NULL, rt->u.dst.dev,
 				  output_maybe_reroute);
+
 	if (err > 0)
 		err = sk->protinfo.af_inet.recverr ? net_xmit_errno(err) : 0;
+
 	if (err)
 		goto error;
+
 out:
 	return 0;
 

@@ -413,7 +413,7 @@ static void skb_split(struct sk_buff *skb, struct sk_buff *skb1, u32 len)
 
 /* Function to create two new TCP segments.  Shrinks the given segment
  * to the specified size and appends a new segment with the rest of the
- * packet to the list.  This won't be called frequently, I hope. 
+ * packet to the list.  This won't be called frequently, I hope.
  * Remember, these are still headerless SKBs at this point.
  */
 static int tcp_fragment(struct sock *sk, struct sk_buff *skb, u32 len)
@@ -560,7 +560,7 @@ int tcp_write_xmit(struct sock *sk, int nonagle)
 		 * We also handle things correctly when the user adds some
 		 * IP options mid-stream.  Silly to do, but cover it.
 		 */
-		mss_now = tcp_current_mss(sk); 
+		mss_now = tcp_current_mss(sk);
 
 		while((skb = tp->send_head) &&
 		      tcp_snd_test(tp, skb, mss_now, tcp_skb_is_last(sk, skb) ? nonagle : 1)) {
@@ -590,7 +590,7 @@ int tcp_write_xmit(struct sock *sk, int nonagle)
 
 /* This function returns the amount that we can raise the
  * usable window based on the following constraints
- *  
+ *
  * 1. The window can never be shrunk once it is offered (RFC 793)
  * 2. We limit memory per socket
  *
@@ -609,12 +609,12 @@ int tcp_write_xmit(struct sock *sk, int nonagle)
  * side SWS prevention criteria. The problem is that under this rule
  * a stream of single byte packets will cause the right side of the
  * window to always advance by a single byte.
- * 
+ *
  * Of course, if the sender implements sender side SWS prevention
  * then this will not be a problem.
- * 
+ *
  * BSD seems to make the following compromise:
- * 
+ *
  *	If the free space is less than the 1/4 of the maximum
  *	space available and the free space is less than 1/2 mss,
  *	then set the window to 0.
@@ -655,7 +655,7 @@ u32 __tcp_select_window(struct sock *sk)
 	int window;
 
 	if (mss > full_space)
-		mss = full_space; 
+		mss = full_space;
 
 	if (free_space < full_space/2) {
 		tp->ack.quick = 0;
@@ -759,9 +759,9 @@ static void tcp_retrans_try_collapse(struct sock *sk, struct sk_buff *skb, int m
 }
 
 /* Do a simple retransmit without using the backoff mechanisms in
- * tcp_timer. This is used for path mtu discovery. 
+ * tcp_timer. This is used for path mtu discovery.
  * The socket is already locked here.
- */ 
+ */
 void tcp_simple_retransmit(struct sock *sk)
 {
 	struct tcp_opt *tp = &(sk->tp_pinfo.af_tcp);
@@ -770,7 +770,7 @@ void tcp_simple_retransmit(struct sock *sk)
 	int lost = 0;
 
 	for_retrans_queue(skb, sk, tp) {
-		if (skb->len > mss && 
+		if (skb->len > mss &&
 		    !(TCP_SKB_CB(skb)->sacked&TCPCB_SACKED_ACKED)) {
 			if (TCP_SKB_CB(skb)->sacked&TCPCB_SACKED_RETRANS) {
 				TCP_SKB_CB(skb)->sacked &= ~TCPCB_SACKED_RETRANS;
@@ -989,15 +989,15 @@ void tcp_xmit_retransmit_queue(struct sock *sk)
  */
 void tcp_send_fin(struct sock *sk)
 {
-	struct tcp_opt *tp = &(sk->tp_pinfo.af_tcp);	
+	struct tcp_opt *tp = &(sk->tp_pinfo.af_tcp);
 	struct sk_buff *skb = skb_peek_tail(&sk->write_queue);
 	unsigned int mss_now;
-	
+
 	/* Optimization, tack on the FIN if we have a queue of
 	 * unsent frames.  But be careful about outgoing SACKS
 	 * and IP options.
 	 */
-	mss_now = tcp_current_mss(sk); 
+	mss_now = tcp_current_mss(sk);
 
 	if(tp->send_head != NULL) {
 		TCP_SKB_CB(skb)->flags |= TCPCB_FLAG_FIN;
@@ -1129,17 +1129,17 @@ struct sk_buff * tcp_make_synack(struct sock *sk, struct dst_entry *dst,
 	th->seq = htonl(TCP_SKB_CB(skb)->seq);
 	th->ack_seq = htonl(req->rcv_isn + 1);
 	if (req->rcv_wnd == 0) { /* ignored for retransmitted syns */
-		__u8 rcv_wscale; 
+		__u8 rcv_wscale;
 		/* Set this up on the first call only */
 		req->window_clamp = tp->window_clamp ? : dst->window;
 		/* tcp_full_space because it is guaranteed to be the first packet */
-		tcp_select_initial_window(tcp_full_space(sk), 
+		tcp_select_initial_window(tcp_full_space(sk),
 			dst->advmss - (req->tstamp_ok ? TCPOLEN_TSTAMP_ALIGNED : 0),
 			&req->rcv_wnd,
 			&req->window_clamp,
 			req->wscale_ok,
 			&rcv_wscale);
-		req->rcv_wscale = rcv_wscale; 
+		req->rcv_wscale = rcv_wscale;
 	}
 
 	/* RFC1323: The window in SYN & SYN/ACK segments is never scaled. */
@@ -1183,11 +1183,11 @@ int tcp_connect(struct sock *sk, struct sk_buff *buff)
 	tcp_initialize_rcv_mss(sk);
 
 	tcp_select_initial_window(tcp_full_space(sk),
-				  tp->advmss - (tp->ts_recent_stamp ? tp->tcp_header_len - sizeof(struct tcphdr) : 0),
-				  &tp->rcv_wnd,
-				  &tp->window_clamp,
-				  sysctl_tcp_window_scaling,
-				  &tp->rcv_wscale);
+							  tp->advmss - (tp->ts_recent_stamp ? tp->tcp_header_len - sizeof(struct tcphdr) : 0),
+							  &tp->rcv_wnd,
+							  &tp->window_clamp,
+							  sysctl_tcp_window_scaling,
+							  &tp->rcv_wscale);
 
 	tp->rcv_ssthresh = tp->rcv_wnd;
 
@@ -1346,7 +1346,7 @@ static int tcp_xmit_probe_skb(struct sock *sk, int urgent)
 
 	/* We don't queue it, tcp_transmit_skb() sets ownership. */
 	skb = alloc_skb(MAX_TCP_HEADER, GFP_ATOMIC);
-	if (skb == NULL) 
+	if (skb == NULL)
 		return -1;
 
 	/* Reserve space for headers and set control bits. */
@@ -1428,7 +1428,7 @@ void tcp_send_probe0(struct sock *sk)
 	if (err <= 0) {
 		tp->backoff++;
 		tp->probes_out++;
-		tcp_reset_xmit_timer (sk, TCP_TIME_PROBE0, 
+		tcp_reset_xmit_timer (sk, TCP_TIME_PROBE0,
 				      min(tp->rto << tp->backoff, TCP_RTO_MAX));
 	} else {
 		/* If packet was not sent due to local congestion,
@@ -1439,7 +1439,7 @@ void tcp_send_probe0(struct sock *sk)
 		 */
 		if (!tp->probes_out)
 			tp->probes_out=1;
-		tcp_reset_xmit_timer (sk, TCP_TIME_PROBE0, 
+		tcp_reset_xmit_timer (sk, TCP_TIME_PROBE0,
 				      min(tp->rto << tp->backoff, TCP_RESOURCE_PROBE_INTERVAL));
 	}
 }

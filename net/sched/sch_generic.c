@@ -34,7 +34,7 @@
 
 /* Main transmission queue. */
 
-/* Main qdisc structure lock. 
+/* Main qdisc structure lock.
 
    However, modifications
    to data, participating in scheduling must be additionally
@@ -52,7 +52,7 @@
  */
 rwlock_t qdisc_tree_lock = RW_LOCK_UNLOCKED;
 
-/* 
+/*
    dev->queue_lock serializes queue accesses for this device
    AND dev->qdisc pointer itself.
 
@@ -239,7 +239,7 @@ struct Qdisc noop_qdisc =
 	noop_enqueue,
 	noop_dequeue,
 	TCQ_F_BUILTIN,
-	&noop_qdisc_ops,	
+	&noop_qdisc_ops,
 };
 
 
@@ -278,15 +278,17 @@ pfifo_fast_enqueue(struct sk_buff *skb, struct Qdisc* qdisc)
 	struct sk_buff_head *list;
 
 	list = ((struct sk_buff_head*)qdisc->data) +
-		prio2band[skb->priority&TC_PRIO_MAX];
+				prio2band[skb->priority & TC_PRIO_MAX];
 
 	if (list->qlen <= skb->dev->tx_queue_len) {
 		__skb_queue_tail(list, skb);
 		qdisc->q.qlen++;
 		return 0;
 	}
+
 	qdisc->stats.drops++;
 	kfree_skb(skb);
+
 	return NET_XMIT_DROP;
 }
 
@@ -344,8 +346,7 @@ static int pfifo_fast_init(struct Qdisc *qdisc, struct rtattr *opt)
 	return 0;
 }
 
-static struct Qdisc_ops pfifo_fast_ops =
-{
+static struct Qdisc_ops pfifo_fast_ops = {
 	NULL,
 	NULL,
 	"pfifo_fast",

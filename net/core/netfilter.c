@@ -101,9 +101,9 @@ int nf_register_sockopt(struct nf_sockopt_ops *reg)
 
 		if (ops->pf == reg->pf &&
 			(overlap(ops->set_optmin, ops->set_optmax,
-						reg->set_optmin, reg->set_optmax)
-			|| overlap(ops->get_optmin, ops->get_optmax,
-						reg->get_optmin, reg->get_optmax)))
+					 reg->set_optmin, reg->set_optmax) ||
+			 overlap(ops->get_optmin, ops->get_optmax,
+					 reg->get_optmin, reg->get_optmax)))
 		{
 			NFDEBUG("nf_sock overlap: %u-%u/%u-%u v %u-%u/%u-%u\n",
 					ops->set_optmin, ops->set_optmax,
