@@ -51,14 +51,14 @@ static inline int pgd_present(pgd_t pgd)	{ return 1; }
 #define pgd_page(pgd) \
 ((unsigned long) __va(pgd_val(pgd) & PAGE_MASK))
 
-static inline pmd_t * pmd_offset(pgd_t * dir, unsigned long address)
+static inline pmd_t *pmd_offset(pgd_t * dir, unsigned long address)
 {
 	return (pmd_t *)dir;
 }
-#define ptep_get_and_clear(xp)	__pte(xchg(&(xp)->pte_low, 0))
-#define pte_same(a, b)		((a).pte_low == (b).pte_low)
-#define pte_page(x)		(mem_map+((unsigned long)(((x).pte_low >> PAGE_SHIFT))))
-#define pte_none(x)		(!(x).pte_low)
+#define ptep_get_and_clear(xp) __pte(xchg(&(xp)->pte_low, 0))
+#define pte_same(a, b) ((a).pte_low == (b).pte_low)
+#define pte_page(x) (mem_map+((unsigned long)(((x).pte_low >> PAGE_SHIFT))))
+#define pte_none(x) (!(x).pte_low)
 #define __mk_pte(page_nr,pgprot) __pte(((page_nr) << PAGE_SHIFT) | pgprot_val(pgprot))
 
 #endif /* _I386_PGTABLE_2LEVEL_H */

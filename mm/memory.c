@@ -59,7 +59,8 @@ struct page *highmem_start_page;
  * a common occurrence (no need to read the page to know
  * that it's zero - better for the cache and memory subsystem).
  */
-static inline void copy_cow_page(struct page * from, struct page * to, unsigned long address)
+static inline void
+copy_cow_page(struct page * from, struct page * to, unsigned long address)
 {
 	if (from == ZERO_PAGE(address)) {
 		clear_user_highpage(to, address);
@@ -172,18 +173,18 @@ void clear_page_tables(struct mm_struct *mm, unsigned long first, int nr)
  * but may be dropped within pmd_alloc() and pte_alloc().
  */
 int copy_page_range(struct mm_struct *dst, struct mm_struct *src,
-			struct vm_area_struct *vma)
+					struct vm_area_struct *vma)
 {
-	pgd_t * src_pgd, * dst_pgd;
+	pgd_t *src_pgd, *dst_pgd;
 	unsigned long address = vma->vm_start;
 	unsigned long end = vma->vm_end;
-	unsigned long cow = (vma->vm_flags & (VM_SHARED | VM_WRITE)) == VM_WRITE;
+	unsigned long cow = (vma->vm_flags & (VM_SHARED|VM_WRITE)) == VM_WRITE;
 
-	src_pgd = pgd_offset(src, address)-1;
-	dst_pgd = pgd_offset(dst, address)-1;
+	src_pgd = pgd_offset(src, address)-1;  // 源目录项
+	dst_pgd = pgd_offset(dst, address)-1;  // 目标目录项
 
 	for (;;) {
-		pmd_t * src_pmd, * dst_pmd;
+		pmd_t *src_pmd, *dst_pmd;
 
 		src_pgd++; dst_pgd++;
 
@@ -191,10 +192,12 @@ int copy_page_range(struct mm_struct *dst, struct mm_struct *src,
 
 		if (pgd_none(*src_pgd))
 			goto skip_copy_pmd_range;
+
 		if (pgd_bad(*src_pgd)) {
 			pgd_ERROR(*src_pgd);
 			pgd_clear(src_pgd);
-skip_copy_pmd_range:	address = (address + PGDIR_SIZE) & PGDIR_MASK;
+skip_copy_pmd_range:
+			address = (address + PGDIR_SIZE) & PGDIR_MASK;
 			if (!address || (address >= end))
 				goto out;
 			continue;
@@ -206,16 +209,18 @@ skip_copy_pmd_range:	address = (address + PGDIR_SIZE) & PGDIR_MASK;
 			goto nomem;
 
 		do {
-			pte_t * src_pte, * dst_pte;
+			pte_t *src_pte, *dst_pte;
 
 			/* copy_pte_range */
 
 			if (pmd_none(*src_pmd))
 				goto skip_copy_pte_range;
+
 			if (pmd_bad(*src_pmd)) {
 				pmd_ERROR(*src_pmd);
 				pmd_clear(src_pmd);
-skip_copy_pte_range:		address = (address + PMD_SIZE) & PMD_MASK;
+skip_copy_pte_range:
+				address = (address + PMD_SIZE) & PMD_MASK;
 				if (address >= end)
 					goto out;
 				goto cont_copy_pmd_range;
@@ -235,13 +240,15 @@ skip_copy_pte_range:		address = (address + PMD_SIZE) & PMD_MASK;
 
 				if (pte_none(pte))
 					goto cont_copy_pte_range_noset;
+
 				if (!pte_present(pte)) {
 					swap_duplicate(pte_to_swp_entry(pte));
 					goto cont_copy_pte_range;
 				}
+
 				ptepage = pte_page(pte);
-				if ((!VALID_PAGE(ptepage)) ||
-				    PageReserved(ptepage))
+
+				if ((!VALID_PAGE(ptepage)) || PageReserved(ptepage))
 					goto cont_copy_pte_range;
 
 				/* If it's a COW mapping, write protect it both in the parent and the child */
@@ -253,23 +260,34 @@ skip_copy_pte_range:		address = (address + PMD_SIZE) & PMD_MASK;
 				/* If it's a shared mapping, mark it clean in the child */
 				if (vma->vm_flags & VM_SHARED)
 					pte = pte_mkclean(pte);
+
 				pte = pte_mkold(pte);
 				get_page(ptepage);
 				dst->rss++;
 
-cont_copy_pte_range:		set_pte(dst_pte, pte);
-cont_copy_pte_range_noset:	address += PAGE_SIZE;
+cont_copy_pte_range:
+				set_pte(dst_pte, pte);
+
+cont_copy_pte_range_noset:
+				address += PAGE_SIZE;
+
 				if (address >= end)
 					goto out_unlock;
+
 				src_pte++;
 				dst_pte++;
+
 			} while ((unsigned long)src_pte & PTE_TABLE_MASK);
+
 			spin_unlock(&src->page_table_lock);
 
-cont_copy_pmd_range:	src_pmd++;
+cont_copy_pmd_range:
+			src_pmd++;
 			dst_pmd++;
+
 		} while ((unsigned long)src_pmd & PMD_TABLE_MASK);
 	}
+
 out_unlock:
 	spin_unlock(&src->page_table_lock);
 out:
@@ -289,7 +307,9 @@ static inline void forget_pte(pte_t page)
 	}
 }
 
-static inline int zap_pte_range(mmu_gather_t *tlb, pmd_t * pmd, unsigned long address, unsigned long size)
+static inline int
+zap_pte_range(mmu_gather_t *tlb, pmd_t * pmd, unsigned long address,
+			  unsigned long size)
 {
 	unsigned long offset;
 	pte_t * ptep;
@@ -326,7 +346,9 @@ static inline int zap_pte_range(mmu_gather_t *tlb, pmd_t * pmd, unsigned long ad
 	return freed;
 }
 
-static inline int zap_pmd_range(mmu_gather_t *tlb, pgd_t * dir, unsigned long address, unsigned long size)
+static inline int
+zap_pmd_range(mmu_gather_t *tlb, pgd_t * dir, unsigned long address,
+			  unsigned long size)
 {
 	pmd_t * pmd;
 	unsigned long end;
@@ -355,7 +377,8 @@ static inline int zap_pmd_range(mmu_gather_t *tlb, pgd_t * dir, unsigned long ad
 /*
  * remove user pages in a given range.
  */
-void zap_page_range(struct mm_struct *mm, unsigned long address, unsigned long size)
+void
+zap_page_range(struct mm_struct *mm, unsigned long address, unsigned long size)
 {
 	mmu_gather_t *tlb;
 	pgd_t * dir;
@@ -705,8 +728,9 @@ int unlock_kiovec(int nr, struct kiobuf *iovec[])
 	return 0;
 }
 
-static inline void zeromap_pte_range(pte_t * pte, unsigned long address,
-                                     unsigned long size, pgprot_t prot)
+static inline void
+zeromap_pte_range(pte_t * pte, unsigned long address, unsigned long size,
+				  pgprot_t prot)
 {
 	unsigned long end;
 
@@ -724,8 +748,9 @@ static inline void zeromap_pte_range(pte_t * pte, unsigned long address,
 	} while (address && (address < end));
 }
 
-static inline int zeromap_pmd_range(struct mm_struct *mm, pmd_t * pmd, unsigned long address,
-                                    unsigned long size, pgprot_t prot)
+static inline int
+zeromap_pmd_range(struct mm_struct *mm, pmd_t * pmd, unsigned long address,
+				  unsigned long size, pgprot_t prot)
 {
 	unsigned long end;
 
@@ -779,8 +804,9 @@ int zeromap_page_range(unsigned long address, unsigned long size, pgprot_t prot)
  * mappings are removed. any references to nonexistent pages results
  * in null mappings (currently treated as "copy-on-access")
  */
-static inline void remap_pte_range(pte_t * pte, unsigned long address, unsigned long size,
-	unsigned long phys_addr, pgprot_t prot)
+static inline void
+remap_pte_range(pte_t * pte, unsigned long address, unsigned long size,
+				unsigned long phys_addr, pgprot_t prot)
 {
 	unsigned long end;
 
@@ -803,8 +829,9 @@ static inline void remap_pte_range(pte_t * pte, unsigned long address, unsigned 
 	} while (address && (address < end));
 }
 
-static inline int remap_pmd_range(struct mm_struct *mm, pmd_t * pmd, unsigned long address, unsigned long size,
-	unsigned long phys_addr, pgprot_t prot)
+static inline int
+remap_pmd_range(struct mm_struct *mm, pmd_t * pmd, unsigned long address,
+				unsigned long size, unsigned long phys_addr, pgprot_t prot)
 {
 	unsigned long end;
 
@@ -825,7 +852,8 @@ static inline int remap_pmd_range(struct mm_struct *mm, pmd_t * pmd, unsigned lo
 }
 
 /*  Note: this is only safe if the mm semaphore is held when called. */
-int remap_page_range(unsigned long from, unsigned long phys_addr, unsigned long size, pgprot_t prot)
+int remap_page_range(unsigned long from, unsigned long phys_addr,
+					 unsigned long size, pgprot_t prot)
 {
 	int error = 0;
 	pgd_t * dir;
@@ -845,7 +873,7 @@ int remap_page_range(unsigned long from, unsigned long phys_addr, unsigned long 
 		error = -ENOMEM;
 		if (!pmd)
 			break;
-		error = remap_pmd_range(mm, pmd, from, end - from, phys_addr + from, prot);
+		error = remap_pmd_range(mm, pmd, from, end-from, phys_addr+from, prot);
 		if (error)
 			break;
 		from = (from + PGDIR_SIZE) & PGDIR_MASK;
@@ -864,7 +892,9 @@ int remap_page_range(unsigned long from, unsigned long phys_addr, unsigned long 
  *
  * We hold the mm semaphore for reading and vma->vm_mm->page_table_lock
  */
-static inline void establish_pte(struct vm_area_struct * vma, unsigned long address, pte_t *page_table, pte_t entry)
+static inline void
+establish_pte(struct vm_area_struct *vma, unsigned long address,
+			  pte_t *page_table, pte_t entry)
 {
 	set_pte(page_table, entry);
 	flush_tlb_page(vma, address);
@@ -874,8 +904,9 @@ static inline void establish_pte(struct vm_area_struct * vma, unsigned long addr
 /*
  * We hold the mm semaphore for reading and vma->vm_mm->page_table_lock
  */
-static inline void break_cow(struct vm_area_struct * vma, struct page * new_page, unsigned long address,
-		pte_t *page_table)
+static inline void
+break_cow(struct vm_area_struct *vma, struct page *new_page,
+		  unsigned long address, pte_t *page_table)
 {
 	flush_page_to_ram(new_page);
 	flush_cache_page(vma, address);
@@ -903,12 +934,13 @@ static inline void break_cow(struct vm_area_struct * vma, struct page * new_page
  * We hold the mm semaphore and the page_table_lock on entry and exit
  * with the page_table_lock released.
  */
-static int do_wp_page(struct mm_struct *mm, struct vm_area_struct * vma,
-	unsigned long address, pte_t *page_table, pte_t pte)
+static int
+do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
+		   unsigned long address, pte_t *page_table, pte_t pte)
 {
 	struct page *old_page, *new_page;
 
-	old_page = pte_page(pte); // 旧的内存页
+	old_page = pte_page(pte); // 获取页表项对应的内存页
 	if (!VALID_PAGE(old_page))
 		goto bad_wp_page;
 
@@ -917,7 +949,8 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct * vma,
 		unlock_page(old_page);
 		if (reuse) {
 			flush_cache_page(vma, address);
-			establish_pte(vma, address, page_table, pte_mkyoung(pte_mkdirty(pte_mkwrite(pte))));
+			establish_pte(vma, address, page_table,
+						  pte_mkyoung(pte_mkdirty(pte_mkwrite(pte))));
 			spin_unlock(&mm->page_table_lock);
 			return 1;	/* Minor fault */
 		}
@@ -929,32 +962,39 @@ static int do_wp_page(struct mm_struct *mm, struct vm_area_struct * vma,
 	page_cache_get(old_page); // 引用计数器加一
 	spin_unlock(&mm->page_table_lock);
 
-	new_page = alloc_page(GFP_HIGHUSER);
+	new_page = alloc_page(GFP_HIGHUSER); // 申请一个新的物理内存页
 	if (!new_page)
 		goto no_mem;
-	copy_cow_page(old_page,new_page,address); // 复制内存页的内容
+
+	copy_cow_page(old_page, new_page, address); // 将旧的内存页内容复制到新的内存页
 
 	/*
 	 * Re-check the pte - we dropped the lock
 	 */
 	spin_lock(&mm->page_table_lock);
+
 	if (pte_same(*page_table, pte)) { // 没有被其他进程修改
 		if (PageReserved(old_page))
 			++mm->rss;
+
 		break_cow(vma, new_page, address, page_table); // 映射内存地址
 		lru_cache_add(new_page);
 
 		/* Free the old page.. */
 		new_page = old_page; // free old page twice
 	}
+
 	spin_unlock(&mm->page_table_lock);
+
 	page_cache_release(new_page);
 	page_cache_release(old_page);
+
 	return 1;	/* Minor fault */
 
 bad_wp_page:
 	spin_unlock(&mm->page_table_lock);
-	printk("do_wp_page: bogus page at address %08lx (page 0x%lx)\n",address,(unsigned long)old_page);
+	printk("do_wp_page: bogus page at address %08lx (page 0x%lx)\n",
+		   address, (unsigned long)old_page);
 	return -1;
 no_mem:
 	page_cache_release(old_page);
@@ -1075,9 +1115,10 @@ void swapin_readahead(swp_entry_t entry)
  * We hold the mm semaphore and the page_table_lock on entry and
  * should release the pagetable lock on exit..
  */
-static int do_swap_page(struct mm_struct * mm,
-	struct vm_area_struct * vma, unsigned long address,
-	pte_t * page_table, pte_t orig_pte, int write_access)
+static int
+do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
+			 unsigned long address, pte_t *page_table,
+			 pte_t orig_pte, int write_access)
 {
 	struct page *page;
 	swp_entry_t entry = pte_to_swp_entry(orig_pte);
@@ -1146,7 +1187,9 @@ static int do_swap_page(struct mm_struct * mm,
  * spinlock held to protect against concurrent faults in
  * multithreaded programs.
  */
-static int do_anonymous_page(struct mm_struct *mm, struct vm_area_struct * vma, pte_t *page_table, int write_access, unsigned long addr)
+static int
+do_anonymous_page(struct mm_struct *mm, struct vm_area_struct * vma,
+				  pte_t *page_table, int write_access, unsigned long addr)
 {
 	pte_t entry;
 
@@ -1309,10 +1352,11 @@ handle_pte_fault(struct mm_struct *mm, struct vm_area_struct *vma,
 		 */
 		if (pte_none(entry))
 			return do_no_page(mm, vma, address, write_access, pte);
+
 		return do_swap_page(mm, vma, address, pte, entry, write_access);
 	}
 
-	if (write_access) { // 这里是因为写操作导致的
+	if (write_access) { // 这里是因为没有写操作权限导致的
 		if (!pte_write(entry))
 			return do_wp_page(mm, vma, address, pte, entry);
 
@@ -1336,7 +1380,7 @@ int handle_mm_fault(struct mm_struct *mm, struct vm_area_struct * vma,
 	pmd_t *pmd;  // page middel dirctory
 
 	current->state = TASK_RUNNING;
-	pgd = pgd_offset(mm, address); // 获取页目录entry
+	pgd = pgd_offset(mm, address); // 获取页目录项
 
 	/*
 	 * We need the page table lock to synchronize with kswapd
@@ -1387,6 +1431,7 @@ pmd_t *__pmd_alloc(struct mm_struct *mm, pgd_t *pgd, unsigned long address)
 			goto out;
 		}
 	}
+
 	pgd_populate(mm, pgd, new);
 out:
 	return pmd_offset(pgd, address);

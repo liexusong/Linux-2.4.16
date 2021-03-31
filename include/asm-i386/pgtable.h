@@ -25,43 +25,43 @@ extern pgd_t swapper_pg_dir[1024];
 extern void paging_init(void);
 
 /* Caches aren't brain-dead on the intel. */
-#define flush_cache_all()			do { } while (0)
-#define flush_cache_mm(mm)			do { } while (0)
+#define flush_cache_all()					do { } while (0)
+#define flush_cache_mm(mm)					do { } while (0)
 #define flush_cache_range(mm, start, end)	do { } while (0)
 #define flush_cache_page(vma, vmaddr)		do { } while (0)
-#define flush_page_to_ram(page)			do { } while (0)
-#define flush_dcache_page(page)			do { } while (0)
+#define flush_page_to_ram(page)				do { } while (0)
+#define flush_dcache_page(page)				do { } while (0)
 #define flush_icache_range(start, end)		do { } while (0)
-#define flush_icache_page(vma,pg)		do { } while (0)
+#define flush_icache_page(vma,pg)			do { } while (0)
 
-#define __flush_tlb()							\
-	do {								\
-		unsigned int tmpreg;					\
-									\
-		__asm__ __volatile__(					\
+#define __flush_tlb()								\
+	do {											\
+		unsigned int tmpreg;						\
+													\
+		__asm__ __volatile__(						\
 			"movl %%cr3, %0;  # flush TLB \n"		\
 			"movl %0, %%cr3;              \n"		\
-			: "=r" (tmpreg)					\
-			:: "memory");					\
+			: "=r" (tmpreg)							\
+			:: "memory");							\
 	} while (0)
 
 /*
  * Global pages have to be flushed a bit differently. Not a real
  * performance problem because this does not happen often.
  */
-#define __flush_tlb_global()						\
-	do {								\
-		unsigned int tmpreg;					\
-									\
-		__asm__ __volatile__(					\
+#define __flush_tlb_global()							\
+	do {												\
+		unsigned int tmpreg;							\
+														\
+		__asm__ __volatile__(							\
 			"movl %1, %%cr4;  # turn off PGE     \n"	\
 			"movl %%cr3, %0;  # flush TLB        \n"	\
 			"movl %0, %%cr3;                     \n"	\
 			"movl %2, %%cr4;  # turn PGE back on \n"	\
-			: "=&r" (tmpreg)				\
+			: "=&r" (tmpreg)							\
 			: "r" (mmu_cr4_features & ~X86_CR4_PGE),	\
-			  "r" (mmu_cr4_features)			\
-			: "memory");					\
+			  "r" (mmu_cr4_features)					\
+			: "memory");								\
 	} while (0)
 
 extern unsigned long pgkern_mask;
@@ -73,11 +73,11 @@ extern unsigned long pgkern_mask;
 # define __flush_tlb_all() __flush_tlb_global()
 #else
 # define __flush_tlb_all()						\
-	do {								\
-		if (cpu_has_pge)					\
+	do {										\
+		if (cpu_has_pge)						\
 			__flush_tlb_global();				\
-		else							\
-			__flush_tlb();					\
+		else									\
+			__flush_tlb();						\
 	} while (0)
 #endif
 
@@ -196,25 +196,27 @@ extern void pgtable_cache_init(void);
 #define PAGE_COPY		__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
 #define PAGE_READONLY	__pgprot(_PAGE_PRESENT | _PAGE_USER | _PAGE_ACCESSED)
 
-#define __PAGE_KERNEL \
+#define __PAGE_KERNEL			\
 	(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY | _PAGE_ACCESSED)
-#define __PAGE_KERNEL_NOCACHE \
+
+#define __PAGE_KERNEL_NOCACHE	\
 	(_PAGE_PRESENT | _PAGE_RW | _PAGE_DIRTY | _PAGE_PCD | _PAGE_ACCESSED)
-#define __PAGE_KERNEL_RO \
+
+#define __PAGE_KERNEL_RO		\
 	(_PAGE_PRESENT | _PAGE_DIRTY | _PAGE_ACCESSED)
 
 #ifdef CONFIG_X86_PGE
 # define MAKE_GLOBAL(x) __pgprot((x) | _PAGE_GLOBAL)
 #else
-# define MAKE_GLOBAL(x)						\
-	({							\
-		pgprot_t __ret;					\
-								\
-		if (cpu_has_pge)				\
+# define MAKE_GLOBAL(x)								\
+	({												\
+		pgprot_t __ret;								\
+													\
+		if (cpu_has_pge)							\
 			__ret = __pgprot((x) | _PAGE_GLOBAL);	\
-		else						\
-			__ret = __pgprot(x);			\
-		__ret;						\
+		else										\
+			__ret = __pgprot(x);					\
+		__ret;										\
 	})
 #endif
 
@@ -255,13 +257,13 @@ extern void pgtable_cache_init(void);
 /* page table for 0-4MB for everybody */
 extern unsigned long pg0[1024];
 
-#define pte_present(x)	((x).pte_low & (_PAGE_PRESENT | _PAGE_PROTNONE))
-#define pte_clear(xp)	do { set_pte(xp, __pte(0)); } while (0)
+#define pte_present(x) ((x).pte_low & (_PAGE_PRESENT | _PAGE_PROTNONE))
+#define pte_clear(xp) do { set_pte(xp, __pte(0)); } while (0)
 
-#define pmd_none(x)		(!pmd_val(x))
-#define pmd_present(x)	(pmd_val(x) & _PAGE_PRESENT)
-#define pmd_clear(xp)	do { set_pmd(xp, __pmd(0)); } while (0)
-#define	pmd_bad(x)		((pmd_val(x) & (~PAGE_MASK & ~_PAGE_USER)) != _KERNPG_TABLE)
+#define pmd_none(x) (!pmd_val(x))
+#define pmd_present(x) (pmd_val(x) & _PAGE_PRESENT)
+#define pmd_clear(xp) do { set_pmd(xp, __pmd(0)); } while (0)
+#define	pmd_bad(x) ((pmd_val(x)&(~PAGE_MASK & ~_PAGE_USER)) != _KERNPG_TABLE)
 
 /*
  * Permanent address of a page. Obviously must never be
@@ -274,37 +276,110 @@ extern unsigned long pg0[1024];
  * The following only work if pte_present() is true.
  * Undefined behaviour if not..
  */
-static inline int pte_read(pte_t pte)		{ return (pte).pte_low & _PAGE_USER; }
-static inline int pte_exec(pte_t pte)		{ return (pte).pte_low & _PAGE_USER; }
-static inline int pte_dirty(pte_t pte)		{ return (pte).pte_low & _PAGE_DIRTY; }
-static inline int pte_young(pte_t pte)		{ return (pte).pte_low & _PAGE_ACCESSED; }
-static inline int pte_write(pte_t pte)		{ return (pte).pte_low & _PAGE_RW; }
+static inline int pte_read(pte_t pte)
+{
+	return (pte).pte_low & _PAGE_USER;
+}
 
-static inline pte_t pte_rdprotect(pte_t pte)	{ (pte).pte_low &= ~_PAGE_USER; return pte; }
-static inline pte_t pte_exprotect(pte_t pte)	{ (pte).pte_low &= ~_PAGE_USER; return pte; }
-static inline pte_t pte_mkclean(pte_t pte)	{ (pte).pte_low &= ~_PAGE_DIRTY; return pte; }
-static inline pte_t pte_mkold(pte_t pte)	{ (pte).pte_low &= ~_PAGE_ACCESSED; return pte; }
-static inline pte_t pte_wrprotect(pte_t pte)	{ (pte).pte_low &= ~_PAGE_RW; return pte; }
-static inline pte_t pte_mkread(pte_t pte)	{ (pte).pte_low |= _PAGE_USER; return pte; }
-static inline pte_t pte_mkexec(pte_t pte)	{ (pte).pte_low |= _PAGE_USER; return pte; }
-static inline pte_t pte_mkdirty(pte_t pte)	{ (pte).pte_low |= _PAGE_DIRTY; return pte; }
-static inline pte_t pte_mkyoung(pte_t pte)	{ (pte).pte_low |= _PAGE_ACCESSED; return pte; }
-static inline pte_t pte_mkwrite(pte_t pte)	{ (pte).pte_low |= _PAGE_RW; return pte; }
+static inline int pte_exec(pte_t pte)
+{
+	return (pte).pte_low & _PAGE_USER;
+}
 
-static inline  int ptep_test_and_clear_dirty(pte_t *ptep)	{ return test_and_clear_bit(_PAGE_BIT_DIRTY, ptep); }
-static inline  int ptep_test_and_clear_young(pte_t *ptep)	{ return test_and_clear_bit(_PAGE_BIT_ACCESSED, ptep); }
-static inline void ptep_set_wrprotect(pte_t *ptep)		{ clear_bit(_PAGE_BIT_RW, ptep); }
-static inline void ptep_mkdirty(pte_t *ptep)			{ set_bit(_PAGE_BIT_DIRTY, ptep); }
+static inline int pte_dirty(pte_t pte)
+{
+	return (pte).pte_low & _PAGE_DIRTY;
+}
+
+static inline int pte_young(pte_t pte)
+{
+	return (pte).pte_low & _PAGE_ACCESSED;
+}
+
+static inline int pte_write(pte_t pte)
+{
+	return (pte).pte_low & _PAGE_RW;
+}
+
+static inline pte_t pte_rdprotect(pte_t pte)
+{
+	(pte).pte_low &= ~_PAGE_USER; return pte;
+}
+
+static inline pte_t pte_exprotect(pte_t pte)
+{
+	(pte).pte_low &= ~_PAGE_USER; return pte;
+}
+
+static inline pte_t pte_mkclean(pte_t pte)
+{
+	(pte).pte_low &= ~_PAGE_DIRTY; return pte;
+}
+
+static inline pte_t pte_mkold(pte_t pte)
+{
+	(pte).pte_low &= ~_PAGE_ACCESSED; return pte;
+}
+
+static inline pte_t pte_wrprotect(pte_t pte)
+{
+	(pte).pte_low &= ~_PAGE_RW; return pte;
+}
+
+static inline pte_t pte_mkread(pte_t pte)
+{
+	(pte).pte_low |= _PAGE_USER; return pte;
+}
+
+static inline pte_t pte_mkexec(pte_t pte)
+{
+	(pte).pte_low |= _PAGE_USER; return pte;
+}
+
+static inline pte_t pte_mkdirty(pte_t pte)
+{
+	(pte).pte_low |= _PAGE_DIRTY; return pte;
+}
+
+static inline pte_t pte_mkyoung(pte_t pte)
+{
+	(pte).pte_low |= _PAGE_ACCESSED; return pte;
+}
+
+static inline pte_t pte_mkwrite(pte_t pte)
+{
+	(pte).pte_low |= _PAGE_RW; return pte;
+}
+
+static inline  int ptep_test_and_clear_dirty(pte_t *ptep)
+{
+	return test_and_clear_bit(_PAGE_BIT_DIRTY, ptep);
+}
+
+static inline  int ptep_test_and_clear_young(pte_t *ptep)
+{
+	return test_and_clear_bit(_PAGE_BIT_ACCESSED, ptep);
+}
+
+static inline void ptep_set_wrprotect(pte_t *ptep)
+{
+	clear_bit(_PAGE_BIT_RW, ptep); // 清空可写标志位, 表示此页不能进行写操作
+}
+
+static inline void ptep_mkdirty(pte_t *ptep)
+{
+	set_bit(_PAGE_BIT_DIRTY, ptep);
+}
 
 /*
  * Conversion functions: convert a page and protection to a page entry,
  * and a page entry and page directory to the page they refer to.
  */
 
-#define mk_pte(page, pgprot)	__mk_pte((page) - mem_map, (pgprot))
+#define mk_pte(page, pgprot) __mk_pte((page) - mem_map, (pgprot))
 
 /* This takes a physical page address that is used by the remapping functions */
-#define mk_pte_phys(physpage, pgprot)	__mk_pte((physpage) >> PAGE_SHIFT, pgprot)
+#define mk_pte_phys(physpage, pgprot) __mk_pte((physpage) >> PAGE_SHIFT, pgprot)
 
 static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 {
@@ -316,7 +391,7 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 #define page_pte(page) page_pte_prot(page, __pgprot(0))
 
 #define pmd_page(pmd) \
-((unsigned long) __va(pmd_val(pmd) & PAGE_MASK))
+	((unsigned long) __va(pmd_val(pmd) & PAGE_MASK))
 
 /* to find an entry in a page-table-directory. PGDIR_SHIFT equls 22 */
 #define pgd_index(address) ((address >> PGDIR_SHIFT) & (PTRS_PER_PGD-1))
@@ -334,6 +409,7 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 /* Find an entry in the third-level page table.. */
 #define __pte_offset(address) \
 		((address >> PAGE_SHIFT) & (PTRS_PER_PTE - 1))
+
 #define pte_offset(dir, address) ((pte_t *) pmd_page(*(dir)) + \
 			__pte_offset(address))
 
@@ -344,16 +420,16 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 #define update_mmu_cache(vma,address,pte) do { } while (0)
 
 /* Encode and de-code a swap entry */
-#define SWP_TYPE(x)			(((x).val >> 1) & 0x3f)
+#define SWP_TYPE(x)				(((x).val >> 1) & 0x3f)
 #define SWP_OFFSET(x)			((x).val >> 8)
-#define SWP_ENTRY(type, offset)		((swp_entry_t) { ((type) << 1) | ((offset) << 8) })
-#define pte_to_swp_entry(pte)		((swp_entry_t) { (pte).pte_low })
+#define SWP_ENTRY(type, offset)	((swp_entry_t) { ((type)<<1)|((offset)<<8) })
+#define pte_to_swp_entry(pte)	((swp_entry_t) { (pte).pte_low })
 #define swp_entry_to_pte(x)		((pte_t) { (x).val })
 
 #endif /* !__ASSEMBLY__ */
 
 /* Needs to be defined here and not in linux/mm.h, as it is arch dependent */
-#define PageSkip(page)		(0)
+#define PageSkip(page)			(0)
 #define kern_addr_valid(addr)	(1)
 
 #define io_remap_page_range remap_page_range

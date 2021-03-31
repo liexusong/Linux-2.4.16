@@ -43,7 +43,8 @@ static inline void *kmap(struct page *page) { return page_address(page); }
 #endif /* CONFIG_HIGHMEM */
 
 /* when CONFIG_HIGHMEM is not set these will be plain clear/copy_page */
-static inline void clear_user_highpage(struct page *page, unsigned long vaddr)
+static inline void
+clear_user_highpage(struct page *page, unsigned long vaddr)
 {
 	void *addr = kmap_atomic(page, KM_USER0);
 	clear_user_page(addr, vaddr);
@@ -56,7 +57,8 @@ static inline void clear_highpage(struct page *page)
 	kunmap(page);
 }
 
-static inline void memclear_highpage(struct page *page, unsigned int offset, unsigned int size)
+static inline void
+memclear_highpage(struct page *page, unsigned int offset, unsigned int size)
 {
 	char *kaddr;
 
@@ -70,7 +72,9 @@ static inline void memclear_highpage(struct page *page, unsigned int offset, uns
 /*
  * Same but also flushes aliased cache contents to RAM.
  */
-static inline void memclear_highpage_flush(struct page *page, unsigned int offset, unsigned int size)
+static inline void
+memclear_highpage_flush(struct page *page, unsigned int offset,
+						unsigned int size)
 {
 	char *kaddr;
 
@@ -82,7 +86,8 @@ static inline void memclear_highpage_flush(struct page *page, unsigned int offse
 	kunmap(page);
 }
 
-static inline void copy_user_highpage(struct page *to, struct page *from, unsigned long vaddr)
+static inline void
+copy_user_highpage(struct page *to, struct page *from, unsigned long vaddr)
 {
 	char *vfrom, *vto;
 
@@ -93,7 +98,8 @@ static inline void copy_user_highpage(struct page *to, struct page *from, unsign
 	kunmap_atomic(vto, KM_USER1);
 }
 
-static inline void copy_highpage(struct page *to, struct page *from)
+static inline void
+copy_highpage(struct page *to, struct page *from)
 {
 	char *vfrom, *vto;
 

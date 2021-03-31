@@ -60,7 +60,7 @@ static inline void set_pte(pte_t *ptep, pte_t pte)
  * We do not let the generic code free and clear pgd entries due to
  * this erratum.
  */
-static inline void pgd_clear (pgd_t * pgd) { }
+static inline void pgd_clear(pgd_t * pgd) { }
 
 #define pgd_page(pgd) \
 ((unsigned long) __va(pgd_val(pgd) & PAGE_MASK))

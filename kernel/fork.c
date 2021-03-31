@@ -126,7 +126,7 @@ inside:
 	return last_pid;
 }
 
-static inline int dup_mmap(struct mm_struct * mm)
+static inline int dup_mmap(struct mm_struct *mm)
 {
 	struct vm_area_struct * mpnt, *tmp, **pprev;
 	int retval;
@@ -156,29 +156,36 @@ static inline int dup_mmap(struct mm_struct * mm)
 		struct file *file;
 
 		retval = -ENOMEM;
-		if(mpnt->vm_flags & VM_DONTCOPY)
+		if (mpnt->vm_flags & VM_DONTCOPY)
 			continue;
+
 		tmp = kmem_cache_alloc(vm_area_cachep, SLAB_KERNEL);
 		if (!tmp)
 			goto fail_nomem;
+
 		*tmp = *mpnt;
 		tmp->vm_flags &= ~VM_LOCKED;
 		tmp->vm_mm = mm;
 		tmp->vm_next = NULL;
+
 		file = tmp->vm_file;
 		if (file) {
 			struct inode *inode = file->f_dentry->d_inode;
+
 			get_file(file);
+
 			if (tmp->vm_flags & VM_DENYWRITE)
 				atomic_dec(&inode->i_writecount);
 
 			/* insert tmp into the share list, just after mpnt */
 			spin_lock(&inode->i_mapping->i_shared_lock);
-			if((tmp->vm_next_share = mpnt->vm_next_share) != NULL)
-				mpnt->vm_next_share->vm_pprev_share =
-					&tmp->vm_next_share;
+
+			if ((tmp->vm_next_share = mpnt->vm_next_share) != NULL)
+				mpnt->vm_next_share->vm_pprev_share = &tmp->vm_next_share;
+
 			mpnt->vm_next_share = tmp;
 			tmp->vm_pprev_share = &mpnt->vm_next_share;
+
 			spin_unlock(&inode->i_mapping->i_shared_lock);
 		}
 
@@ -199,6 +206,7 @@ static inline int dup_mmap(struct mm_struct * mm)
 		if (retval)
 			goto fail_nomem;
 	}
+
 	retval = 0;
 	build_mmap_rb(mm);
 
@@ -211,7 +219,7 @@ spinlock_t mmlist_lock __cacheline_aligned = SPIN_LOCK_UNLOCKED;
 int mmlist_nr;
 
 #define allocate_mm()	(kmem_cache_alloc(mm_cachep, SLAB_KERNEL))
-#define free_mm(mm)	(kmem_cache_free(mm_cachep, (mm)))
+#define free_mm(mm)		(kmem_cache_free(mm_cachep, (mm)))
 
 static struct mm_struct * mm_init(struct mm_struct * mm)
 {
@@ -561,7 +569,7 @@ static inline void copy_flags(unsigned long clone_flags, struct task_struct *p)
  * arch/ia64/kernel/process.c.
  */
 int do_fork(unsigned long clone_flags, unsigned long stack_start,
-	    struct pt_regs *regs, unsigned long stack_size)
+			struct pt_regs *regs, unsigned long stack_size)
 {
 	int retval;
 	struct task_struct *p;

@@ -159,7 +159,7 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 	siginfo_t info;
 
 	/* get the address */
-	__asm__("movl %%cr2,%0":"=r" (address));  // 获取出错的虚拟地址
+	__asm__("movl %%cr2,%0":"=r" (address));  // 获取缺页异常的虚拟地址
 
 	/* It's safe to allow irq's after cr2 has been saved */
 	if (regs->eflags & X86_EFLAGS_IF)
@@ -198,10 +198,13 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 	vma = find_vma(mm, address);
 	if (!vma)
 		goto bad_area;
+
 	if (vma->vm_start <= address)
 		goto good_area;
+
 	if (!(vma->vm_flags & VM_GROWSDOWN))
 		goto bad_area;
+
 	if (error_code & 4) {
 		/*
 		 * accessing the stack below %esp is always a bug.
@@ -212,9 +215,11 @@ do_page_fault(struct pt_regs *regs, unsigned long error_code)
 		if (address + 32 < regs->esp)
 			goto bad_area;
 	}
+
 	// 到这里代表访问栈空间
 	if (expand_stack(vma, address)) // 扩充栈空间
 		goto bad_area;
+
 /*
  * Ok, we have a good vm_area for this memory access, so
  * we can handle it..
