@@ -966,7 +966,8 @@ do_wp_page(struct mm_struct *mm, struct vm_area_struct *vma,
 	if (!new_page)
 		goto no_mem;
 
-	copy_cow_page(old_page, new_page, address); // 将旧的内存页内容复制到新的内存页
+	// 将旧的内存页内容复制到新的内存页
+	copy_cow_page(old_page, new_page, address);
 
 	/*
 	 * Re-check the pte - we dropped the lock
