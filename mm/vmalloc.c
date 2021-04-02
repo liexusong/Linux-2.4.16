@@ -51,7 +51,8 @@ free_area_pte(pmd_t *pmd, unsigned long address, unsigned long size)
 
 		if (pte_present(page)) {
 			struct page *ptpage = pte_page(page);
-			if (VALID_PAGE(ptpage) && (!PageReserved(ptpage)))
+
+			if (VALID_PAGE(ptpage) && !PageReserved(ptpage))
 				__free_page(ptpage);
 			continue;
 		}
@@ -61,9 +62,9 @@ free_area_pte(pmd_t *pmd, unsigned long address, unsigned long size)
 }
 
 static inline void
-free_area_pmd(pgd_t * dir, unsigned long address, unsigned long size)
+free_area_pmd(pgd_t *dir, unsigned long address, unsigned long size)
 {
-	pmd_t * pmd;
+	pmd_t *pmd;
 	unsigned long end;
 
 	if (pgd_none(*dir))
@@ -136,7 +137,7 @@ alloc_area_pte(pte_t * pte, unsigned long address, unsigned long size,
 }
 
 static inline int
-alloc_area_pmd(pmd_t * pmd, unsigned long address, unsigned long size,
+alloc_area_pmd(pmd_t *pmd, unsigned long address, unsigned long size,
 			   int gfp_mask, pgprot_t prot)
 {
 	unsigned long end;
@@ -148,7 +149,7 @@ alloc_area_pmd(pmd_t * pmd, unsigned long address, unsigned long size,
 		end = PGDIR_SIZE;    // 只能最大4MB
 
 	do {
-		pte_t * pte = pte_alloc(&init_mm, pmd, address);
+		pte_t *pte = pte_alloc(&init_mm, pmd, address);
 		if (!pte)
 			return -ENOMEM;
 
@@ -172,12 +173,12 @@ inline int vmalloc_area_pages(unsigned long address, unsigned long size,
 
 	dir = pgd_offset_k(address);
 
-	spin_lock(&init_mm.page_table_lock); // lock kernel memory manager
+	spin_lock(&init_mm.page_table_lock);
 
 	do {
 		pmd_t *pmd;
 
-		pmd = pmd_alloc(&init_mm, dir, address);
+		pmd = pmd_alloc(&init_mm, dir, address); // 页目录申请了就不会再释放
 		ret = -ENOMEM;
 		if (!pmd)
 			break;
@@ -251,7 +252,7 @@ void vfree(void *addr)
 
 	write_lock(&vmlist_lock);
 
-	for (p = &vmlist ; (tmp = *p) ; p = &tmp->next) {
+	for (p = &vmlist; (tmp = *p); p = &tmp->next) {
 		if (tmp->addr == addr) {
 			*p = tmp->next;
 			vmfree_area_pages(VMALLOC_VMADDR(tmp->addr), tmp->size);

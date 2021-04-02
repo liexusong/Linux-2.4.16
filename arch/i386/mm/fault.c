@@ -328,6 +328,7 @@ no_context:
 		printk(KERN_ALERT "Unable to handle kernel NULL pointer dereference");
 	else
 		printk(KERN_ALERT "Unable to handle kernel paging request");
+
 	printk(" at virtual address %08lx\n",address);
 	printk(" printing eip:\n");
 	printk("%08lx\n", regs->eip);
@@ -356,7 +357,9 @@ out_of_memory:
 		down_read(&mm->mmap_sem);
 		goto survive;
 	}
+
 	printk("VM: killing process %s\n", tsk->comm);
+
 	if (error_code & 4)
 		do_exit(SIGKILL);
 	goto no_context;
@@ -380,6 +383,7 @@ do_sigbus:
 	/* Kernel mode? Handle exceptions or die */
 	if (!(error_code & 4))
 		goto no_context;
+
 	return;
 
 vmalloc_fault:
@@ -396,23 +400,28 @@ vmalloc_fault:
 		pmd_t *pmd, *pmd_k;
 		pte_t *pte_k;
 
-		asm("movl %%cr3,%0":"=r" (pgd));
+		asm("movl %%cr3,%0" : "=r"(pgd));
+
 		pgd = offset + (pgd_t *)__va(pgd);
 		pgd_k = init_mm.pgd + offset;
 
 		if (!pgd_present(*pgd_k))
 			goto no_context;
+
 		set_pgd(pgd, *pgd_k);
 
 		pmd = pmd_offset(pgd, address);
 		pmd_k = pmd_offset(pgd_k, address);
+
 		if (!pmd_present(*pmd_k))
 			goto no_context;
+
 		set_pmd(pmd, *pmd_k);
 
 		pte_k = pte_offset(pmd_k, address);
 		if (!pte_present(*pte_k))
 			goto no_context;
+
 		return;
 	}
 }

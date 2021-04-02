@@ -298,7 +298,7 @@ static spinlock_t tlbstate_lock = SPIN_LOCK_UNLOCKED;
  * We cannot call mmdrop() because we are in interrupt context,
  * instead update mm->cpu_vm_mask.
  */
-static void inline leave_mm (unsigned long cpu)
+static void inline leave_mm(unsigned long cpu)
 {
 	if (cpu_tlbstate[cpu].state == TLBSTATE_OK)
 		BUG();
@@ -351,7 +351,7 @@ static void inline leave_mm (unsigned long cpu)
  * 2) Leave the mm if we are in the lazy tlb mode.
  */
 
-asmlinkage void smp_invalidate_interrupt (void)
+asmlinkage void smp_invalidate_interrupt(void)
 {
 	unsigned long cpu = smp_processor_id();
 
