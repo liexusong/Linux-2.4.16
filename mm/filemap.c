@@ -1662,18 +1662,19 @@ generic_file_read(struct file *filp, char *buf, size_t count, loff_t *ppos)
 	}
 }
 
-static int file_send_actor(read_descriptor_t * desc, struct page *page, unsigned long offset , unsigned long size)
+static int file_send_actor(read_descriptor_t *desc, struct page *page,
+						   unsigned long offset , unsigned long size)
 {
 	ssize_t written;
 	unsigned long count = desc->count;
-	struct file *file = (struct file *) desc->buf;
+	struct file *file = (struct file *)desc->buf;
 
 	if (size > count)
 		size = count;
 
  	if (file->f_op->sendpage) {
- 		written = file->f_op->sendpage(file, page, offset,
-					       size, &file->f_pos, size<count);
+ 		written = file->f_op->sendpage(file, page, offset, size, &file->f_pos,
+ 									   size<count);
 	} else {
 		char *kaddr;
 		mm_segment_t old_fs;
@@ -1687,37 +1688,48 @@ static int file_send_actor(read_descriptor_t * desc, struct page *page, unsigned
 
 		set_fs(old_fs);
 	}
+
 	if (written < 0) {
 		desc->error = written;
 		written = 0;
 	}
+
 	desc->count = count - written;
 	desc->written += written;
+
 	return written;
 }
 
-asmlinkage ssize_t sys_sendfile(int out_fd, int in_fd, off_t *offset, size_t count)
+asmlinkage ssize_t
+sys_sendfile(int out_fd, int in_fd, off_t *offset, size_t count)
 {
 	ssize_t retval;
-	struct file * in_file, * out_file;
-	struct inode * in_inode, * out_inode;
+	struct file *in_file, *out_file;
+	struct inode *in_inode, *out_inode;
 
 	/*
 	 * Get input file, and verify that it is ok..
 	 */
 	retval = -EBADF;
+
 	in_file = fget(in_fd);
 	if (!in_file)
 		goto out;
+
 	if (!(in_file->f_mode & FMODE_READ))
 		goto fput_in;
+
 	retval = -EINVAL;
+
 	in_inode = in_file->f_dentry->d_inode;
 	if (!in_inode)
 		goto fput_in;
+
 	if (!in_inode->i_mapping->a_ops->readpage)
 		goto fput_in;
-	retval = locks_verify_area(FLOCK_VERIFY_READ, in_inode, in_file, in_file->f_pos, count);
+
+	retval = locks_verify_area(FLOCK_VERIFY_READ, in_inode, in_file,
+							   in_file->f_pos, count);
 	if (retval)
 		goto fput_in;
 
@@ -1728,13 +1740,18 @@ asmlinkage ssize_t sys_sendfile(int out_fd, int in_fd, off_t *offset, size_t cou
 	out_file = fget(out_fd);
 	if (!out_file)
 		goto fput_in;
+
 	if (!(out_file->f_mode & FMODE_WRITE))
 		goto fput_out;
+
 	retval = -EINVAL;
 	if (!out_file->f_op || !out_file->f_op->write)
 		goto fput_out;
+
 	out_inode = out_file->f_dentry->d_inode;
-	retval = locks_verify_area(FLOCK_VERIFY_WRITE, out_inode, out_file, out_file->f_pos, count);
+
+	retval = locks_verify_area(FLOCK_VERIFY_WRITE, out_inode, out_file,
+							   out_file->f_pos, count);
 	if (retval)
 		goto fput_out;
 
@@ -1745,6 +1762,7 @@ asmlinkage ssize_t sys_sendfile(int out_fd, int in_fd, off_t *offset, size_t cou
 
 		retval = -EFAULT;
 		ppos = &in_file->f_pos;
+
 		if (offset) {
 			if (get_user(pos, offset))
 				goto fput_out;
@@ -1753,13 +1771,15 @@ asmlinkage ssize_t sys_sendfile(int out_fd, int in_fd, off_t *offset, size_t cou
 
 		desc.written = 0;
 		desc.count = count;
-		desc.buf = (char *) out_file;
+		desc.buf = (char *)out_file;
 		desc.error = 0;
+
 		do_generic_file_read(in_file, ppos, &desc, file_send_actor);
 
 		retval = desc.written;
 		if (!retval)
 			retval = desc.error;
+
 		if (offset)
 			put_user(pos, offset);
 	}

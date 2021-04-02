@@ -36,7 +36,8 @@ static __inline__ pgd_t *get_pgd_slow(void)
 			clear_page(pmd);
 			set_pgd(pgd + i, __pgd(1 + __pa(pmd)));
 		}
-		memcpy(pgd + USER_PTRS_PER_PGD, swapper_pg_dir + USER_PTRS_PER_PGD, (PTRS_PER_PGD - USER_PTRS_PER_PGD) * sizeof(pgd_t));
+		memcpy(pgd + USER_PTRS_PER_PGD, swapper_pg_dir + USER_PTRS_PER_PGD,
+			   (PTRS_PER_PGD - USER_PTRS_PER_PGD) * sizeof(pgd_t));
 	}
 	return pgd;
 out_oom:
@@ -95,7 +96,8 @@ static __inline__ void free_pgd_slow(pgd_t *pgd)
 #endif
 }
 
-static inline pte_t *pte_alloc_one(struct mm_struct *mm, unsigned long address)
+static inline pte_t *
+pte_alloc_one(struct mm_struct *mm, unsigned long address)
 {
 	pte_t *pte;
 
@@ -105,7 +107,8 @@ static inline pte_t *pte_alloc_one(struct mm_struct *mm, unsigned long address)
 	return pte;
 }
 
-static inline pte_t *pte_alloc_one_fast(struct mm_struct *mm, unsigned long address)
+static inline pte_t *
+pte_alloc_one_fast(struct mm_struct *mm, unsigned long address)
 {
 	unsigned long *ret;
 
@@ -207,7 +210,8 @@ extern void flush_tlb_page(struct vm_area_struct *, unsigned long);
 
 #define flush_tlb()	flush_tlb_current_task()
 
-static inline void flush_tlb_range(struct mm_struct * mm, unsigned long start, unsigned long end)
+static inline void
+flush_tlb_range(struct mm_struct * mm, unsigned long start, unsigned long end)
 {
 	flush_tlb_mm(mm);
 }

@@ -628,6 +628,7 @@ out:
 unmap_and_free_vma:
 	if (correct_wcount)
 		atomic_inc(&file->f_dentry->d_inode->i_writecount);
+
 	vma->vm_file = NULL;
 	fput(file);
 

@@ -1,1 +1,1 @@
-ip_rcv();
+sys_fork();

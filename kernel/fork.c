@@ -305,9 +305,9 @@ void mm_release(void)
 	}
 }
 
-static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
+static int copy_mm(unsigned long clone_flags, struct task_struct *tsk)
 {
-	struct mm_struct * mm, *oldmm;
+	struct mm_struct *mm, *oldmm;
 	int retval;
 
 	tsk->min_flt = tsk->maj_flt = 0;
@@ -326,7 +326,7 @@ static int copy_mm(unsigned long clone_flags, struct task_struct * tsk)
 	if (!oldmm)
 		return 0;
 
-	if (clone_flags & CLONE_VM) {
+	if (clone_flags & CLONE_VM) { /* 共用相同的内存空间 */
 		atomic_inc(&oldmm->mm_users);
 		mm = oldmm;
 		goto good_mm;
@@ -455,7 +455,7 @@ static int copy_files(unsigned long clone_flags, struct task_struct * tsk)
 	newf->max_fdset	    = __FD_SETSIZE;
 	newf->close_on_exec = &newf->close_on_exec_init;
 	newf->open_fds	    = &newf->open_fds_init;
-	newf->fd	    = &newf->fd_array[0];
+	newf->fd	    	= &newf->fd_array[0];
 
 	/* We don't yet have the oldf readlock, but even if the old
            fdset gets grown now, we'll only copy up to "size" fds */

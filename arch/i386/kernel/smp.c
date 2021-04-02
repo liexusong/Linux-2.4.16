@@ -162,23 +162,23 @@ static inline void send_IPI_mask_bitmask(int mask, int vector)
 	__save_flags(flags);
 	__cli();
 
-		
+
 	/*
 	 * Wait for idle.
 	 */
 	apic_wait_icr_idle();
-		
+
 	/*
 	 * prepare target chip field
 	 */
 	cfg = __prepare_ICR2(mask);
 	apic_write_around(APIC_ICR2, cfg);
-		
+
 	/*
-	 * program the ICR 
+	 * program the ICR
 	 */
 	cfg = __prepare_ICR(0, vector);
-			
+
 	/*
 	 * Send the IPI. The write to APIC_ICR fires this off.
 	 */
@@ -193,10 +193,10 @@ static inline void send_IPI_mask_sequence(int mask, int vector)
 	unsigned int query_cpu, query_mask;
 
 	/*
-	 * Hack. The clustered APIC addressing mode doesn't allow us to send 
-	 * to an arbitrary mask, so I do a unicasts to each CPU instead. This 
+	 * Hack. The clustered APIC addressing mode doesn't allow us to send
+	 * to an arbitrary mask, so I do a unicasts to each CPU instead. This
 	 * should be modified to do 1 message per cluster ID - mbligh
-	 */ 
+	 */
 
 	__save_flags(flags);
 	__cli();
@@ -204,23 +204,23 @@ static inline void send_IPI_mask_sequence(int mask, int vector)
 	for (query_cpu = 0; query_cpu < NR_CPUS; ++query_cpu) {
 		query_mask = 1 << query_cpu;
 		if (query_mask & mask) {
-		
+
 			/*
 			 * Wait for idle.
 			 */
 			apic_wait_icr_idle();
-		
+
 			/*
 			 * prepare target chip field
 			 */
 			cfg = __prepare_ICR2(cpu_to_logical_apicid(query_cpu));
 			apic_write_around(APIC_ICR2, cfg);
-		
+
 			/*
-			 * program the ICR 
+			 * program the ICR
 			 */
 			cfg = __prepare_ICR(0, vector);
-			
+
 			/*
 			 * Send the IPI. The write to APIC_ICR fires this off.
 			 */
@@ -232,7 +232,7 @@ static inline void send_IPI_mask_sequence(int mask, int vector)
 
 static inline void send_IPI_mask(int mask, int vector)
 {
-	if (clustered_apic_mode) 
+	if (clustered_apic_mode)
 		send_IPI_mask_sequence(mask, vector);
 	else
 		send_IPI_mask_bitmask(mask, vector);
@@ -279,7 +279,7 @@ static inline void send_IPI_all(int vector)
 }
 
 /*
- *	Smarter SMP flushing macros. 
+ *	Smarter SMP flushing macros.
  *		c/o Linus Torvalds.
  *
  *	These mean you can really definitely utterly forget about
@@ -295,7 +295,7 @@ static spinlock_t tlbstate_lock = SPIN_LOCK_UNLOCKED;
 #define FLUSH_ALL	0xffffffff
 
 /*
- * We cannot call mmdrop() because we are in interrupt context, 
+ * We cannot call mmdrop() because we are in interrupt context,
  * instead update mm->cpu_vm_mask.
  */
 static void inline leave_mm (unsigned long cpu)
@@ -357,7 +357,7 @@ asmlinkage void smp_invalidate_interrupt (void)
 
 	if (!test_bit(cpu, &flush_cpumask))
 		return;
-		/* 
+		/*
 		 * This was a BUG() but until someone can quote me the
 		 * line from the intel manual that guarantees an IPI to
 		 * multiple CPUs is retried _only_ on the erroring CPUs
@@ -365,7 +365,7 @@ asmlinkage void smp_invalidate_interrupt (void)
 		 *
 		 * BUG();
 		 */
-		 
+
 	if (flush_mm == cpu_tlbstate[cpu].active_mm) {
 		if (cpu_tlbstate[cpu].state == TLBSTATE_OK) {
 			if (flush_va == FLUSH_ALL)
@@ -405,7 +405,7 @@ static void flush_tlb_others (unsigned long cpumask, struct mm_struct *mm,
 	 * detected by the NMI watchdog.
 	 */
 	spin_lock(&tlbstate_lock);
-	
+
 	flush_mm = mm;
 	flush_va = va;
 	atomic_set_mask(cpumask, &flush_cpumask);
@@ -422,7 +422,7 @@ static void flush_tlb_others (unsigned long cpumask, struct mm_struct *mm,
 	flush_va = 0;
 	spin_unlock(&tlbstate_lock);
 }
-	
+
 void flush_tlb_current_task(void)
 {
 	struct mm_struct *mm = current->mm;
@@ -479,8 +479,7 @@ static void flush_tlb_all_ipi(void* info)
 
 void flush_tlb_all(void)
 {
-	smp_call_function (flush_tlb_all_ipi,0,1,1);
-
+	smp_call_function(flush_tlb_all_ipi, 0, 1, 1);
 	do_flush_tlb_all_local();
 }
 
