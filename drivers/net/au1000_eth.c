@@ -573,6 +573,7 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 	if (!dev) {
 		dev = init_etherdev(0, sizeof(struct au1000_private));
 	}
+
 	if (!dev) {
 		 printk (KERN_ERR "au1000 eth: init_etherdev failed\n");
 		 return -ENODEV;
@@ -626,13 +627,19 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 	aup->phy_addr = PHY_ADDRESS;
 	/* bring the device out of reset, otherwise probing the mii
 	 * will hang */
-	*aup->enable = MAC_EN_RESET0 | MAC_EN_RESET1 | MAC_EN_RESET2 |
-		MAC_EN_CLOCK_ENABLE | MAC_EN_TOSS;
+	*aup->enable = MAC_EN_RESET0
+						| MAC_EN_RESET1
+						| MAC_EN_RESET2
+						| MAC_EN_CLOCK_ENABLE
+						| MAC_EN_TOSS;
+
 	sync();
 	mdelay(2);
+
 	if (mii_probe(dev) != 0) {
 		 goto free_region;
 	}
+
 	aup->phy_ops->phy_status(dev, aup->phy_addr, &link, &speed);
 	if (!link) {
 		printk(KERN_INFO "%s: link down resetting...\n", dev->name);
@@ -656,16 +663,18 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 
 	aup->pDBfree = pDBfree;
 
-	for (i=0; i<NUM_RX_DMA; i++) {
+	for (i = 0; i < NUM_RX_DMA; i++) {
 		pDB = GetFreeDB(aup);
-		if (!pDB) goto free_region;
+		if (!pDB)
+			goto free_region;
 		aup->rx_dma_ring[i]->buff_stat = (unsigned)pDB->dma_addr;
 		aup->rx_db_inuse[i] = pDB;
 	}
 
-	for (i=0; i<NUM_TX_DMA; i++) {
+	for (i = 0; i < NUM_TX_DMA; i++) {
 		pDB = GetFreeDB(aup);
-		if (!pDB) goto free_region;
+		if (!pDB)
+			goto free_region;
 		aup->tx_dma_ring[i]->buff_stat = (unsigned)pDB->dma_addr;
 		aup->tx_dma_ring[i]->len = 0;
 		aup->tx_db_inuse[i] = pDB;
@@ -683,7 +692,6 @@ au1000_probe1(struct net_device *dev, long ioaddr, int irq, int port_num)
 	dev->set_config = &au1000_set_config;
 	dev->tx_timeout = au1000_tx_timeout;
 	dev->watchdog_timeo = ETH_TX_TIMEOUT;
-
 
 	/* Fill in the fields of the device structure with ethernet values. */
 	ether_setup(dev);
@@ -731,8 +739,12 @@ static int au1000_init(struct net_device *dev)
 	spin_lock_irqsave(&aup->lock, flags);
 
 	/* bring the device out of reset */
-	value = MAC_EN_RESET0 | MAC_EN_RESET1 | MAC_EN_RESET2 |
-		MAC_EN_CLOCK_ENABLE | MAC_EN_TOSS;
+	value = MAC_EN_RESET0
+				| MAC_EN_RESET1
+				| MAC_EN_RESET2
+				| MAC_EN_CLOCK_ENABLE
+				| MAC_EN_TOSS;
+
 	*aup->enable = value;
 	sync();
 	mdelay(200);
