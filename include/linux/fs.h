@@ -393,17 +393,18 @@ struct address_space_operations {
 	int (*direct_IO)(int, struct inode *, struct kiobuf *, unsigned long, int);
 };
 
+// 文件缓存管理对象
 struct address_space {
-	struct list_head	clean_pages;	/* list of clean pages */
-	struct list_head	dirty_pages;	/* list of dirty pages */
-	struct list_head	locked_pages;	/* list of locked pages */
-	unsigned long		nrpages;	/* number of total pages */
-	struct address_space_operations *a_ops;	/* methods */
-	struct inode		*host;		/* owner: inode, block_device */
-	struct vm_area_struct	*i_mmap;	/* list of private mappings */
-	struct vm_area_struct	*i_mmap_shared; /* list of shared mappings */
-	spinlock_t		i_shared_lock;  /* and spinlock protecting it */
-	int			gfp_mask;	/* how to allocate the pages */
+	struct list_head				clean_pages;	/* list of clean pages */ // 干净的内存页
+	struct list_head				dirty_pages;	/* list of dirty pages */ // 肮脏的内存页
+	struct list_head				locked_pages;	/* list of locked pages */// 锁定的内存页
+	unsigned long					nrpages;		/* number of total pages */
+	struct address_space_operations	*a_ops;			/* methods */
+	struct inode					*host;			/* owner: inode, block_device */ // 对应的文件inode
+	struct vm_area_struct			*i_mmap;		/* list of private mappings */
+	struct vm_area_struct			*i_mmap_shared; /* list of shared mappings */
+	spinlock_t						i_shared_lock;  /* and spinlock protecting it */
+	int								gfp_mask;		/* how to allocate the pages */
 };
 
 struct char_device {

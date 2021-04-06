@@ -1,3 +1,2 @@
-sys_fork();
-do_page_fault();
-dma_alloc();
+sys_mmap2();
+generic_file_mmap();

@@ -126,9 +126,9 @@ void fput(struct file * file)
 	}
 }
 
-struct file * fget(unsigned int fd)
+struct file *fget(unsigned int fd)
 {
-	struct file * file;
+	struct file *file;
 	struct files_struct *files = current->files;
 
 	read_lock(&files->file_lock);

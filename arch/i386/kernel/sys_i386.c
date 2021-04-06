@@ -42,9 +42,12 @@ asmlinkage int sys_pipe(unsigned long *fildes)
 
 /* common code for old and new mmaps */
 static inline long
-do_mmap2(unsigned long addr, unsigned long len,
-		 unsigned long prot, unsigned long flags,
-		 unsigned long fd, unsigned long pgoff)
+do_mmap2(unsigned long addr,    // mmap映射的开始虚拟内存地址
+		 unsigned long len,     // 映射的长度
+		 unsigned long prot,    // 映射区间的读写权限
+		 unsigned long flags,   // 映射区间的特性标志
+		 unsigned long fd,      // 映射的文件句柄
+		 unsigned long pgoff)   // 文件偏移量
 {
 	int error = -EBADF;
 	struct file * file = NULL;

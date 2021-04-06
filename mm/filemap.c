@@ -83,7 +83,8 @@ static void add_page_to_hash_queue(struct page * page, struct page **p)
 	atomic_inc(&page_cache_size);
 }
 
-static inline void add_page_to_inode_queue(struct address_space *mapping, struct page * page)
+static inline void
+add_page_to_inode_queue(struct address_space *mapping, struct page *page)
 {
 	struct list_head *head = &mapping->clean_pages;
 
@@ -250,8 +251,12 @@ static void truncate_complete_page(struct page *page)
 	page_cache_release(page);
 }
 
-static int FASTCALL(truncate_list_pages(struct list_head *, unsigned long, unsigned *));
-static int truncate_list_pages(struct list_head *head, unsigned long start, unsigned *partial)
+static int
+FASTCALL(truncate_list_pages(struct list_head *, unsigned long, unsigned *));
+
+static int
+truncate_list_pages(struct list_head *head, unsigned long start,
+					unsigned *partial)
 {
 	struct list_head *curr;
 	struct page * page;
@@ -491,7 +496,8 @@ int waitfor_one_page(struct page *page)
 	return error;
 }
 
-static int do_buffer_fdatasync(struct list_head *head, unsigned long start, unsigned long end, int (*fn)(struct page *))
+static int do_buffer_fdatasync(struct list_head *head, unsigned long start,
+							   unsigned long end, int (*fn)(struct page *))
 {
 	struct list_head *curr;
 	struct page *page;
@@ -591,7 +597,8 @@ void filemap_fdatasync(struct address_space * mapping)
 	spin_lock(&pagecache_lock);
 
 	while (!list_empty(&mapping->dirty_pages)) {
-		struct page *page = list_entry(mapping->dirty_pages.next, struct page, list);
+		struct page *page = list_entry(mapping->dirty_pages.next,
+									   struct page, list);
 
 		list_del(&page->list);
 		list_add(&page->list, &mapping->locked_pages);
@@ -628,7 +635,8 @@ void filemap_fdatawait(struct address_space * mapping)
 	spin_lock(&pagecache_lock);
 
 	while (!list_empty(&mapping->locked_pages)) {
-		struct page *page = list_entry(mapping->locked_pages.next, struct page, list);
+		struct page *page = list_entry(mapping->locked_pages.next,
+									   struct page, list);
 
 		list_del(&page->list);
 		list_add(&page->list, &mapping->clean_pages);
@@ -653,7 +661,8 @@ void filemap_fdatawait(struct address_space * mapping)
  * The caller must have locked the page and
  * set all the page flags correctly..
  */
-void add_to_page_cache_locked(struct page * page, struct address_space *mapping, unsigned long index)
+void add_to_page_cache_locked(struct page *page, struct address_space *mapping,
+							  unsigned long index)
 {
 	if (!PageLocked(page))
 		BUG();
@@ -672,21 +681,29 @@ void add_to_page_cache_locked(struct page * page, struct address_space *mapping,
  * This adds a page to the page cache, starting out as locked,
  * owned by us, but unreferenced, not uptodate and with no errors.
  */
-static inline void __add_to_page_cache(struct page * page,
-	struct address_space *mapping, unsigned long offset,
-	struct page **hash)
+static inline void
+__add_to_page_cache(struct page *page, struct address_space *mapping,
+					unsigned long offset, struct page **hash)
 {
 	unsigned long flags;
 
-	flags = page->flags & ~(1 << PG_uptodate | 1 << PG_error | 1 << PG_dirty | 1 << PG_referenced | 1 << PG_arch_1 | 1 << PG_checked);
+	flags = page->flags & ~(1 << PG_uptodate
+								| 1 << PG_error
+								| 1 << PG_dirty
+								| 1 << PG_referenced
+								| 1 << PG_arch_1
+								| 1 << PG_checked);
+
 	page->flags = flags | (1 << PG_locked);
+
 	page_cache_get(page);
 	page->index = offset;
 	add_page_to_inode_queue(mapping, page);
 	add_page_to_hash_queue(page, hash);
 }
 
-void add_to_page_cache(struct page * page, struct address_space * mapping, unsigned long offset)
+void add_to_page_cache(struct page * page, struct address_space * mapping,
+					   unsigned long offset)
 {
 	spin_lock(&pagecache_lock);
 	__add_to_page_cache(page, mapping, offset, page_hash(mapping, offset));
@@ -694,25 +711,27 @@ void add_to_page_cache(struct page * page, struct address_space * mapping, unsig
 	lru_cache_add(page);
 }
 
-int add_to_page_cache_unique(struct page * page,
-	struct address_space *mapping, unsigned long offset,
-	struct page **hash)
+int add_to_page_cache_unique(struct page *page, struct address_space *mapping,
+							 unsigned long offset, struct page **hash)
 {
 	int err;
 	struct page *alias;
 
 	spin_lock(&pagecache_lock);
+
 	alias = __find_page_nolock(mapping, offset, *hash);
 
 	err = 1;
 	if (!alias) {
-		__add_to_page_cache(page,mapping,offset,hash);
+		__add_to_page_cache(page, mapping, offset, hash);
 		err = 0;
 	}
 
 	spin_unlock(&pagecache_lock);
+
 	if (!err)
 		lru_cache_add(page);
+
 	return err;
 }
 
@@ -747,6 +766,7 @@ static int page_cache_read(struct file * file, unsigned long offset)
 	 * raced with us and added our page to the cache first.
 	 */
 	page_cache_release(page);
+
 	return 0;
 }
 
@@ -845,8 +865,9 @@ void lock_page(struct page *page)
  * a rather lightweight function, finding and getting a reference to a
  * hashed page atomically.
  */
-struct page * __find_get_page(struct address_space *mapping,
-			      unsigned long offset, struct page **hash)
+struct page *
+__find_get_page(struct address_space *mapping, unsigned long offset,
+				struct page **hash)
 {
 	struct page *page;
 
@@ -855,10 +876,13 @@ struct page * __find_get_page(struct address_space *mapping,
 	 * the hash-list needs a held write-lock.
 	 */
 	spin_lock(&pagecache_lock);
+
 	page = __find_page_nolock(mapping, offset, *hash);
 	if (page)
 		page_cache_get(page);
+
 	spin_unlock(&pagecache_lock);
+
 	return page;
 }
 
@@ -1903,7 +1927,7 @@ static void nopage_sequential_readahead(struct vm_area_struct * vma,
  * having a lot of duplicated code.
  */
 struct page *
-filemap_nopage(struct vm_area_struct * area, unsigned long address, int unused)
+filemap_nopage(struct vm_area_struct *area, unsigned long address, int unused)
 {
 	int error;
 	struct file *file = area->vm_file;
@@ -2154,7 +2178,7 @@ int filemap_sync(struct vm_area_struct * vma, unsigned long address,
 }
 
 static struct vm_operations_struct generic_file_vm_ops = {
-	nopage:		filemap_nopage,
+	nopage: filemap_nopage,
 };
 
 /* This is used for a general mmap of a disk file */

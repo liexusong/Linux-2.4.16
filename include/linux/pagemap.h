@@ -59,25 +59,32 @@ extern void page_cache_init(unsigned long);
  * For the time being it will work for struct address_space too (most of
  * them sitting inside the inodes). We might want to change it later.
  */
-static inline unsigned long _page_hashfn(struct address_space * mapping, unsigned long index)
+static inline unsigned long
+_page_hashfn(struct address_space * mapping, unsigned long index)
 {
 #define i (((unsigned long) mapping)/(sizeof(struct inode) & ~ (sizeof(struct inode) - 1)))
 #define s(x) ((x)+((x)>>PAGE_HASH_BITS))
+
 	return s(i+index) & (PAGE_HASH_SIZE-1);
+
 #undef i
 #undef s
 }
 
-#define page_hash(mapping,index) (page_hash_table+_page_hashfn(mapping,index))
+#define page_hash(mapping,index) (page_hash_table + _page_hashfn(mapping,index))
 
-extern struct page * __find_get_page(struct address_space *mapping,
-				unsigned long index, struct page **hash);
+extern struct page *__find_get_page(struct address_space *mapping,
+									unsigned long index, struct page **hash);
+
 #define find_get_page(mapping, index) \
 	__find_get_page(mapping, index, page_hash(mapping, index))
-extern struct page * __find_lock_page (struct address_space * mapping,
-				unsigned long index, struct page **hash);
-extern struct page * find_or_create_page(struct address_space *mapping,
-				unsigned long index, unsigned int gfp_mask);
+
+extern struct page *__find_lock_page(struct address_space * mapping,
+									 unsigned long index, struct page **hash);
+
+extern struct page *find_or_create_page(struct address_space *mapping,
+										unsigned long index,
+										unsigned int gfp_mask);
 
 extern void FASTCALL(lock_page(struct page *page));
 extern void FASTCALL(unlock_page(struct page *page));
